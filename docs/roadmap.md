@@ -11,11 +11,12 @@ draft, not a substitute for it.
 | 0002 | Class → class by constructor, end to end: engine, FIR checker, IR lowering |
 | 0003 | Override DSL: `withFieldConst`, `withFieldComputed`, `withFieldRenamed` |
 | 0004 | Enum → enum and sealed → sealed by name |
-| 0005 | `T → T?`, value class wrap/unwrap, `List`/`Set`/`Collection`/`Map`/`Array` |
+| 0005 | `T → T?`, `T? → T?`, value class wrap and unwrap |
 | 0006 | User-supplied transformers for nested pairs |
 | 0007 | Recursive types |
 | 0008 | Partial transformers |
 | 0009 | Tests for the internal-error and disagreement paths — built before 0004 |
+| 0010 | `List`/`Set`/`Collection`/`Map`/`Array`, element by element |
 
 ## Rule order
 
@@ -25,9 +26,9 @@ Specs add rules to this list; none reorders it without saying why.
 1. Override for this target path (0003)
 2. User-supplied transformer in scope (0006)
 3. Identity — `Source` is a subtype of `Target` (0002)
-4. Nullable — `T → T?` wraps; `T? → T` is a failure until 0008 (0005)
-5. Value class — wrap or unwrap one level (0005)
-6. Containers — element-wise (0005)
+4. Nullable — `T → T?` and `T? → T?` through the non-null type; `T? → T` is a failure until 0008 (0005)
+5. Value class — wrap the target, unwrap the source (0005)
+6. Containers — element-wise (0010)
 7. Object → object, the target instance (0004)
 8. Enum → enum by case name (0004)
 9. Sealed → sealed by subclass simple name, exhaustive `when` (0004)
