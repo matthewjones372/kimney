@@ -1,0 +1,12 @@
+/nullables.kt:(1042,1073): error: Cannot transform User → StrictDto:
+    StrictDto.name: String — User.name is String?, and a null has nowhere to go. Make StrictDto.name nullable, or fill it with .withFieldComputed(StrictDto::name) { … }.
+    StrictDto.address.zip: String — Address.zip is String?, and a null has nowhere to go. Make StrictAddressDto.zip nullable.
+
+/nullables.kt:(1109,1137): error: Cannot transform String? → String:
+    String — the source is String?, and a null has nowhere to go. Transform into String? instead.
+
+/nullables.kt:(1170,1195): error: Cannot transform UserId → Label:
+    Label.text: String — no rule transforms Long into String.
+
+/nullables.kt:(1239,1268): error: Cannot transform UserId → UserIdDto:
+    UserIdDto.raw: Long — Long has no property 'raw'. Add it to Long, give UserIdDto.raw a default value, or add .withFieldConst(UserIdDto::raw, …).

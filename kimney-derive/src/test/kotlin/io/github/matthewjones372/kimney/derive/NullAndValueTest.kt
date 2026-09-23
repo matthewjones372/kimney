@@ -79,4 +79,9 @@ class NullAndValueTest {
     fun `a value class whose inner type does not fit fails at its path like any pair`() {
         lines("UserId", "String") shouldBe listOf("String — no rule transforms Long into String.")
     }
+
+    @Test
+    fun `a failure inside a wrap has the held property in its path`() {
+        lines("String", "UserId") shouldBe listOf("UserId.raw: Long — no rule transforms String into Long.")
+    }
 }

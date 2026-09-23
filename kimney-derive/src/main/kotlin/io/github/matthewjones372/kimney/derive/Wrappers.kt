@@ -16,7 +16,9 @@ internal fun <T> TypeModel<T>.nullToNonNull(site: Site<T>): Derived<T> = Derived
 
 internal fun <T> TypeModel<T>.wrap(site: Site<T>, pair: (Site<T>) -> Derived<T>): Derived<T> {
     val inner = checkNotNull(valueClass(site.target)) { "wrap is tried only for a value class target" }
-    return pair(site.copy(target = inner.type)).map { Plan.Wrap(site.target, it) }
+    // The held property is a segment of the path, so a failure inside reads `Label.text`, not the bare inner type.
+    val below = site.below(inner.name, site.source, inner.type, owner = render(site.target), origin = site.origin)
+    return pair(below).map { Plan.Wrap(site.target, it) }
 }
 
 internal fun <T> TypeModel<T>.unwrap(site: Site<T>, pair: (Site<T>) -> Derived<T>): Derived<T> {

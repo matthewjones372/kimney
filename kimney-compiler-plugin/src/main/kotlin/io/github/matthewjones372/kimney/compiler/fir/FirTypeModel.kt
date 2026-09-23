@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.fir.types.ConeTypeParameterType
 import org.jetbrains.kotlin.fir.types.isMarkedNullable
 import org.jetbrains.kotlin.fir.types.isSubtypeOf
 import org.jetbrains.kotlin.fir.types.lowerBoundIfFlexible
+import org.jetbrains.kotlin.fir.types.typeContext
+import org.jetbrains.kotlin.fir.types.withNullability
 
 class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> {
 
@@ -94,12 +96,20 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
             ?.takeUnless { it.isMarkedNullable }
             ?.toRegularClassSymbol(session)
 
-    // Nullability and value classes are modelled from spec 0005's next entries; until then neither is seen.
-    override fun isNullable(type: ConeKotlinType): Boolean = false
+    // A platform type is taken at its non-null bound, as Kotlin lets it be used.
+    override fun isNullable(type: ConeKotlinType): Boolean =
+        type.fullyExpandedType(session).lowerBoundIfFlexible().isMarkedNullable
 
-    override fun nonNull(type: ConeKotlinType): ConeKotlinType = type
+    override fun nonNull(type: ConeKotlinType): ConeKotlinType =
+        type.fullyExpandedType(session).lowerBoundIfFlexible().withNullability(false, session.typeContext)
 
-    override fun valueClass(type: ConeKotlinType): Param<ConeKotlinType>? = null
+    override fun valueClass(type: ConeKotlinType): Param<ConeKotlinType>? {
+        val symbol = classOf(type)
+            ?.takeIf { (it.resolvedStatus.isInline || it.resolvedStatus.isValue) && it.typeParameterSymbols.isEmpty() }
+            ?: return null
+        val inner = symbol.constructors(session).firstOrNull { it.isPrimary }?.valueParameterSymbols?.singleOrNull()
+        return inner?.let { Param(it.name.asString(), it.resolvedReturnType, hasDefault = false) }
+    }
 
     override fun property(owner: ConeKotlinType, name: String): ConeKotlinType? {
         val classType = owner.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType

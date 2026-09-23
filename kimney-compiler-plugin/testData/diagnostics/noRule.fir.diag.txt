@@ -9,4 +9,4 @@
     Box<Long>.value: Long — no rule transforms Int into Long.
 
 /noRule.kt:(544,573): error: Cannot transform Maybe → Surely:
-    Surely.name: String — no rule transforms String? into String.
+    Surely.name: String — Maybe.name is String?, and a null has nowhere to go. Make Surely.name nullable, or fill it with .withFieldComputed(Surely::name) { … }.
