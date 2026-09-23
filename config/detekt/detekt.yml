@@ -41,6 +41,10 @@ style:
     # A compiler-API lookup answers `?: return null` at each step it can fail;
     # those are guards, not a second exit to reason about.
     excludeGuardClauses: true
+  UnusedParameter:
+    # The runtime's functions are stubs the plugin replaces: their parameters
+    # exist for the type checker and for the plugin to read, never for a body.
+    excludes: ['**/kimney-runtime/src/main/**']
   MagicNumber:
     excludes: ['**/test/**']
   MaxLineLength:
