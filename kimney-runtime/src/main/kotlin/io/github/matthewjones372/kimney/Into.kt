@@ -16,6 +16,10 @@ public class Into<A, B> internal constructor() {
     public fun <S, T> withFieldRenamed(from: KProperty1<A, S>, to: KProperty1<B, T>): Into<A, B> =
         throw KimneyNotApplied("withFieldRenamed")
 
+    /** Used for every pair below the root that [transformer] fits, before any other rule. */
+    public fun <S, T> withTransformer(transformer: Transformer<S, T>): Into<A, B> =
+        throw KimneyNotApplied("withTransformer")
+
     public fun transform(): B = throw KimneyNotApplied("transform")
 }
 

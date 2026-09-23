@@ -3,6 +3,7 @@ public final class io/github/matthewjones372/kimney/Into {
 	public final fun withFieldComputed (Lkotlin/reflect/KProperty1;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldConst (Lkotlin/reflect/KProperty1;Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldRenamed (Lkotlin/reflect/KProperty1;Lkotlin/reflect/KProperty1;)Lio/github/matthewjones372/kimney/Into;
+	public final fun withTransformer (Lio/github/matthewjones372/kimney/Transformer;)Lio/github/matthewjones372/kimney/Into;
 }
 
 public final class io/github/matthewjones372/kimney/IntoKt {
@@ -15,5 +16,9 @@ public final class io/github/matthewjones372/kimney/KimneyNotApplied : java/lang
 
 public final class io/github/matthewjones372/kimney/TransformKt {
 	public static final fun transformInto (Ljava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/matthewjones372/kimney/Transformer {
+	public abstract fun transform (Ljava/lang/Object;)Ljava/lang/Object;
 }
 

@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kimney
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 
@@ -26,10 +27,17 @@ class IntoTest {
             .message shouldStartWith "withFieldComputed reached runtime"
         shouldThrow<KimneyNotApplied> { chain.withFieldRenamed(User::name, UserDto::name) }
             .message shouldStartWith "withFieldRenamed reached runtime"
+        shouldThrow<KimneyNotApplied> { chain.withTransformer(Transformer<User, UserDto> { UserDto(it.name) }) }
+            .message shouldStartWith "withTransformer reached runtime"
     }
 
     @Test
     fun `transform says it was not replaced`() {
         shouldThrow<KimneyNotApplied> { chain.transform() }.message shouldStartWith "transform reached runtime"
+    }
+
+    @Test
+    fun `a transformer is an ordinary value, usable without the plugin`() {
+        Transformer<User, UserDto> { UserDto(it.name.uppercase()) }.transform(User("ada")) shouldBe UserDto("ADA")
     }
 }
