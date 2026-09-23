@@ -14,16 +14,23 @@ import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.IrStatementsBuilder
 import org.jetbrains.kotlin.ir.builders.irBlock
+import org.jetbrains.kotlin.ir.builders.irBranch
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irCallConstructor
+import org.jetbrains.kotlin.ir.builders.irElseBranch
+import org.jetbrains.kotlin.ir.builders.irEqeqeq
 import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetObjectValue
 import org.jetbrains.kotlin.ir.builders.irTemporary
+import org.jetbrains.kotlin.ir.builders.irWhen
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
@@ -94,8 +101,12 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         when (plan) {
             Plan.Identity -> value
 
-            // The IR model reports no enum, sealed type or object yet, so the engine plans none of these.
-            is Plan.ObjectInstance, is Plan.EnumByName, is Plan.SealedByName ->
+            is Plan.ObjectInstance -> irGetObjectValue(plan.target, plan.target.classOrFail)
+
+            is Plan.EnumByName -> enumByName(plan, value)
+
+            // The IR model reports no sealed type yet, so the engine plans none.
+            is Plan.SealedByName ->
                 error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
 
             is Plan.Construct -> {
@@ -120,6 +131,26 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
                 }
             }
         }
+
+    /** Entries compared by identity, not by ordinal: an enum compiled elsewhere may be reordered after this build. */
+    private fun IrStatementsBuilder<*>.enumByName(plan: Plan.EnumByName<IrType>, value: IrExpression): IrExpression {
+        val source = irTemporary(value)
+        val branches = plan.entries.map { name ->
+            irBranch(irEqeqeq(irGet(source), entry(plan.source, name)), entry(plan.target, name))
+        }
+        val otherwise = irElseBranch(irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol))
+        return irWhen(plan.target, branches + otherwise)
+    }
+
+    private fun IrBuilderWithScope.entry(type: IrType, name: String): IrExpression {
+        val entry = planned(
+            model.classOf(type)?.declarations?.filterIsInstance<IrEnumEntry>()?.firstOrNull {
+                it.name.asString() == name
+            },
+            "an entry '$name'",
+        )
+        return IrGetEnumValueImpl(startOffset, endOffset, type, entry.symbol)
+    }
 
     private fun IrStatementsBuilder<*>.read(source: IrVariable, name: String): IrExpression {
         val getter = planned(model.readable(source.type.classOrFail.owner, name)?.getter, "a getter for '$name'")

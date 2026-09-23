@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
@@ -67,12 +68,18 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
         }
     }
 
-    // Enums, sealed types and objects are modelled from spec 0004's next entries; until then none is seen.
-    override fun enumEntries(type: IrType): List<String>? = null
+    override fun enumEntries(type: IrType): List<String>? =
+        classOf(type)?.takeIf { it.kind == ClassKind.ENUM_CLASS }
+            ?.declarations
+            ?.filterIsInstance<IrEnumEntry>()
+            ?.map { it.name.asString() }
 
+    // Sealed cases are modelled with their lowering, in the next entry of spec 0004.
     override fun sealedCases(type: IrType): List<Case<IrType>>? = null
 
-    override fun isObject(type: IrType): Boolean = false
+    override fun isObject(type: IrType): Boolean = classOf(type)?.kind == ClassKind.OBJECT
+
+    fun classOf(type: IrType): IrClass? = type.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner
 
     override fun property(owner: IrType, name: String): IrType? {
         val irClass = owner.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner ?: return null
@@ -101,9 +108,9 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
             ?: return null
         return irClass.typeParameters.map { it.symbol }.zip(arguments).toMap()
     }
-
-    private fun relativeName(irClass: IrClass): String =
-        generateSequence(irClass) {
-            it.parent as? IrClass
-        }.toList().asReversed().joinToString(".") { it.name.asString() }
 }
+
+private fun relativeName(irClass: IrClass): String =
+    generateSequence(irClass) {
+        it.parent as? IrClass
+    }.toList().asReversed().joinToString(".") { it.name.asString() }
