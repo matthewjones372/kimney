@@ -15,6 +15,7 @@ draft, not a substitute for it.
 | 0006 | User-supplied transformers for nested pairs |
 | 0007 | Recursive types |
 | 0008 | Partial transformers |
+| 0009 | Tests for the internal-error and disagreement paths — built before 0004 |
 
 ## Rule order
 
