@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.spotless)
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.kover)
+    // The runtime's binary surface as a file somebody reads in a diff.
+    alias(libs.plugins.bcv)
     base
 }
 
@@ -36,6 +38,16 @@ kover {
     }
 }
 
+apiValidation {
+    // Only the runtime is linked against by user code; the rest is loaded by
+    // the compiler or is the example.
+    ignoredProjects += listOf("kimney-derive", "kimney-compiler-plugin", "example")
+}
+
+// The modules AGENTS.md promises depend on the standard library alone. Each
+// one's NoThirdPartyDependenciesTest reads the classpath handed over here.
+val stdlibOnly = setOf("kimney-runtime", "kimney-derive")
+
 dependencies {
     subprojects.forEach { kover(project(it.path)) }
 }
@@ -63,6 +75,23 @@ subprojects {
     tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         systemProperty("junit.jupiter.execution.timeout.default", "60s")
+    }
+
+    if (name in stdlibOnly) {
+        tasks.named<Test>("test") {
+            // The main runtime classpath, not the test one, which carries JUnit.
+            val mainRuntime = configurations.named("runtimeClasspath")
+            inputs.files(mainRuntime).withPropertyName("mainRuntimeClasspath")
+            jvmArgumentProviders.add(
+                CommandLineArgumentProvider {
+                    listOf(
+                        "-Dkimney.runtimeClasspath=" + mainRuntime.get().joinToString(File.pathSeparator) {
+                            it.name
+                        },
+                    )
+                },
+            )
+        }
     }
 
     apply(plugin = "org.jetbrains.kotlinx.kover")

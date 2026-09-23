@@ -1,0 +1,4 @@
+public final class io/github/matthewjones372/kimney/KimneyNotApplied : java/lang/IllegalStateException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
