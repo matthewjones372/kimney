@@ -1,0 +1,69 @@
+# detekt, layered on top of its default rule set (`buildUponDefaultConfig`).
+# Only the deviations are written here, so this file reads as a list of
+# decisions. detekt 2 fails the build on any finding.
+
+comments:
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+
+complexity:
+  CyclomaticComplexMethod:
+    # A `when` over a sealed type is one decision written out in full, and the
+    # compiler checks it is complete. Its branches count once.
+    ignoreSimpleWhenEntries: true
+
+exceptions:
+  TooGenericExceptionCaught:
+    # The two adapter entry points turn anything the plugin throws into an
+    # internal-error diagnostic, so the compiler never crashes on kimney's
+    # account. See AGENTS.md.
+    excludes: ['**/fir/KimneyCallChecker.kt', '**/ir/KimneyLowering.kt']
+  SwallowedException:
+    excludes: ['**/test/**']
+
+naming:
+  FunctionNaming:
+    # Test names are sentences in backticks.
+    excludes: ['**/test/**']
+  MatchingDeclarationName:
+    active: false
+
+style:
+  UnusedImport:
+    active: true
+  WildcardImport:
+    # No wildcard imports, anywhere. `.editorconfig` tells ktlint and the IDE
+    # the same thing.
+    active: true
+  MagicNumber:
+    excludes: ['**/test/**']
+  MaxLineLength:
+    maxLineLength: 120
+  ForbiddenComment:
+    active: true
+    comments:
+      - reason: 'Unfinished work does not belong on main.'
+        value: 'TODO:'
+      - reason: 'Unfinished work does not belong on main.'
+        value: 'FIXME:'
+
+  # The functional rules: a value once bound stays bound, and a function is an
+  # expression where it can be.
+  ExpressionBodySyntax:
+    active: true
+    includeLineWrapping: false
+  VarCouldBeVal:
+    active: true
+    ignoreLateinitVar: false
+  UnnecessaryLet:
+    active: true
+  UnnecessaryApply:
+    active: true
+  UnnecessaryFilter:
+    active: true
+  CollapsibleIfStatements:
+    active: true
+  UseIfEmptyOrIfBlank:
+    active: true
