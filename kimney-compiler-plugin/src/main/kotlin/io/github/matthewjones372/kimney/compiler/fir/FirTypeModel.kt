@@ -10,12 +10,17 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
+import org.jetbrains.kotlin.fir.declarations.collectEnumEntries
 import org.jetbrains.kotlin.fir.declarations.constructors
 import org.jetbrains.kotlin.fir.declarations.declaredProperties
+import org.jetbrains.kotlin.fir.declarations.getSealedClassInheritors
+import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -63,12 +68,31 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
         }
     }
 
-    // Enums, sealed types and objects are modelled from spec 0004's next entries; until then none is seen.
-    override fun enumEntries(type: ConeKotlinType): List<String>? = null
+    override fun enumEntries(type: ConeKotlinType): List<String>? =
+        classOf(type)?.takeIf { it.classKind == ClassKind.ENUM_CLASS }
+            ?.collectEnumEntries(session)
+            ?.map { it.name.asString() }
 
-    override fun sealedCases(type: ConeKotlinType): List<Case<ConeKotlinType>>? = null
+    /** Direct inheritors, each a case only if it is itself non-generic: generic hierarchies are not modelled. */
+    @OptIn(SymbolInternals::class)
+    override fun sealedCases(type: ConeKotlinType): List<Case<ConeKotlinType>>? {
+        val symbol = classOf(type)
+            ?.takeIf { it.resolvedStatus.modality == Modality.SEALED && it.typeParameterSymbols.isEmpty() }
+            ?: return null
+        val cases = symbol.fir.getSealedClassInheritors(session).map { id ->
+            (session.symbolProvider.getClassLikeSymbolByClassId(id) as? FirRegularClassSymbol)
+                ?.takeIf { it.typeParameterSymbols.isEmpty() }
+                ?.let { Case(id.shortClassName.asString(), it.defaultType() as ConeKotlinType) }
+        }
+        return cases.filterNotNull().takeIf { it.size == cases.size }
+    }
 
-    override fun isObject(type: ConeKotlinType): Boolean = false
+    override fun isObject(type: ConeKotlinType): Boolean = classOf(type)?.classKind == ClassKind.OBJECT
+
+    private fun classOf(type: ConeKotlinType): FirRegularClassSymbol? =
+        (type.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType)
+            ?.takeUnless { it.isMarkedNullable }
+            ?.toRegularClassSymbol(session)
 
     override fun property(owner: ConeKotlinType, name: String): ConeKotlinType? {
         val classType = owner.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType

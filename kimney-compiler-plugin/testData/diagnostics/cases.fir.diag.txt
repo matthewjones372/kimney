@@ -1,0 +1,15 @@
+/cases.kt:(760,793): error: Cannot transform Status → StatusDto:
+    StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.
+
+/cases.kt:(831,862): error: Cannot transform Shape → ShapeDto:
+    ShapeDto.Circle.radius: Double — no rule transforms Int into Double.
+    ShapeDto — Shape.Hexagon has no subclass of the same name in ShapeDto.
+
+/cases.kt:(908,943): error: Cannot transform Account → AccountDto:
+    AccountDto.status: StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.
+
+/cases.kt:(998,1033): error: Cannot transform Something → Nothing1:
+    Nothing1 — no rule transforms Something into Nothing1.
+
+/cases.kt:(1076,1108): error: Cannot transform Status → ShapeDto:
+    ShapeDto — no rule transforms Status into ShapeDto.
