@@ -25,6 +25,21 @@ interface TypeModel<T> {
 
     /** The one property a value class holds, or null if [type] is not a non-generic value class. */
     fun valueClass(type: T): Param<T>?
+
+    /** A read-only collection, map or reference array, with its element type; null for anything else. */
+    fun container(type: T): Container<T>?
+}
+
+/** For a [Kind.MAP], [element] is the value type and [key] the key type. */
+data class Container<T>(val kind: Kind, val element: T, val key: T? = null) {
+    enum class Kind(val display: String) {
+        LIST("a List"),
+        SET("a Set"),
+        COLLECTION("a Collection"),
+        ITERABLE("an Iterable"),
+        MAP("a Map"),
+        ARRAY("an Array"),
+    }
 }
 
 /** One direct subclass of a sealed type, matched to the other side by its simple [name]. */

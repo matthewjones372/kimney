@@ -34,6 +34,12 @@ sealed interface Plan<out T> {
     /** The value class [source]'s [property], transformed by [plan]. */
     data class Unwrap<T>(val source: T, val property: String, val plan: Plan<T>) : Plan<T>
 
+    /** Each element through [plan], in source order, into a new [target] built as [kind] builds. */
+    data class Elements<T>(val kind: Container.Kind, val target: T, val plan: Plan<T>) : Plan<T>
+
+    /** Each entry's key through [key] and value through [value], in source order. */
+    data class Entries<T>(val target: T, val key: Plan<T>, val value: Plan<T>) : Plan<T>
+
     /** Each source case to the target case of the same name, in source order. */
     data class SealedByName<T>(val target: T, val arms: List<Arm<T>>) : Plan<T>
 }

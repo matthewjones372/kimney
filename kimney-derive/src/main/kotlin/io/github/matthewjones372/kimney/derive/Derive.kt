@@ -29,39 +29,54 @@ private typealias Step<T> = Pair<Arg<T>?, List<Failure>>
 private class Derivation<T>(val model: TypeModel<T>) {
 
     // With overrides the target is built, even from its own type: `into<_, User>()` is a copy with changes.
-    fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> {
-        val enumEntries = model.enumEntries(site.target)
-        val cases = model.sealedCases(site.target)
-        val constructed = enumEntries == null && cases == null && !model.isObject(site.target) &&
-            !model.isNullable(site.target) && model.valueClass(site.target) == null
-        return when {
-            overrides.isNotEmpty() && !constructed -> Derived.Failed(
+    fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> = when {
+        overrides.isEmpty() && model.isSubtypeOf(site.source, site.target) -> Derived.Planned(Plan.Identity)
+
+        site.seen.any { (s, t) -> model.same(s, site.source) && model.same(t, site.target) } ->
+            failed(Failure.Recursive(site.path, model.render(site.target), model.render(site.source)))
+
+        else -> byShape(site, overrides)
+    }
+
+    /** Every rule but the constructor answers by the target's shape; overrides can only fill a constructor. */
+    private fun byShape(site: Site<T>, overrides: List<Override<T>>): Derived<T> {
+        val shaped = shapedRule(site) ?: return construct(site, overrides)
+        return if (overrides.isEmpty()) {
+            shaped()
+        } else {
+            Derived.Failed(
                 overrides.map { Failure.NotAParameter(site.path / it.field, it.method, model.render(site.target)) },
             )
+        }
+    }
 
-            overrides.isEmpty() && model.isSubtypeOf(site.source, site.target) -> Derived.Planned(Plan.Identity)
+    private fun shapedRule(site: Site<T>): (() -> Derived<T>)? {
+        val enumEntries = model.enumEntries(site.target)
+        val cases = model.sealedCases(site.target)
+        return when {
+            model.isNullable(site.target) -> { -> model.nullable(site, ::pair) }
 
-            site.seen.any { (s, t) -> same(s, site.source) && same(t, site.target) } ->
-                failed(Failure.Recursive(site.path, model.render(site.target), model.render(site.source)))
+            model.isNullable(site.source) -> { -> model.nullToNonNull(site) }
 
-            model.isNullable(site.target) -> model.nullable(site, ::pair)
+            model.valueClass(site.target) != null -> { -> model.wrap(site, ::pair) }
 
-            model.isNullable(site.source) -> model.nullToNonNull(site)
+            model.valueClass(site.source) != null -> { -> model.unwrap(site, ::pair) }
 
-            model.valueClass(site.target) != null -> model.wrap(site, ::pair)
+            model.container(site.target) != null -> { -> model.containers(site, ::pair) }
 
-            model.valueClass(site.source) != null -> model.unwrap(site, ::pair)
+            model.isObject(site.target) -> { ->
+                if (model.isObject(site.source)) Derived.Planned(Plan.ObjectInstance(site.target)) else noRule(site)
+            }
 
-            model.isObject(site.target) && model.isObject(site.source) ->
-                Derived.Planned(Plan.ObjectInstance(site.target))
+            enumEntries != null -> { ->
+                model.enumEntries(site.source)?.let { model.enumByName(site, it, enumEntries) } ?: noRule(site)
+            }
 
-            enumEntries != null -> model.enumEntries(site.source)?.let { model.enumByName(site, it, enumEntries) }
-                ?: noRule(site)
+            cases != null -> { ->
+                model.sealedCases(site.source)?.let { model.sealedByName(site, it, cases, ::pair) } ?: noRule(site)
+            }
 
-            cases != null -> model.sealedCases(site.source)?.let { model.sealedByName(site, it, cases, ::pair) }
-                ?: noRule(site)
-
-            else -> construct(site, overrides)
+            else -> null
         }
     }
 
@@ -126,7 +141,7 @@ private class Derivation<T>(val model: TypeModel<T>) {
         if (model.isSubtypeOf(given, param.type)) {
             arg() to emptyList()
         } else {
-            null to listOf(Failure.OverrideTypeMismatch(field, render(param), method, model.render(given)))
+            null to listOf(Failure.OverrideTypeMismatch(field, model.render(param.type), method, model.render(given)))
         }
 
     private fun derived(param: Param<T>, site: Site<T>): Step<T> {
@@ -139,7 +154,7 @@ private class Derivation<T>(val model: TypeModel<T>) {
             else -> null to listOf(
                 Failure.MissingSource(
                     site.path / param.name,
-                    render(param),
+                    model.render(param.type),
                     model.render(site.source),
                     model.render(site.target),
                 ),
@@ -153,8 +168,6 @@ private class Derivation<T>(val model: TypeModel<T>) {
             is Derived.Failed -> null to derived.failures
         }
 
-    private fun render(param: Param<T>): String = model.render(param.type)
-
     private fun beneath(site: Site<T>, param: Param<T>, property: T, name: String): Site<T> = site.below(
         param.name,
         property,
@@ -162,11 +175,11 @@ private class Derivation<T>(val model: TypeModel<T>) {
         owner = model.render(site.target),
         origin = "${model.render(site.source)}.$name",
     )
-
-    private fun same(a: T, b: T): Boolean = model.isSubtypeOf(a, b) && model.isSubtypeOf(b, a)
 }
 
 private fun failed(failure: Failure): Derived<Nothing> = Derived.Failed(listOf(failure))
 
 private fun <T> Derivation<T>.unreadable(field: Path, param: Param<T>, site: Site<T>, property: String): Failure =
     Failure.UnreadableSource(field, model.render(param.type), model.render(site.source), property)
+
+private fun <T> TypeModel<T>.same(a: T, b: T): Boolean = isSubtypeOf(a, b) && isSubtypeOf(b, a)

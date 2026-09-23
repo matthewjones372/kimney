@@ -26,7 +26,7 @@ internal fun <T> TypeModel<T>.unwrap(site: Site<T>, pair: (Site<T>) -> Derived<T
     return pair(site.copy(source = inner.type)).map { Plan.Unwrap(site.source, inner.name, it) }
 }
 
-private fun <T> Derived<T>.map(f: (Plan<T>) -> Plan<T>): Derived<T> = when (this) {
+internal fun <T> Derived<T>.map(f: (Plan<T>) -> Plan<T>): Derived<T> = when (this) {
     is Derived.Planned -> Derived.Planned(f(plan))
     is Derived.Failed -> this
 }

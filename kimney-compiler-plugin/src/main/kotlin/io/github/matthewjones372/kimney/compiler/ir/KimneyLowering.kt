@@ -124,6 +124,10 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.Unwrap -> lower(plan.plan, read(irTemporary(value), plan.property), given)
 
+            // The IR model reports no container yet, so the engine plans none of these.
+            is Plan.Elements, is Plan.Entries ->
+                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+
             is Plan.Construct -> {
                 val source = irTemporary(value)
                 val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a primary constructor")

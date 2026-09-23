@@ -2,6 +2,7 @@ package io.github.matthewjones372.kimney.compiler.ir
 
 import io.github.matthewjones372.kimney.derive.Case
 import io.github.matthewjones372.kimney.derive.Construction
+import io.github.matthewjones372.kimney.derive.Container
 import io.github.matthewjones372.kimney.derive.Param
 import io.github.matthewjones372.kimney.derive.TypeModel
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -106,6 +107,9 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
         val inner = irClass.primaryConstructor?.parameters?.singleOrNull { it.kind == IrParameterKind.Regular }
         return inner?.let { Param(it.name.asString(), it.type, hasDefault = false) }
     }
+
+    // Containers are modelled from spec 0010's next entries; until then none is seen.
+    override fun container(type: IrType): Container<IrType>? = null
 
     override fun property(owner: IrType, name: String): IrType? {
         val irClass = owner.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner ?: return null

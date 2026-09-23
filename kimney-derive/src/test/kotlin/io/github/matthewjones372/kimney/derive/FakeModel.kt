@@ -9,6 +9,7 @@ class FakeModel(
     private val sealed: Map<String, List<String>> = emptyMap(),
     private val objects: Set<String> = emptySet(),
     private val valueClasses: Map<String, Param<String>> = emptyMap(),
+    private val containers: Map<String, Container<String>> = emptyMap(),
 ) : TypeModel<String> {
     override fun render(type: String): String = type
 
@@ -35,6 +36,8 @@ class FakeModel(
     override fun nonNull(type: String): String = type.removeSuffix("?")
 
     override fun valueClass(type: String): Param<String>? = valueClasses[type]
+
+    override fun container(type: String): Container<String>? = containers[type]
 }
 
 fun param(name: String, type: String, hasDefault: Boolean = false): Param<String> = Param(name, type, hasDefault)

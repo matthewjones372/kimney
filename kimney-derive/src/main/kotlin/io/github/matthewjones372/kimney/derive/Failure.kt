@@ -4,7 +4,9 @@ package io.github.matthewjones372.kimney.derive
 data class Path(val root: String, val fields: List<String> = emptyList()) {
     operator fun div(field: String): Path = copy(fields = fields + field)
 
-    override fun toString(): String = (listOf(root) + fields).joinToString(".")
+    // `[]` and `[key]` attach to the field before them: `OrderDto.lines[].sku`.
+    override fun toString(): String =
+        fields.fold(root) { path, field -> if (field.startsWith("[")) "$path$field" else "$path.$field" }
 }
 
 /** Why a target could not be derived. Each variant owns its message; types arrive already rendered. */
@@ -79,6 +81,31 @@ sealed interface Failure {
                 else -> "Make $owner.$field nullable."
             }
         }
+    }
+
+    data class ContainerMismatch(
+        override val path: Path,
+        override val type: String,
+        val from: Container.Kind,
+        val to: Container.Kind,
+        val owner: String?,
+    ) : Failure {
+        override val reason: String
+            get() {
+                val field = path.fields.lastOrNull()
+                val fix = if (owner != null && path.fields.size == 1) {
+                    " Fill it with .withFieldComputed($owner::$field) { … }."
+                } else {
+                    ""
+                }
+                return "${from.display} is not turned into ${to.display}.$fix"
+            }
+    }
+
+    data class KeyMayCollide(override val path: Path, override val type: String, val source: String) : Failure {
+        override val reason
+            get() = "keys are transformed only as themselves or through a value class, since $source into $type " +
+                "could turn two keys into one."
     }
 
     data class MissingCase(

@@ -2,6 +2,7 @@ package io.github.matthewjones372.kimney.compiler.fir
 
 import io.github.matthewjones372.kimney.derive.Case
 import io.github.matthewjones372.kimney.derive.Construction
+import io.github.matthewjones372.kimney.derive.Container
 import io.github.matthewjones372.kimney.derive.Param
 import io.github.matthewjones372.kimney.derive.TypeModel
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -110,6 +111,9 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
         val inner = symbol.constructors(session).firstOrNull { it.isPrimary }?.valueParameterSymbols?.singleOrNull()
         return inner?.let { Param(it.name.asString(), it.resolvedReturnType, hasDefault = false) }
     }
+
+    // Containers are modelled from spec 0010's next entries; until then none is seen.
+    override fun container(type: ConeKotlinType): Container<ConeKotlinType>? = null
 
     override fun property(owner: ConeKotlinType, name: String): ConeKotlinType? {
         val classType = owner.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType
