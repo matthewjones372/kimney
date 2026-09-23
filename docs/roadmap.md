@@ -12,11 +12,12 @@ draft, not a substitute for it.
 | 0003 | Override DSL: `withFieldConst`, `withFieldComputed`, `withFieldRenamed` |
 | 0004 | Enum → enum and sealed → sealed by name |
 | 0005 | `T → T?`, `T? → T?`, value class wrap and unwrap |
-| 0006 | User-supplied transformers for nested pairs |
+| 0006 | User-supplied transformers for nested pairs, passed with `withTransformer` |
 | 0007 | Recursive types |
 | 0008 | Partial transformers |
 | 0009 | Tests for the internal-error and disagreement paths — built before 0004 |
 | 0010 | `List`/`Set`/`Collection`/`Map`/`Array`, element by element |
+| 0011 | Transformers from context parameters, on 0006's rule |
 
 ## Rule order
 
@@ -45,9 +46,9 @@ Specs add rules to this list; none reorders it without saying why.
   error naming the field.
 - **Overrides must be one expression.** `into<B>()…transform()` is read from
   the syntax tree; a builder stored in a `val` is a failure (0003).
-- **Nested transformers via context parameters** (0006), the nearest Kotlin has
-  to Chimney's implicits. Explicit `.withTransformer(t)` is the fallback if
-  context-parameter resolution cannot be observed from FIR.
+- **Nested transformers** are passed with `.withTransformer(t)` (0006), and
+  from context parameters (0011), the nearest Kotlin has to Chimney's
+  implicits, once 0006's rule and lowering exist to build them on.
 - **Recursive types** get a private generated helper per recursive pair rather
   than a failure (0007).
 - **Test harness.** JetBrains' compiler test framework, as in
