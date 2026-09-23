@@ -47,10 +47,10 @@ is the honest way to reach it: it is exactly the condition the path exists for.
 
 ## Stack
 
-- [ ] **`spec-0009-guard`** — `guarded` with unit tests for the report, the
+- [x] **`spec-0009-guard`** — `guarded` with unit tests for the report, the
       fallback and the cancellation rethrow; both adapters use it.
       Done when: the unit tests pass and neither adapter has its own `catch`.
-- [ ] **`spec-0009-ir-diagnostics`** — the lowering reports positioned
+- [x] **`spec-0009-ir-diagnostics`** — the lowering reports positioned
       diagnostics; the lowering-only runner and its goldens; the two untested
       behaviours get diagnostic cases.
       Done when: goldens pin the disagreement text with a position, and total

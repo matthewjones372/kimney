@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kimney.compiler.fir
 
 import io.github.matthewjones372.kimney.compiler.INTO
+import io.github.matthewjones372.kimney.compiler.KimneyErrors
 import io.github.matthewjones372.kimney.compiler.OVERRIDES
 import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO

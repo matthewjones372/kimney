@@ -18,3 +18,8 @@ fun byVariable(user: User, field: KProperty1<UserDto, String>): UserDto =
 
 fun byReference(user: User, source: (User) -> String): UserDto =
     <!KIMNEY_CANNOT_TRANSFORM!>user.into<_, UserDto>().withFieldComputed(UserDto::source, source).transform()<!>
+
+fun <A, B> Into<A, B>.audited(): Into<A, B> = this
+
+fun ownExtension(user: User): UserDto =
+    <!KIMNEY_CANNOT_TRANSFORM!><!KIMNEY_CANNOT_TRANSFORM!>user.into<_, UserDto>().withFieldConst(UserDto::source, "import")<!>.audited().transform()<!>

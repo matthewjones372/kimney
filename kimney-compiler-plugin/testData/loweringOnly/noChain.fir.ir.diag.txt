@@ -1,0 +1,2 @@
+/noChain.kt:(174,185): error: kimney's checker accepted a call its lowering cannot build. This is a bug in kimney.
+Its override chain cannot be read back to into().

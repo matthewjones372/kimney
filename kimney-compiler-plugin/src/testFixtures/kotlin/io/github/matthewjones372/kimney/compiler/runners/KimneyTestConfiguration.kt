@@ -13,7 +13,13 @@ import java.io.File
 
 /** Registers the plugin and puts `kimney-runtime` on both the compile and the run classpath of the code under test. */
 fun TestConfigurationBuilderBase<*, *>.configureKimney() {
-    useConfigurators(::KimneyExtensions, ::KimneyRuntimeOnCompileClasspath)
+    useConfigurators(::KimneyExtensions)
+    configureKimneyRuntime()
+}
+
+/** `kimney-runtime` on both classpaths, for a runner that registers the plugin's parts itself. */
+fun TestConfigurationBuilderBase<*, *>.configureKimneyRuntime() {
+    useConfigurators(::KimneyRuntimeOnCompileClasspath)
     useCustomRuntimeClasspathProviders(::KimneyRuntimeOnRunClasspath)
 }
 

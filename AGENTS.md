@@ -166,6 +166,9 @@ Write the failing test first. Work out which of these a change can break:
 - **Agreement.** For every box test there is a matching statement that the FIR
   checker reports nothing on the same source. A checker that rejects what the
   lowering can build — or accepts what it cannot — is caught here.
+- **Lowering only.** `testData/loweringOnly/*.kt` run the lowering with the
+  checker switched off, so the report for a call the checker should have
+  refused is reachable, and its goldens pin that text and its position.
 - **The consumer path.** `example/` applies the Gradle plugin by id and
   compiles. If `example` needs a trick a user would not know, the plugin is
   wrong.

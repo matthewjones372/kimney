@@ -12,3 +12,9 @@
 
 /overrideNotStatic.kt:(684,762): error: Cannot transform User → UserDto:
     Into<User, UserDto> — the overrides must be one chain from into() to .transform(), written as a single expression with property references like UserDto::name and a lambda for withFieldComputed.
+
+/overrideNotStatic.kt:(860,947): error: Cannot transform User → UserDto:
+    Into<User, UserDto> — the overrides must be one chain from into() to .transform(), written as a single expression with property references like UserDto::name and a lambda for withFieldComputed.
+
+/overrideNotStatic.kt:(860,925): error: Cannot transform User → UserDto:
+    Into<User, UserDto> — the overrides must be one chain from into() to .transform(), written as a single expression with property references like UserDto::name and a lambda for withFieldComputed.

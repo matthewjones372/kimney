@@ -1,0 +1,2 @@
+/typeParameter.kt:(155,178): error: Cannot transform User → X:
+    X — no rule transforms User into X.

@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kimney.compiler.ir
 
+import io.github.matthewjones372.kimney.compiler.KimneyErrors
 import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
 import io.github.matthewjones372.kimney.compiler.guarded
@@ -10,8 +11,6 @@ import io.github.matthewjones372.kimney.derive.derive
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.IrStatementsBuilder
 import org.jetbrains.kotlin.ir.builders.irBlock
@@ -33,21 +32,19 @@ import org.jetbrains.kotlin.ir.util.callableId
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 
 /** Replaces each `transformInto` call with the constructor calls the engine planned, evaluating the source once. */
-class KimneyLowering(
-    private val context: IrPluginContext,
-    private val messages: MessageCollector,
-) : IrElementTransformerVoidWithContext() {
+class KimneyLowering(private val context: IrPluginContext) : IrElementTransformerVoidWithContext() {
     private val model = IrTypeModel(context)
 
     override fun visitCall(expression: IrCall): IrExpression {
         val call = super.visitCall(expression) as? IrCall ?: return expression
-        val report = { message: String -> messages.report(CompilerMessageSeverity.ERROR, message) }
+        val report = { message: String -> report(call, message) }
         return guarded(fallback = { call }, report = report) {
             when (call.symbol.owner.callableId) {
                 TRANSFORM_INTO -> call.arguments[0]?.let { lowered(call, IrChain(it, emptyList(), emptyList())) }
                     ?: call
 
-                TRANSFORM -> readChain(call)?.let { lowered(call, it) } ?: disagreed(call, "reads no chain")
+                TRANSFORM -> readChain(call)?.let { lowered(call, it) }
+                    ?: disagreed(call, "Its override chain cannot be read back to into().")
 
                 else -> call
             }
@@ -69,10 +66,11 @@ class KimneyLowering(
 
     // The checker reports these first, so reaching one means the two adapters disagree.
     private fun disagreed(call: IrCall, why: String): IrCall = call.also {
-        messages.report(
-            CompilerMessageSeverity.ERROR,
-            "kimney's checker accepted a call its lowering cannot build. This is a bug in kimney.\n$why",
-        )
+        report(call, "kimney's checker accepted a call its lowering cannot build. This is a bug in kimney.\n$why")
+    }
+
+    private fun report(call: IrCall, message: String) {
+        context.diagnosticReporter.at(call, currentFile).report(KimneyErrors.KIMNEY_INTERNAL_ERROR, message)
     }
 
     /** A const's expression as written; a computed lambda as a direct call of a local function, not an object. */
