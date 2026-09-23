@@ -64,15 +64,15 @@ same way it would by hand.
 
 ## Stack
 
-- [ ] **`spec-0004-engine`** — `TypeModel` learns enum entries, sealed cases
+- [x] **`spec-0004-engine`** — `TypeModel` learns enum entries, sealed cases
       and objects; the enum, sealed and object rules; `MissingCase`.
       Done when: engine tests cover each rule and a nested case failure's path.
-- [ ] **`spec-0004-fir`** — FIR adapter for the three; goldens.
+- [x] **`spec-0004-fir`** — FIR adapter for the three; goldens.
       Done when: goldens pass for missing entries, missing subclasses and a
       nested failure inside a case.
-- [ ] **`spec-0004-ir-enum`** — enum and object lowering; box and agreement.
+- [x] **`spec-0004-ir-enum`** — enum and object lowering; box and agreement.
       Done when: box tests pass, including an enum from another module.
-- [ ] **`spec-0004-ir-sealed`** — sealed lowering; example and reference.
+- [x] **`spec-0004-ir-sealed`** — sealed lowering; example and reference.
       Done when: box tests pass, including a nested sealed hierarchy.
 
 ## Acceptance

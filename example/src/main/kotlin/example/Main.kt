@@ -13,6 +13,22 @@ data class AddressDto(val street: String, val zip: String, val country: String =
 
 data class UserDto(val name: String, val address: AddressDto)
 
+enum class Status { ACTIVE, SUSPENDED }
+
+enum class StatusDto { ACTIVE, SUSPENDED, UNKNOWN }
+
+sealed interface Payment {
+    data class Card(val last4: String) : Payment
+
+    data object Cash : Payment
+}
+
+sealed interface PaymentDto {
+    data class Card(val last4: String, val network: String = "unknown") : PaymentDto
+
+    data object Cash : PaymentDto
+}
+
 data class AuditedUser(val name: String, val age: Int, val source: String, val address: AddressDto)
 
 fun main() {
@@ -29,4 +45,7 @@ fun main() {
     )
 
     println(Address("2 Loop Rd", "N1 9GV").transformInto<AddressDto>())
+
+    println(Status.SUSPENDED.transformInto<StatusDto>())
+    println(listOf(Payment.Card("4242"), Payment.Cash).map { it.transformInto<PaymentDto>() })
 }

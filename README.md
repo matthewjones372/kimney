@@ -21,8 +21,8 @@ No reflection and no runtime cost: the generated code is what you would have
 written by hand.
 
 **Status:** class-to-class by constructor works, with nested types, defaults,
-generics and overrides (`withFieldConst`, `withFieldComputed`,
-`withFieldRenamed`); see [docs/reference.md](docs/reference.md). Enums, sealed
-types and collections are next. The design lives in
+generics, overrides (`withFieldConst`, `withFieldComputed`, `withFieldRenamed`),
+enums and sealed types; see [docs/reference.md](docs/reference.md).
+Nullables, value classes and collections are next. The design lives in
 [docs/roadmap.md](docs/roadmap.md) and [specs/](specs/). How to work here:
 [AGENTS.md](AGENTS.md).

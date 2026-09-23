@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.isMarkedNullable
 import org.jetbrains.kotlin.ir.types.isSubtypeOf
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.packageFqName
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.ir.util.properties
@@ -74,8 +75,15 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
             ?.filterIsInstance<IrEnumEntry>()
             ?.map { it.name.asString() }
 
-    // Sealed cases are modelled with their lowering, in the next entry of spec 0004.
-    override fun sealedCases(type: IrType): List<Case<IrType>>? = null
+    /** Direct subclasses, each a case only if it is itself non-generic, as `FirTypeModel` has it. */
+    override fun sealedCases(type: IrType): List<Case<IrType>>? {
+        val irClass = classOf(type)?.takeIf { it.modality == Modality.SEALED && it.typeParameters.isEmpty() }
+            ?: return null
+        val cases = irClass.sealedSubclasses.map { it.owner }.map { case ->
+            case.takeIf { it.typeParameters.isEmpty() }?.let { Case(it.name.asString(), it.defaultType as IrType) }
+        }
+        return cases.filterNotNull().takeIf { it.size == cases.size }
+    }
 
     override fun isObject(type: IrType): Boolean = classOf(type)?.kind == ClassKind.OBJECT
 

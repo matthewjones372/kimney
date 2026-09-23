@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.ir.builders.irElseBranch
 import org.jetbrains.kotlin.ir.builders.irEqeqeq
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetObjectValue
+import org.jetbrains.kotlin.ir.builders.irImplicitCast
+import org.jetbrains.kotlin.ir.builders.irIs
 import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.builders.irWhen
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -105,9 +107,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.EnumByName -> enumByName(plan, value)
 
-            // The IR model reports no sealed type yet, so the engine plans none.
-            is Plan.SealedByName ->
-                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+            is Plan.SealedByName -> sealedByName(plan, value, given)
 
             is Plan.Construct -> {
                 val source = irTemporary(value)
@@ -137,6 +137,23 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         val source = irTemporary(value)
         val branches = plan.entries.map { name ->
             irBranch(irEqeqeq(irGet(source), entry(plan.source, name)), entry(plan.target, name))
+        }
+        val otherwise = irElseBranch(irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol))
+        return irWhen(plan.target, branches + otherwise)
+    }
+
+    /** Each arm is a block of its own, so the temporaries it declares run only once the case has matched. */
+    private fun IrStatementsBuilder<*>.sealedByName(
+        plan: Plan.SealedByName<IrType>,
+        value: IrExpression,
+        given: List<IrVariable?>,
+    ): IrExpression {
+        val source = irTemporary(value)
+        val branches = plan.arms.map { arm ->
+            val body = irBlock(resultType = arm.target) {
+                +lower(arm.plan, irImplicitCast(irGet(source), arm.source), given)
+            }
+            irBranch(irIs(irGet(source), arm.source), body)
         }
         val otherwise = irElseBranch(irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol))
         return irWhen(plan.target, branches + otherwise)

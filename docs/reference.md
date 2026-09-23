@@ -28,20 +28,35 @@ The plugin replaces the call with the constructor calls you would have
 written. The source is evaluated once. For each target type, in order:
 
 1. **Identity.** A source that is already a subtype of the target is used as
-   it is.
-2. **Constructor.** A final or open Kotlin class outside the standard library
+   it is, unless the call has overrides, in which case the target is rebuilt.
+2. **Object.** An `object` target is its instance, from an `object` source
+   only, so no case can drop the fields of the one it came from.
+3. **Enum.** Each source entry becomes the target entry of the same name. A
+   source entry with no target entry is a compile error; extra target entries
+   are fine. Entries are compared by identity, never by ordinal, so an enum
+   compiled elsewhere can be reordered safely.
+4. **Sealed.** Each direct subclass of the source becomes the target's direct
+   subclass of the same simple name, and each pair is derived by every rule
+   here, so a case gets its defaults and a failure inside it has a path
+   through it (`ShapeDto.Circle.radius`). Generic sealed hierarchies are not
+   supported yet.
+5. **Constructor.** A final or open Kotlin class outside the standard library
    is built with its public primary constructor. Each parameter takes, in
    order: the source's public property of the same name, transformed by these
    same rules; else the parameter's default value; else it is a failure.
    Source properties the target does not ask for are ignored. A generic target
    is built with its type arguments substituted.
 
+The generated `when` ends in the throwing `else` an exhaustive hand-written
+`when` compiles to, so a case added to a source compiled elsewhere fails the
+same way it would by hand.
+
 Anything else is a compile error on the call, naming every field that could
 not be filled and the path to it:
 
 ```
 e: Main.kt:15:13 Cannot transform User → UserDto:
-    UserDto.email: String — User has no property 'email'. Add it to User, or give UserDto.email a default value.
+    UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default value, or add .withFieldConst(UserDto::email, …).
     UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip a default value.
 ```
 
@@ -51,6 +66,7 @@ The other failures:
 |---|---|
 | No public primary constructor | `Hidden — Hidden has no public primary constructor: it is private.` |
 | No rule for the pair | `OrderDto.count: Long — no rule transforms Int into Long.` |
+| A missing case | `StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.` |
 | A type containing itself | `TreeDto.child: TreeDto — Tree → TreeDto contains itself, and recursive types are not supported yet.` |
 
 ## Overrides
@@ -96,7 +112,7 @@ covariant in its value, so `withFieldConst(UserDto::age, "forty")` type-checks
 with `T` widened to `Any`.
 
 Not yet: nested overrides, nullable to non-null, value classes, collections,
-enums, sealed types and recursive types. `docs/roadmap.md` has the order.
+generic sealed hierarchies and recursive types. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
 says how to apply it.
