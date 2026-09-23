@@ -25,12 +25,14 @@ import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.ConeKotlinTypeProjection
 import org.jetbrains.kotlin.fir.types.ConeTypeParameterType
 import org.jetbrains.kotlin.fir.types.isMarkedNullable
 import org.jetbrains.kotlin.fir.types.isSubtypeOf
 import org.jetbrains.kotlin.fir.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.fir.types.withNullability
+import org.jetbrains.kotlin.name.StandardClassIds
 
 class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> {
 
@@ -112,8 +114,18 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
         return inner?.let { Param(it.name.asString(), it.resolvedReturnType, hasDefault = false) }
     }
 
-    // Containers are modelled from spec 0010's next entries; until then none is seen.
-    override fun container(type: ConeKotlinType): Container<ConeKotlinType>? = null
+    /** The read-only interfaces and `Array` only: a mutable or concrete collection is not a container here. */
+    override fun container(type: ConeKotlinType): Container<ConeKotlinType>? {
+        val classType = type.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType
+        val kind = classType?.takeUnless { it.isMarkedNullable }?.let { CONTAINERS[it.lookupTag.classId] }
+            ?: return null
+        val arguments = classType.typeArguments.map { (it as? ConeKotlinTypeProjection)?.type ?: return null }
+        return if (kind == Container.Kind.MAP) {
+            Container(kind, arguments[1], key = arguments[0])
+        } else {
+            Container(kind, arguments[0])
+        }
+    }
 
     override fun property(owner: ConeKotlinType, name: String): ConeKotlinType? {
         val classType = owner.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType
@@ -143,3 +155,12 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
         return substitutorByMap(symbol.typeParameterSymbols.zip(arguments).toMap(), session)
     }
 }
+
+private val CONTAINERS = mapOf(
+    StandardClassIds.List to Container.Kind.LIST,
+    StandardClassIds.Set to Container.Kind.SET,
+    StandardClassIds.Collection to Container.Kind.COLLECTION,
+    StandardClassIds.Iterable to Container.Kind.ITERABLE,
+    StandardClassIds.Map to Container.Kind.MAP,
+    StandardClassIds.Array to Container.Kind.ARRAY,
+)

@@ -1,6 +1,6 @@
 /noRule.kt:(238,269): error: Cannot transform Order → OrderDto:
     OrderDto.count: Long — no rule transforms Int into Long.
-    OrderDto.tags: List<String> — no rule transforms List<Int> into List<String>.
+    OrderDto.tags[]: String — no rule transforms Int into String.
 
 /noRule.kt:(298,323): error: Cannot transform Int → String:
     String — no rule transforms Int into String.

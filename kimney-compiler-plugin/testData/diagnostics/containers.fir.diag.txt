@@ -1,0 +1,11 @@
+/containers.kt:(988,1022): error: Cannot transform LooseOrder → StrictOrder:
+    StrictOrder.lines[].sku: String — LooseLine has no property 'sku'. Add it to LooseLine, or give LineDto.sku a default value.
+    StrictOrder.lines[].qty: Int? — LooseLine has no property 'qty'. Add it to LooseLine, or give LineDto.qty a default value.
+    StrictOrder.tags: List<TagDto> — a Set is not turned into a List. Fill it with .withFieldComputed(StrictOrder::tags) { … }.
+    StrictOrder.keyed[key]: LineDto — keys are transformed only as themselves or through a value class, since Line into LineDto could turn two keys into one.
+
+/containers.kt:(1079,1114): error: Cannot transform List<String?> → List<String>:
+    List<String>[]: String — an element of List<String?> is String?, and a null has nowhere to go. Transform into String? instead.
+
+/containers.kt:(1171,1214): error: Cannot transform List<Line> → MutableList<LineDto>:
+    MutableList<LineDto> — no rule transforms List<Line> into MutableList<LineDto>.
