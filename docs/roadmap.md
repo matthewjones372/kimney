@@ -28,9 +28,10 @@ Specs add rules to this list; none reorders it without saying why.
 4. Nullable — `T → T?` wraps; `T? → T` is a failure until 0008 (0005)
 5. Value class — wrap or unwrap one level (0005)
 6. Containers — element-wise (0005)
-7. Enum → enum by case name (0004)
-8. Sealed → sealed by subclass simple name, exhaustive `when` (0004)
-9. Class → class by primary constructor: same-named source property, then the
+7. Object → object, the target instance (0004)
+8. Enum → enum by case name (0004)
+9. Sealed → sealed by subclass simple name, exhaustive `when` (0004)
+10. Class → class by primary constructor: same-named source property, then the
    parameter's default, then a failure (0002)
 
 ## Decisions already taken
