@@ -30,8 +30,9 @@ kover {
             }
             filters {
                 excludes {
-                    // A `main` that prints. There is nothing in it to assert.
-                    classes("example.MainKt")
+                    // The example proves the consumer path by compiling; it has
+                    // no behaviour of its own to test.
+                    classes("example.*")
                 }
             }
         }
@@ -54,6 +55,9 @@ dependencies {
 
 tasks.named("check") {
     dependsOn("koverVerify")
+    // The Gradle plugin is an included build, which this one does not check
+    // unless it is asked to.
+    dependsOn(gradle.includedBuild("kimney-gradle-plugin").task(":check"))
 }
 
 subprojects {

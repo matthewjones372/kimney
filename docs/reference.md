@@ -3,6 +3,19 @@
 What kimney does today, and nothing it is planned to do. `docs/roadmap.md`
 has the plan.
 
+## Applying
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.4.10"
+    id("io.github.matthewjones372.kimney")
+}
+```
+
+The plugin adds `kimney-runtime` to every JVM compilation and loads the
+compiler plugin into it. kimney is built for exactly one Kotlin version; on
+any other, the build fails at configuration naming both versions.
+
 ## `transformInto`
 
 ```kotlin
