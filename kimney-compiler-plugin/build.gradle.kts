@@ -81,6 +81,9 @@ tasks.test {
             listOf(
                 "-Dkimney.runtimeUnderTest.classpath=$runtimePath",
                 "-Dorg.jetbrains.kotlin.test.kotlin-stdlib=${jar("kotlin-stdlib")}",
+                // Compiling a test's Java sources reads the standard library from here instead.
+                "-Dkotlin.full.stdlib.path=${jar("kotlin-stdlib")}",
+                "-Dkotlin.reflect.jar.path=${jar("kotlin-reflect")}",
                 "-Dorg.jetbrains.kotlin.test.kotlin-stdlib-jdk8=${jar("kotlin-stdlib-jdk8")}",
                 "-Dorg.jetbrains.kotlin.test.kotlin-reflect=${jar("kotlin-reflect")}",
                 "-Dorg.jetbrains.kotlin.test.kotlin-test=${jar("kotlin-test")}",

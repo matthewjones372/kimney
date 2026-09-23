@@ -13,6 +13,13 @@ data class AddressDto(val street: String, val zip: String, val country: String =
 
 data class UserDto(val name: String, val address: AddressDto)
 
+@JvmInline
+value class UserId(val raw: Long)
+
+data class Account(val id: UserId, val status: Status?, val billing: Address?)
+
+data class AccountDto(val id: Long, val status: StatusDto?, val billing: AddressDto?)
+
 enum class Status { ACTIVE, SUSPENDED }
 
 enum class StatusDto { ACTIVE, SUSPENDED, UNKNOWN }
@@ -48,4 +55,6 @@ fun main() {
 
     println(Status.SUSPENDED.transformInto<StatusDto>())
     println(listOf(Payment.Card("4242"), Payment.Cash).map { it.transformInto<PaymentDto>() })
+
+    println(Account(UserId(raw = 7), Status.ACTIVE, billing = null).transformInto<AccountDto>())
 }

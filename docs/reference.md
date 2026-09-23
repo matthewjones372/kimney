@@ -29,18 +29,26 @@ written. The source is evaluated once. For each target type, in order:
 
 1. **Identity.** A source that is already a subtype of the target is used as
    it is, unless the call has overrides, in which case the target is rebuilt.
-2. **Object.** An `object` target is its instance, from an `object` source
+2. **Nullable target.** `S → T?` is `S → T`. `S? → T?` is `S → T` on the
+   non-null value, with null kept as null; the source is read once. So every
+   rule below also works inside an optional: `Address? → AddressDto?`.
+3. **Value class.** A value class target wraps: `Long → UserId` derives
+   `Long` into what `UserId` holds. A value class source unwraps, whatever its
+   property is called, so `UserId → OrderId` meets through the `Long` inside.
+   A value class source into a data class unwraps too, and does not match
+   property names.
+4. **Object.** An `object` target is its instance, from an `object` source
    only, so no case can drop the fields of the one it came from.
-3. **Enum.** Each source entry becomes the target entry of the same name. A
+5. **Enum.** Each source entry becomes the target entry of the same name. A
    source entry with no target entry is a compile error; extra target entries
    are fine. Entries are compared by identity, never by ordinal, so an enum
    compiled elsewhere can be reordered safely.
-4. **Sealed.** Each direct subclass of the source becomes the target's direct
+6. **Sealed.** Each direct subclass of the source becomes the target's direct
    subclass of the same simple name, and each pair is derived by every rule
    here, so a case gets its defaults and a failure inside it has a path
    through it (`ShapeDto.Circle.radius`). Generic sealed hierarchies are not
    supported yet.
-5. **Constructor.** A final or open Kotlin class outside the standard library
+7. **Constructor.** A final or open Kotlin class outside the standard library
    is built with its public primary constructor. Each parameter takes, in
    order: the source's public property of the same name, transformed by these
    same rules; else the parameter's default value; else it is a failure.
@@ -66,6 +74,7 @@ The other failures:
 |---|---|
 | No public primary constructor | `Hidden — Hidden has no public primary constructor: it is private.` |
 | No rule for the pair | `OrderDto.count: Long — no rule transforms Int into Long.` |
+| Null into non-null | `UserDto.name: String — User.name is String?, and a null has nowhere to go. Make UserDto.name nullable, or fill it with .withFieldComputed(UserDto::name) { … }.` |
 | A missing case | `StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.` |
 | A type containing itself | `TreeDto.child: TreeDto — Tree → TreeDto contains itself, and recursive types are not supported yet.` |
 
@@ -111,8 +120,10 @@ The wrong-value-type check is kimney's, not the compiler's: `KProperty1` is
 covariant in its value, so `withFieldConst(UserDto::age, "forty")` type-checks
 with `T` widened to `Any`.
 
-Not yet: nested overrides, nullable to non-null, value classes, collections,
-generic sealed hierarchies and recursive types. `docs/roadmap.md` has the order.
+A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
+
+Not yet: nested overrides, nullable to non-null, collections, generic sealed
+hierarchies, generic value classes and recursive types. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
 says how to apply it.

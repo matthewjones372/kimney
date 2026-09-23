@@ -22,7 +22,7 @@ written by hand.
 
 **Status:** class-to-class by constructor works, with nested types, defaults,
 generics, overrides (`withFieldConst`, `withFieldComputed`, `withFieldRenamed`),
-enums and sealed types; see [docs/reference.md](docs/reference.md).
-Nullables, value classes and collections are next. The design lives in
+enums, sealed types, nullables and value classes; see
+[docs/reference.md](docs/reference.md). Collections are next. The design lives in
 [docs/roadmap.md](docs/roadmap.md) and [specs/](specs/). How to work here:
 [AGENTS.md](AGENTS.md).

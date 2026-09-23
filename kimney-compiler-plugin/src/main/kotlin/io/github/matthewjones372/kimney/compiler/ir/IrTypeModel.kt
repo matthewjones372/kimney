@@ -23,18 +23,21 @@ import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.isMarkedNullable
 import org.jetbrains.kotlin.ir.types.isSubtypeOf
+import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.packageFqName
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.util.substitute
+import org.jetbrains.kotlin.name.FqName
 
 /** The IR side of [TypeModel]. Every eligibility rule mirrors `FirTypeModel`, or checker and lowering disagree. */
 class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
     private val typeSystem = IrTypeSystemContextImpl(context.irBuiltIns)
 
     override fun render(type: IrType): String {
-        val simple = type as? IrSimpleType ?: return type.toString()
+        val simple = rigid(type) as? IrSimpleType ?: return type.toString()
         val name = when (val classifier = simple.classifier) {
             is IrClassSymbol -> relativeName(classifier.owner) +
                 simple.arguments.takeIf { it.isNotEmpty() }
@@ -48,7 +51,7 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
         return if (simple.isMarkedNullable()) "$name?" else name
     }
 
-    override fun isSubtypeOf(sub: IrType, sup: IrType): Boolean = sub.isSubtypeOf(sup, typeSystem)
+    override fun isSubtypeOf(sub: IrType, sup: IrType): Boolean = rigid(sub).isSubtypeOf(rigid(sup), typeSystem)
 
     override fun construction(type: IrType): Construction<IrType> {
         val irClass = constructible(type) ?: return Construction.NotAClass
@@ -87,14 +90,22 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
 
     override fun isObject(type: IrType): Boolean = classOf(type)?.kind == ClassKind.OBJECT
 
-    fun classOf(type: IrType): IrClass? = type.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner
+    fun classOf(type: IrType): IrClass? = type.takeUnless { isNullable(it) }?.classOrNull?.owner
 
-    // Nullability and value classes are modelled from spec 0005's next entries; until then neither is seen.
-    override fun isNullable(type: IrType): Boolean = false
+    // IR carries a Java platform type as nullable with this annotation; FIR takes its non-null bound, and so must this.
+    override fun isNullable(type: IrType): Boolean =
+        type.isMarkedNullable() && !type.hasAnnotation(FLEXIBLE_NULLABILITY)
 
-    override fun nonNull(type: IrType): IrType = type
+    override fun nonNull(type: IrType): IrType = type.makeNotNull()
 
-    override fun valueClass(type: IrType): Param<IrType>? = null
+    /** A platform type at its non-null bound, which is how FIR has already judged it. */
+    private fun rigid(type: IrType): IrType = if (type.hasAnnotation(FLEXIBLE_NULLABILITY)) type.makeNotNull() else type
+
+    override fun valueClass(type: IrType): Param<IrType>? {
+        val irClass = classOf(type)?.takeIf { it.isValue && it.typeParameters.isEmpty() } ?: return null
+        val inner = irClass.primaryConstructor?.parameters?.singleOrNull { it.kind == IrParameterKind.Regular }
+        return inner?.let { Param(it.name.asString(), it.type, hasDefault = false) }
+    }
 
     override fun property(owner: IrType, name: String): IrType? {
         val irClass = owner.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner ?: return null
@@ -129,3 +140,5 @@ private fun relativeName(irClass: IrClass): String =
     generateSequence(irClass) {
         it.parent as? IrClass
     }.toList().asReversed().joinToString(".") { it.name.asString() }
+
+private val FLEXIBLE_NULLABILITY = FqName("kotlin.internal.ir.FlexibleNullability")

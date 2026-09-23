@@ -21,8 +21,10 @@ import org.jetbrains.kotlin.ir.builders.irElseBranch
 import org.jetbrains.kotlin.ir.builders.irEqeqeq
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetObjectValue
+import org.jetbrains.kotlin.ir.builders.irIfNull
 import org.jetbrains.kotlin.ir.builders.irImplicitCast
 import org.jetbrains.kotlin.ir.builders.irIs
+import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.builders.irWhen
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -37,6 +39,8 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
 import org.jetbrains.kotlin.ir.types.classOrFail
+import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.callableId
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 
@@ -109,9 +113,16 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.SealedByName -> sealedByName(plan, value, given)
 
-            // The IR model reports no nullable or value class yet, so the engine plans none of these.
-            is Plan.NullSafe, is Plan.Wrap, is Plan.Unwrap ->
-                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+            is Plan.NullSafe -> nullSafe(plan, value, given)
+
+            is Plan.Wrap -> {
+                val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a value class constructor")
+                irCallConstructor(constructor.symbol, emptyList()).apply {
+                    arguments[0] = lower(plan.plan, value, given)
+                }
+            }
+
+            is Plan.Unwrap -> lower(plan.plan, read(irTemporary(value), plan.property), given)
 
             is Plan.Construct -> {
                 val source = irTemporary(value)
@@ -144,6 +155,17 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         }
         val otherwise = irElseBranch(irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol))
         return irWhen(plan.target, branches + otherwise)
+    }
+
+    /** The source held once; the inner plan in a block of its own, so nothing it declares runs for a null. */
+    private fun IrStatementsBuilder<*>.nullSafe(
+        plan: Plan.NullSafe<IrType>,
+        value: IrExpression,
+        given: List<IrVariable?>,
+    ): IrExpression {
+        val source = irTemporary(value)
+        val present = irBlock { +lower(plan.plan, irImplicitCast(irGet(source), source.type.makeNotNull()), given) }
+        return irIfNull(present.type.makeNullable(), irGet(source), irNull(), present)
     }
 
     /** Each arm is a block of its own, so the temporaries it declares run only once the case has matched. */

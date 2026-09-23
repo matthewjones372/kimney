@@ -61,14 +61,14 @@ which the backend erases.
 
 ## Stack
 
-- [ ] **`spec-0005-engine`** — `TypeModel` learns nullability and value
+- [x] **`spec-0005-engine`** — `TypeModel` learns nullability and value
       classes; the three rules; `NullableToNonNull`.
       Done when: engine tests cover each rule, a nullable inside a sealed
       case, and the new failure with and without its hint.
-- [ ] **`spec-0005-fir`** — FIR adapter; goldens; the one existing golden
+- [x] **`spec-0005-fir`** — FIR adapter; goldens; the one existing golden
       whose `String? into String` message moves.
       Done when: goldens pass and the moved golden reads better.
-- [ ] **`spec-0005-ir`** — null-safe, wrap and unwrap lowering; box and
+- [x] **`spec-0005-ir`** — null-safe, wrap and unwrap lowering; box and
       agreement; example and reference.
       Done when: box tests pass, including a nullable read evaluated once and
       a value class from another module.
