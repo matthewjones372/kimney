@@ -35,7 +35,8 @@ import org.jetbrains.kotlin.name.FqName
 
 /** The IR side of [TypeModel]. Every eligibility rule mirrors `FirTypeModel`, or checker and lowering disagree. */
 class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
-    private val typeSystem = IrTypeSystemContextImpl(context.irBuiltIns)
+    private val builtIns = context.irBuiltIns
+    private val typeSystem = IrTypeSystemContextImpl(builtIns)
 
     override fun render(type: IrType): String {
         val simple = rigid(type) as? IrSimpleType ?: return type.toString()
@@ -108,8 +109,26 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
         return inner?.let { Param(it.name.asString(), it.type, hasDefault = false) }
     }
 
-    // Containers are modelled from spec 0010's next entries; until then none is seen.
-    override fun container(type: IrType): Container<IrType>? = null
+    /** The read-only interfaces and `Array` only, as `FirTypeModel` has them. */
+    override fun container(type: IrType): Container<IrType>? {
+        val simple = rigid(type).takeUnless { it.isMarkedNullable() } as? IrSimpleType ?: return null
+        val kind = containers[simple.classifier] ?: return null
+        val arguments = simple.arguments.map { (it as? IrTypeProjection)?.type ?: return null }
+        return if (kind == Container.Kind.MAP) {
+            Container(kind, arguments[1], key = arguments[0])
+        } else {
+            Container(kind, arguments[0])
+        }
+    }
+
+    private val containers = mapOf(
+        builtIns.listClass to Container.Kind.LIST,
+        builtIns.setClass to Container.Kind.SET,
+        builtIns.collectionClass to Container.Kind.COLLECTION,
+        builtIns.iterableClass to Container.Kind.ITERABLE,
+        builtIns.mapClass to Container.Kind.MAP,
+        builtIns.arrayClass to Container.Kind.ARRAY,
+    )
 
     override fun property(owner: IrType, name: String): IrType? {
         val irClass = owner.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner ?: return null

@@ -5,6 +5,7 @@ import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
 import io.github.matthewjones372.kimney.compiler.guarded
 import io.github.matthewjones372.kimney.derive.Arg
+import io.github.matthewjones372.kimney.derive.Container
 import io.github.matthewjones372.kimney.derive.Derived
 import io.github.matthewjones372.kimney.derive.Plan
 import io.github.matthewjones372.kimney.derive.derive
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.ir.builders.irBranch
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irCallConstructor
 import org.jetbrains.kotlin.ir.builders.irElseBranch
-import org.jetbrains.kotlin.ir.builders.irEqeqeq
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetObjectValue
 import org.jetbrains.kotlin.ir.builders.irIfNull
@@ -28,13 +28,11 @@ import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.builders.irWhen
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
@@ -47,6 +45,8 @@ import org.jetbrains.kotlin.ir.util.primaryConstructor
 /** Replaces each `transformInto` call with the constructor calls the engine planned, evaluating the source once. */
 class KimneyLowering(private val context: IrPluginContext) : IrElementTransformerVoidWithContext() {
     private val model = IrTypeModel(context)
+    private val containers = ContainerLowering(context)
+    private val enums = EnumLowering(model)
 
     override fun visitCall(expression: IrCall): IrExpression {
         val call = super.visitCall(expression) as? IrCall ?: return expression
@@ -109,7 +109,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.ObjectInstance -> irGetObjectValue(plan.target, plan.target.classOrFail)
 
-            is Plan.EnumByName -> enumByName(plan, value)
+            is Plan.EnumByName -> with(enums) { enumByName(plan, value) }
 
             is Plan.SealedByName -> sealedByName(plan, value, given)
 
@@ -124,8 +124,10 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.Unwrap -> lower(plan.plan, read(irTemporary(value), plan.property), given)
 
-            // The IR model reports no container yet, so the engine plans none of these.
-            is Plan.Elements, is Plan.Entries ->
+            is Plan.Elements -> elements(plan, value, given)
+
+            // The IR model reports no map yet, so the engine plans none.
+            is Plan.Entries ->
                 error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
 
             is Plan.Construct -> {
@@ -151,14 +153,20 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
             }
         }
 
-    /** Entries compared by identity, not by ordinal: an enum compiled elsewhere may be reordered after this build. */
-    private fun IrStatementsBuilder<*>.enumByName(plan: Plan.EnumByName<IrType>, value: IrExpression): IrExpression {
-        val source = irTemporary(value)
-        val branches = plan.entries.map { name ->
-            irBranch(irEqeqeq(irGet(source), entry(plan.source, name)), entry(plan.target, name))
+    private fun IrStatementsBuilder<*>.elements(
+        plan: Plan.Elements<IrType>,
+        value: IrExpression,
+        given: List<IrVariable?>,
+    ): IrExpression {
+        val from = planned(model.container(value.type), "a source container").element
+        val element: IrStatementsBuilder<*>.(IrExpression) -> IrExpression = { item -> lower(plan.plan, item, given) }
+        return with(containers) {
+            if (plan.kind == Container.Kind.ARRAY) {
+                array(plan.target, from, value, element)
+            } else {
+                iterables(plan.kind, plan.target, from, value, element)
+            }
         }
-        val otherwise = irElseBranch(irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol))
-        return irWhen(plan.target, branches + otherwise)
     }
 
     /** The source held once; the inner plan in a block of its own, so nothing it declares runs for a null. */
@@ -189,16 +197,6 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         return irWhen(plan.target, branches + otherwise)
     }
 
-    private fun IrBuilderWithScope.entry(type: IrType, name: String): IrExpression {
-        val entry = planned(
-            model.classOf(type)?.declarations?.filterIsInstance<IrEnumEntry>()?.firstOrNull {
-                it.name.asString() == name
-            },
-            "an entry '$name'",
-        )
-        return IrGetEnumValueImpl(startOffset, endOffset, type, entry.symbol)
-    }
-
     private fun IrStatementsBuilder<*>.read(source: IrVariable, name: String): IrExpression {
         val getter = planned(model.readable(source.type.classOrFail.owner, name)?.getter, "a getter for '$name'")
         val type = planned(model.property(source.type, name), "a type for '$name'")
@@ -207,5 +205,5 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 }
 
 /** The engine planned from these same lookups, so a miss here is the adapters disagreeing with themselves. */
-private fun <A : Any> planned(value: A?, what: String): A =
+internal fun <A : Any> planned(value: A?, what: String): A =
     checkNotNull(value) { "the plan relies on $what that the IR does not have" }
