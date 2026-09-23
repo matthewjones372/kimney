@@ -25,6 +25,15 @@ sealed interface Plan<out T> {
     /** Each source entry to the target entry of the same name. */
     data class EnumByName<T>(val source: T, val target: T, val entries: List<String>) : Plan<T>
 
+    /** [plan] on the non-null source; null stays null. */
+    data class NullSafe<T>(val plan: Plan<T>) : Plan<T>
+
+    /** [plan]'s result, wrapped in the value class [target]. */
+    data class Wrap<T>(val target: T, val plan: Plan<T>) : Plan<T>
+
+    /** The value class [source]'s [property], transformed by [plan]. */
+    data class Unwrap<T>(val source: T, val property: String, val plan: Plan<T>) : Plan<T>
+
     /** Each source case to the target case of the same name, in source order. */
     data class SealedByName<T>(val target: T, val arms: List<Arm<T>>) : Plan<T>
 }

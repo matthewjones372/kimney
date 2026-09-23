@@ -94,6 +94,13 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
             ?.takeUnless { it.isMarkedNullable }
             ?.toRegularClassSymbol(session)
 
+    // Nullability and value classes are modelled from spec 0005's next entries; until then neither is seen.
+    override fun isNullable(type: ConeKotlinType): Boolean = false
+
+    override fun nonNull(type: ConeKotlinType): ConeKotlinType = type
+
+    override fun valueClass(type: ConeKotlinType): Param<ConeKotlinType>? = null
+
     override fun property(owner: ConeKotlinType, name: String): ConeKotlinType? {
         val classType = owner.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType
         val symbol = classType?.takeUnless { it.isMarkedNullable }?.toRegularClassSymbol(session) ?: return null

@@ -57,6 +57,30 @@ sealed interface Failure {
         override val reason get() = "$source → $type contains itself, and recursive types are not supported yet."
     }
 
+    data class NullableToNonNull(
+        override val path: Path,
+        override val type: String,
+        val source: String,
+        val owner: String?,
+        val origin: String?,
+    ) : Failure {
+        override val reason get() = "${origin?.let { "$it is $source" } ?: "the source is $source"}, " +
+            "and a null has nowhere to go. ${fix()}"
+
+        // Overrides name top-level fields only, so a nested field is not offered one.
+        private fun fix(): String {
+            val field = path.fields.lastOrNull()
+            return when {
+                owner == null -> "Transform into $type? instead."
+
+                path.fields.size == 1 ->
+                    "Make $owner.$field nullable, or fill it with .withFieldComputed($owner::$field) { … }."
+
+                else -> "Make $owner.$field nullable."
+            }
+        }
+    }
+
     data class MissingCase(
         override val path: Path,
         override val type: String,

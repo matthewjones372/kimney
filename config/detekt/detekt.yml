@@ -9,6 +9,14 @@ comments:
     active: false
 
 complexity:
+  TooManyFunctions:
+    # A TypeModel adapter implements every method of the interface; its count
+    # is the engine's decision, not the adapter's.
+    ignoreOverridden: true
+  LongParameterList:
+    # Parameters with defaults are named at the call site, so they read as a
+    # list of settings rather than a positional list to get wrong.
+    ignoreDefaultParameters: true
   CyclomaticComplexMethod:
     # A `when` over a sealed type is one decision written out in full, and the
     # compiler checks it is complete. Its branches count once.

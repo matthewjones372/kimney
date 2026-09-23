@@ -18,6 +18,13 @@ interface TypeModel<T> {
     fun sealedCases(type: T): List<Case<T>>?
 
     fun isObject(type: T): Boolean
+
+    fun isNullable(type: T): Boolean
+
+    fun nonNull(type: T): T
+
+    /** The one property a value class holds, or null if [type] is not a non-generic value class. */
+    fun valueClass(type: T): Param<T>?
 }
 
 /** One direct subclass of a sealed type, matched to the other side by its simple [name]. */

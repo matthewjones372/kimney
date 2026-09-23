@@ -7,22 +7,33 @@ package io.github.matthewjones372.kimney.derive
 fun <T> derive(model: TypeModel<T>, source: T, target: T, overrides: List<Override<T>> = emptyList()): Derived<T> =
     Derivation(model).pair(Site(source, target, Path(model.render(target)), emptyList()), overrides)
 
-/** One pair being derived, where it sits, and the pairs above it. */
-internal data class Site<T>(val source: T, val target: T, val path: Path, val seen: List<Pair<T, T>>) {
-    fun below(field: String, source: T, target: T): Site<T> =
-        Site(source, target, path / field, seen + (this.source to this.target))
+/**
+ * One pair being derived, where it sits, and the pairs above it. [owner] is the class the field at [path] belongs
+ * to and [origin] the source property it was read from, as a message names them; both are null at the root.
+ */
+internal data class Site<T>(
+    val source: T,
+    val target: T,
+    val path: Path,
+    val seen: List<Pair<T, T>>,
+    val owner: String? = null,
+    val origin: String? = null,
+) {
+    fun below(field: String, source: T, target: T, owner: String? = null, origin: String? = null): Site<T> =
+        Site(source, target, path / field, seen + (this.source to this.target), owner, origin)
 }
 
 /** One constructor argument, or the failures that stop it; never both. */
 private typealias Step<T> = Pair<Arg<T>?, List<Failure>>
 
-private class Derivation<T>(private val model: TypeModel<T>) {
+private class Derivation<T>(val model: TypeModel<T>) {
 
     // With overrides the target is built, even from its own type: `into<_, User>()` is a copy with changes.
     fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> {
         val enumEntries = model.enumEntries(site.target)
         val cases = model.sealedCases(site.target)
-        val constructed = enumEntries == null && cases == null && !model.isObject(site.target)
+        val constructed = enumEntries == null && cases == null && !model.isObject(site.target) &&
+            !model.isNullable(site.target) && model.valueClass(site.target) == null
         return when {
             overrides.isNotEmpty() && !constructed -> Derived.Failed(
                 overrides.map { Failure.NotAParameter(site.path / it.field, it.method, model.render(site.target)) },
@@ -32,6 +43,14 @@ private class Derivation<T>(private val model: TypeModel<T>) {
 
             site.seen.any { (s, t) -> same(s, site.source) && same(t, site.target) } ->
                 failed(Failure.Recursive(site.path, model.render(site.target), model.render(site.source)))
+
+            model.isNullable(site.target) -> model.nullable(site, ::pair)
+
+            model.isNullable(site.source) -> model.nullToNonNull(site)
+
+            model.valueClass(site.target) != null -> model.wrap(site, ::pair)
+
+            model.valueClass(site.source) != null -> model.unwrap(site, ::pair)
 
             model.isObject(site.target) && model.isObject(site.source) ->
                 Derived.Planned(Plan.ObjectInstance(site.target))
@@ -97,13 +116,10 @@ private class Derivation<T>(private val model: TypeModel<T>) {
             }
 
             is Override.Renamed -> model.property(site.source, override.from)
-                ?.let { fromProperty(param, override.from, site.below(param.name, it, param.type)) }
-                ?: unreadable(field, param, site, override.from)
+                ?.let { fromProperty(param, override.from, beneath(site, param, it, override.from)) }
+                ?: (null to listOf(unreadable(field, param, site, override.from)))
         }
     }
-
-    private fun unreadable(field: Path, param: Param<T>, site: Site<T>, property: String): Step<T> =
-        null to listOf(Failure.UnreadableSource(field, render(param), model.render(site.source), property))
 
     // The compiler widens an override's type argument until the value fits, so the field's type is checked here.
     private fun checked(given: T, param: Param<T>, field: Path, method: String, arg: () -> Arg<T>): Step<T> =
@@ -116,7 +132,7 @@ private class Derivation<T>(private val model: TypeModel<T>) {
     private fun derived(param: Param<T>, site: Site<T>): Step<T> {
         val property = model.property(site.source, param.name)
         return when {
-            property != null -> fromProperty(param, param.name, site.below(param.name, property, param.type))
+            property != null -> fromProperty(param, param.name, beneath(site, param, property, param.name))
 
             param.hasDefault -> Arg.Default(param.name) to emptyList()
 
@@ -139,7 +155,18 @@ private class Derivation<T>(private val model: TypeModel<T>) {
 
     private fun render(param: Param<T>): String = model.render(param.type)
 
+    private fun beneath(site: Site<T>, param: Param<T>, property: T, name: String): Site<T> = site.below(
+        param.name,
+        property,
+        param.type,
+        owner = model.render(site.target),
+        origin = "${model.render(site.source)}.$name",
+    )
+
     private fun same(a: T, b: T): Boolean = model.isSubtypeOf(a, b) && model.isSubtypeOf(b, a)
 }
 
 private fun failed(failure: Failure): Derived<Nothing> = Derived.Failed(listOf(failure))
+
+private fun <T> Derivation<T>.unreadable(field: Path, param: Param<T>, site: Site<T>, property: String): Failure =
+    Failure.UnreadableSource(field, model.render(param.type), model.render(site.source), property)

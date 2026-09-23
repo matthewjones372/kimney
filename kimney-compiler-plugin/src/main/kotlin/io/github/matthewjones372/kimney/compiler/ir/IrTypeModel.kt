@@ -89,6 +89,13 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
 
     fun classOf(type: IrType): IrClass? = type.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner
 
+    // Nullability and value classes are modelled from spec 0005's next entries; until then neither is seen.
+    override fun isNullable(type: IrType): Boolean = false
+
+    override fun nonNull(type: IrType): IrType = type
+
+    override fun valueClass(type: IrType): Param<IrType>? = null
+
     override fun property(owner: IrType, name: String): IrType? {
         val irClass = owner.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner ?: return null
         val getter = readable(irClass, name)?.getter ?: return null

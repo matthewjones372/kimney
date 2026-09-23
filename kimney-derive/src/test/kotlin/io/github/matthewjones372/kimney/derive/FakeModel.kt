@@ -1,6 +1,6 @@
 package io.github.matthewjones372.kimney.derive
 
-/** Types by name, declared the way a test reads: `"UserDto" constructs listOf(param("name", "String"))`. */
+/** Types by name, declared the way a test reads. A trailing `?` makes a type nullable. */
 class FakeModel(
     private val constructions: Map<String, Construction<String>>,
     private val properties: Map<String, Map<String, String>> = emptyMap(),
@@ -8,10 +8,15 @@ class FakeModel(
     private val enums: Map<String, List<String>> = emptyMap(),
     private val sealed: Map<String, List<String>> = emptyMap(),
     private val objects: Set<String> = emptySet(),
+    private val valueClasses: Map<String, Param<String>> = emptyMap(),
 ) : TypeModel<String> {
     override fun render(type: String): String = type
 
-    override fun isSubtypeOf(sub: String, sup: String): Boolean = sub == sup || sup in supertypes[sub].orEmpty()
+    override fun isSubtypeOf(sub: String, sup: String): Boolean = when {
+        isNullable(sup) -> isSubtypeOf(nonNull(sub), nonNull(sup))
+        isNullable(sub) -> false
+        else -> sub == sup || sup in supertypes[sub].orEmpty()
+    }
 
     override fun construction(type: String): Construction<String> = constructions[type] ?: Construction.NotAClass
 
@@ -24,6 +29,12 @@ class FakeModel(
         sealed[type]?.map { Case(it.substringAfterLast('.'), it) }
 
     override fun isObject(type: String): Boolean = type in objects
+
+    override fun isNullable(type: String): Boolean = type.endsWith("?")
+
+    override fun nonNull(type: String): String = type.removeSuffix("?")
+
+    override fun valueClass(type: String): Param<String>? = valueClasses[type]
 }
 
 fun param(name: String, type: String, hasDefault: Boolean = false): Param<String> = Param(name, type, hasDefault)
