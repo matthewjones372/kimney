@@ -30,12 +30,13 @@ class DeriveTest {
             Plan.Construct(
                 "UserDto",
                 listOf(
-                    Arg.FromProperty("name", Plan.Identity),
+                    Arg.FromProperty("name", "name", Plan.Identity),
                     Arg.FromProperty(
+                        "address",
                         "address",
                         Plan.Construct(
                             "AddressDto",
-                            listOf(Arg.FromProperty("street", Plan.Identity), Arg.Default("country")),
+                            listOf(Arg.FromProperty("street", "street", Plan.Identity), Arg.Default("country")),
                         ),
                     ),
                 ),
@@ -51,7 +52,7 @@ class DeriveTest {
         )
 
         derive(model, "Src", "Dto") shouldBe
-            Derived.Planned(Plan.Construct("Dto", listOf(Arg.FromProperty("country", Plan.Identity))))
+            Derived.Planned(Plan.Construct("Dto", listOf(Arg.FromProperty("country", "country", Plan.Identity))))
     }
 
     @Test
@@ -65,7 +66,7 @@ class DeriveTest {
 
         failed.message("User", "UserDto") shouldBe """
             Cannot transform User → UserDto:
-                UserDto.email: String — User has no property 'email'. Add it to User, or give UserDto.email a default value.
+                UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default value, or add .withFieldConst(UserDto::email, …).
         """.trimIndent()
     }
 

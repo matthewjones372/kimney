@@ -23,8 +23,14 @@ sealed interface Plan<out T> {
 sealed interface Arg<out T> {
     val param: String
 
-    /** The source's property of the same name, transformed by [plan]. */
-    data class FromProperty<T>(override val param: String, val plan: Plan<T>) : Arg<T>
+    /** The source's [property], transformed by [plan]. */
+    data class FromProperty<T>(override val param: String, val property: String, val plan: Plan<T>) : Arg<T>
+
+    /** The value given by the override at [index] in the chain. */
+    data class Const(override val param: String, val index: Int) : Arg<Nothing>
+
+    /** The lambda at [index] in the chain, applied to the source. */
+    data class Computed(override val param: String, val index: Int) : Arg<Nothing>
 
     /** Left out of the call, so the parameter's default applies. */
     data class Default(override val param: String) : Arg<Nothing>

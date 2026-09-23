@@ -80,7 +80,7 @@ class KimneyLowering(
                     // A Default is left null: the backend's default-argument lowering fills it, as for a written call.
                     plan.args.filterIsInstance<Arg.FromProperty<IrType>>().forEach { arg ->
                         val param = params.single { it.name.asString() == arg.param }
-                        arguments[param.indexInParameters] = lower(arg.plan, read(source, arg.param))
+                        arguments[param.indexInParameters] = lower(arg.plan, read(source, arg.property))
                     }
                 }
             }
