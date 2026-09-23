@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kimney.compiler.ir
 
+import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
 import io.github.matthewjones372.kimney.compiler.internalError
 import io.github.matthewjones372.kimney.derive.Arg
@@ -18,10 +19,12 @@ import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irCallConstructor
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irTemporary
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
@@ -38,23 +41,14 @@ class KimneyLowering(
 
     override fun visitCall(expression: IrCall): IrExpression {
         val call = super.visitCall(expression) as? IrCall ?: return expression
-        if (call.symbol.owner.callableId != TRANSFORM_INTO) return call
-        val receiver = call.arguments[0] ?: return call
-
         return try {
-            when (val derived = derive(model, receiver.type, call.type)) {
-                is Derived.Planned -> builder(call).irBlock(resultType = call.type) {
-                    +lower(derived.plan, receiver)
-                }
+            when (call.symbol.owner.callableId) {
+                TRANSFORM_INTO -> call.arguments[0]?.let { lowered(call, IrChain(it, emptyList(), emptyList())) }
+                    ?: call
 
-                // The checker reports these first, so reaching one means the two adapters disagree.
-                is Derived.Failed -> call.also {
-                    messages.report(
-                        CompilerMessageSeverity.ERROR,
-                        "kimney's checker accepted a call its lowering cannot build. This is a bug in kimney.\n" +
-                            derived.message(model.render(receiver.type), model.render(call.type)),
-                    )
-                }
+                TRANSFORM -> readChain(call)?.let { lowered(call, it) } ?: disagreed(call, "reads no chain")
+
+                else -> call
             }
         } catch (e: Exception) {
             messages.report(CompilerMessageSeverity.ERROR, internalError(e))
@@ -62,12 +56,45 @@ class KimneyLowering(
         }
     }
 
+    private fun lowered(call: IrCall, chain: IrChain): IrExpression =
+        when (val derived = derive(model, chain.source.type, call.type, chain.overrides)) {
+            is Derived.Planned -> builder(call).irBlock(resultType = call.type) {
+                val source = irTemporary(chain.source)
+                // Evaluated here, in written order, so side effects happen as the chain reads.
+                val given = chain.given.map { it?.let { expression -> irTemporary(given(expression, source)) } }
+                +lower(derived.plan, irGet(source), given)
+            }
+
+            is Derived.Failed ->
+                disagreed(call, derived.message(model.render(chain.source.type), model.render(call.type)))
+        }
+
+    // The checker reports these first, so reaching one means the two adapters disagree.
+    private fun disagreed(call: IrCall, why: String): IrCall = call.also {
+        messages.report(
+            CompilerMessageSeverity.ERROR,
+            "kimney's checker accepted a call its lowering cannot build. This is a bug in kimney.\n$why",
+        )
+    }
+
+    /** A const's expression as written; a computed lambda as a direct call of a local function, not an object. */
+    private fun IrStatementsBuilder<*>.given(expression: IrExpression, source: IrVariable): IrExpression {
+        val lambda = (expression as? IrFunctionExpression)?.function ?: return expression
+        lambda.origin = IrDeclarationOrigin.LOCAL_FUNCTION
+        +lambda
+        return irCall(lambda.symbol).apply { arguments[0] = irGet(source) }
+    }
+
     private fun builder(call: IrCall): IrBuilderWithScope {
         val owner = planned(currentScope, "an enclosing scope").scope.scopeOwnerSymbol
         return DeclarationIrBuilder(context, owner, call.startOffset, call.endOffset)
     }
 
-    private fun IrStatementsBuilder<*>.lower(plan: Plan<IrType>, value: IrExpression): IrExpression =
+    private fun IrStatementsBuilder<*>.lower(
+        plan: Plan<IrType>,
+        value: IrExpression,
+        given: List<IrVariable?>,
+    ): IrExpression =
         when (plan) {
             Plan.Identity -> value
 
@@ -77,10 +104,18 @@ class KimneyLowering(
                 val params = constructor.parameters.filter { it.kind == IrParameterKind.Regular }
                 val typeArguments = (plan.target as IrSimpleType).arguments.map { (it as IrTypeProjection).type }
                 irCallConstructor(constructor.symbol, typeArguments).apply {
-                    // A Default is left null: the backend's default-argument lowering fills it, as for a written call.
-                    plan.args.filterIsInstance<Arg.FromProperty<IrType>>().forEach { arg ->
-                        val param = params.single { it.name.asString() == arg.param }
-                        arguments[param.indexInParameters] = lower(arg.plan, read(source, arg.property))
+                    plan.args.forEach { arg ->
+                        val index = params.single { it.name.asString() == arg.param }.indexInParameters
+                        when (arg) {
+                            is Arg.FromProperty -> arguments[index] = lower(arg.plan, read(source, arg.property), given)
+
+                            is Arg.Const -> arguments[index] = irGet(planned(given[arg.index], "a const value"))
+
+                            is Arg.Computed -> arguments[index] = irGet(planned(given[arg.index], "a computed value"))
+
+                            // Left null: the backend's default-argument lowering fills it, as for a written call.
+                            is Arg.Default -> Unit
+                        }
                     }
                 }
             }

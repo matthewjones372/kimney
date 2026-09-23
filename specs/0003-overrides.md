@@ -64,16 +64,16 @@ tree; a builder that escapes is a failure, not a runtime lookup.
 
 ## Stack
 
-- [ ] **`spec-0003-runtime`** — `Into`, `into`, the four stubs; BCV `.api`.
+- [x] **`spec-0003-runtime`** — `Into`, `into`, the four stubs; BCV `.api`.
       Done when: each stub throws `KimneyNotApplied` naming itself.
-- [ ] **`spec-0003-engine`** — `derive` takes overrides; rule 1; the two new
+- [x] **`spec-0003-engine`** — `derive` takes overrides; rule 1; the two new
       failures; the longer `MissingSource` hint.
       Done when: engine tests cover each override and each failure's text.
-- [ ] **`spec-0003-fir`** — the checker reads the chain from `transform()`
+- [x] **`spec-0003-fir`** — the checker reads the chain from `transform()`
       back to `into`, and reports `OverrideNotStatic` for any `Into` that
       escapes it.
       Done when: diagnostic goldens pass for all three new failures.
-- [ ] **`spec-0003-ir`** — lowering of the chain; agreement tests; example
+- [x] **`spec-0003-ir`** — lowering of the chain; agreement tests; example
       and reference updated.
       Done when: box tests pass for each override, including evaluation order.
 

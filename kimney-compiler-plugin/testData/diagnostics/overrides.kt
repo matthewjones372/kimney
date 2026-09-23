@@ -42,3 +42,9 @@ fun unreadable(user: User): UserDto = <!KIMNEY_CANNOT_TRANSFORM!>user.into<_, Us
     .withFieldConst(UserDto::source, "import")
     .withFieldConst(UserDto::age, 1L)
     .transform()<!>
+
+fun sourceIsACall(): UserDto = User("Ada", 1815, "x").into<_, UserDto>()
+    .withFieldRenamed(User::fullName, UserDto::name)
+    .withFieldConst(UserDto::source, "import")
+    .withFieldComputed(UserDto::age) { 2026L - it.born }
+    .transform()

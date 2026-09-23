@@ -26,8 +26,9 @@ val FirFunctionCall.callableId: CallableId?
 
 /** Null when the chain is not one expression of literal references and lambdas back to `into()`. */
 fun readChain(transform: FirFunctionCall): FirChain? {
-    val calls = generateSequence(transform.explicitReceiver as? FirFunctionCall) {
-        it.explicitReceiver as? FirFunctionCall
+    // Stops at into(): the source may itself be a call, and is not part of the chain.
+    val calls = generateSequence(transform.explicitReceiver as? FirFunctionCall) { call ->
+        (call.explicitReceiver as? FirFunctionCall)?.takeUnless { call.callableId == INTO }
     }
         .toList()
         .asReversed()

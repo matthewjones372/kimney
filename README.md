@@ -20,8 +20,9 @@ e: Main.kt:15:13 Cannot transform User → UserDto:
 No reflection and no runtime cost: the generated code is what you would have
 written by hand.
 
-**Status:** class-to-class by constructor works, with nested types, defaults
-and generics ([docs/reference.md](docs/reference.md)). Collections, enums,
-sealed types and overrides are next. The design lives in
+**Status:** class-to-class by constructor works, with nested types, defaults,
+generics and overrides (`withFieldConst`, `withFieldComputed`,
+`withFieldRenamed`); see [docs/reference.md](docs/reference.md). Enums, sealed
+types and collections are next. The design lives in
 [docs/roadmap.md](docs/roadmap.md) and [specs/](specs/). How to work here:
 [AGENTS.md](AGENTS.md).

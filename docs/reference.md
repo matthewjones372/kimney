@@ -53,8 +53,50 @@ The other failures:
 | No rule for the pair | `OrderDto.count: Long — no rule transforms Int into Long.` |
 | A type containing itself | `TreeDto.child: TreeDto — Tree → TreeDto contains itself, and recursive types are not supported yet.` |
 
-Not yet: nullable to non-null, value classes, collections, enums, sealed
-types, overrides and recursive types. `docs/roadmap.md` has the order.
+## Overrides
+
+```kotlin
+import io.github.matthewjones372.kimney.into
+
+val dto = user.into<_, UserDto>()
+    .withFieldRenamed(User::fullName, UserDto::name)
+    .withFieldConst(UserDto::source, "import")
+    .withFieldComputed(UserDto::age) { 2026 - it.born }
+    .transform()
+```
+
+`into<_, UserDto>()` infers the source and names the target. An override
+fills one top-level constructor parameter of the target and wins over every
+other way of filling it:
+
+| Override | Fills the field with |
+|---|---|
+| `withFieldConst(field, value)` | `value` |
+| `withFieldComputed(field) { source -> … }` | the lambda's result, applied to the source |
+| `withFieldRenamed(from, to)` | the source property `from`, transformed by the rules above |
+
+The source is evaluated once, then each override's expression in the order
+written, then the constructor. A computed lambda compiles to a direct call of
+its body: no function object is created.
+
+The whole chain must be one expression from `into()` to `.transform()`, with
+property references written out and a lambda for `withFieldComputed`, because
+the plugin reads it at compile time. Anything else is a compile error:
+
+| Failure | Says |
+|---|---|
+| Not a constructor parameter | `UserDto.nickname — withFieldConst names 'nickname', which is not a constructor parameter of UserDto.` |
+| Overridden twice | `UserDto.name — overridden twice, by withFieldRenamed and withFieldConst. Keep one.` |
+| Wrong value type | `UserDto.age: Long — withFieldConst gives String, which is not a Long.` |
+| Unreadable renamed source | `UserDto.name: String — withFieldRenamed reads User.inherited, which kimney cannot read: it is inherited, an extension or not public.` |
+| The chain escapes | `Into<User, UserDto> — the overrides must be one chain from into() to .transform(), …` |
+
+The wrong-value-type check is kimney's, not the compiler's: `KProperty1` is
+covariant in its value, so `withFieldConst(UserDto::age, "forty")` type-checks
+with `T` widened to `Any`.
+
+Not yet: nested overrides, nullable to non-null, value classes, collections,
+enums, sealed types and recursive types. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
 says how to apply it.
