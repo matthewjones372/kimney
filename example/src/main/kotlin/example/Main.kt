@@ -20,6 +20,10 @@ data class Account(val id: UserId, val status: Status?, val billing: Address?)
 
 data class AccountDto(val id: Long, val status: StatusDto?, val billing: AddressDto?)
 
+data class Team(val sites: List<Address>, val leads: Map<UserId, Status>)
+
+data class TeamDto(val sites: List<AddressDto>, val leads: Map<Long, StatusDto>)
+
 enum class Status { ACTIVE, SUSPENDED }
 
 enum class StatusDto { ACTIVE, SUSPENDED, UNKNOWN }
@@ -57,4 +61,7 @@ fun main() {
     println(listOf(Payment.Card("4242"), Payment.Cash).map { it.transformInto<PaymentDto>() })
 
     println(Account(UserId(raw = 7), Status.ACTIVE, billing = null).transformInto<AccountDto>())
+
+    val team = Team(listOf(user.address), mapOf(UserId(raw = 7) to Status.SUSPENDED))
+    println(team.transformInto<TeamDto>())
 }

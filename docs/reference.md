@@ -37,18 +37,25 @@ written. The source is evaluated once. For each target type, in order:
    property is called, so `UserId → OrderId` meets through the `Long` inside.
    A value class source into a data class unwraps too, and does not match
    property names.
-4. **Object.** An `object` target is its instance, from an `object` source
+4. **Containers.** A `List`, `Set`, `Collection`, `Iterable`, `Map` or
+   `Array<T>` pair transforms element by element, each element by every rule
+   here, into the same kind or a read-only supertype of it (`List` into
+   `Iterable`). Order is kept. Crossing kinds (`Set` into `List`) is refused,
+   since it would drop duplicates or pick an order. A map's values take every
+   rule; its keys only identity or a value class, since anything else could
+   turn two keys into one. The loop is written out, so no lambda is created.
+5. **Object.** An `object` target is its instance, from an `object` source
    only, so no case can drop the fields of the one it came from.
-5. **Enum.** Each source entry becomes the target entry of the same name. A
+6. **Enum.** Each source entry becomes the target entry of the same name. A
    source entry with no target entry is a compile error; extra target entries
    are fine. Entries are compared by identity, never by ordinal, so an enum
    compiled elsewhere can be reordered safely.
-6. **Sealed.** Each direct subclass of the source becomes the target's direct
+7. **Sealed.** Each direct subclass of the source becomes the target's direct
    subclass of the same simple name, and each pair is derived by every rule
    here, so a case gets its defaults and a failure inside it has a path
    through it (`ShapeDto.Circle.radius`). Generic sealed hierarchies are not
    supported yet.
-7. **Constructor.** A final or open Kotlin class outside the standard library
+8. **Constructor.** A final or open Kotlin class outside the standard library
    is built with its public primary constructor. Each parameter takes, in
    order: the source's public property of the same name, transformed by these
    same rules; else the parameter's default value; else it is a failure.
@@ -75,6 +82,8 @@ The other failures:
 | No public primary constructor | `Hidden — Hidden has no public primary constructor: it is private.` |
 | No rule for the pair | `OrderDto.count: Long — no rule transforms Int into Long.` |
 | Null into non-null | `UserDto.name: String — User.name is String?, and a null has nowhere to go. Make UserDto.name nullable, or fill it with .withFieldComputed(UserDto::name) { … }.` |
+| Crossing kinds | `OrderDto.tags: List<TagDto> — a Set is not turned into a List. Fill it with .withFieldComputed(OrderDto::tags) { … }.` |
+| A map key that could collide | `StrictOrder.keyed[key]: LineDto — keys are transformed only as themselves or through a value class, since Line into LineDto could turn two keys into one.` |
 | A missing case | `StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.` |
 | A type containing itself | `TreeDto.child: TreeDto — Tree → TreeDto contains itself, and recursive types are not supported yet.` |
 
@@ -122,8 +131,9 @@ with `T` widened to `Any`.
 
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
-Not yet: nested overrides, nullable to non-null, collections, generic sealed
-hierarchies, generic value classes and recursive types. `docs/roadmap.md` has the order.
+Not yet: nested overrides, nullable to non-null, mutable collection targets,
+primitive arrays other than as themselves, generic sealed hierarchies, generic
+value classes and recursive types. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
 says how to apply it.

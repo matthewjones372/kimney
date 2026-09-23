@@ -62,17 +62,17 @@ inliner to take apart again is more machinery than the loop it becomes.
 
 ## Stack
 
-- [ ] **`spec-0010-engine`** — `TypeModel` learns container kinds and element
+- [x] **`spec-0010-engine`** — `TypeModel` learns container kinds and element
       types; the container rule; `ContainerMismatch`.
       Done when: engine tests cover each allowed kind, a crossing, a map, and
       an element failure's path.
-- [ ] **`spec-0010-fir`** — FIR adapter; goldens.
+- [x] **`spec-0010-fir`** — FIR adapter; goldens.
       Done when: goldens pass for an element failure, a crossing and a key.
-- [ ] **`spec-0010-ir-iterables`** — lists, sets, collections, iterables and
+- [x] **`spec-0010-ir-iterables`** — lists, sets, collections, iterables and
       arrays; box and agreement.
       Done when: box tests pass, including order preserved in a set and an
       element that is itself a list.
-- [ ] **`spec-0010-ir-maps`** — maps; example and reference.
+- [x] **`spec-0010-ir-maps`** — maps; example and reference.
       Done when: box tests pass, including insertion order preserved.
 
 ## Acceptance

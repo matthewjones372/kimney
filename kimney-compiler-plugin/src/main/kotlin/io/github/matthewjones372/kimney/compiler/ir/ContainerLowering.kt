@@ -32,6 +32,7 @@ internal class ContainerLowering(context: IrPluginContext) {
     private val builtIns = context.irBuiltIns
     private val arrayList = context.referenceClass(ClassId.fromString("java/util/ArrayList"))
     private val linkedHashSet = context.referenceClass(ClassId.fromString("java/util/LinkedHashSet"))
+    private val linkedHashMap = context.referenceClass(ClassId.fromString("java/util/LinkedHashMap"))
 
     /** A list is presized to the source where its size is known; a set is not, since its argument is a capacity. */
     fun IrStatementsBuilder<*>.iterables(
@@ -101,6 +102,45 @@ internal class ContainerLowering(context: IrPluginContext) {
         }
         // Every slot has been filled, so the array holds no null; the cast is the one `Array(size) { … }` makes.
         return irImplicitCast(irGet(out), target)
+    }
+
+    /** Each entry of the source, in its order, into a new `LinkedHashMap`, the key and value each through its plan. */
+    fun IrStatementsBuilder<*>.entries(
+        target: IrType,
+        from: Container<IrType>,
+        source: IrExpression,
+        key: IrStatementsBuilder<*>.(IrExpression) -> IrExpression,
+        value: IrStatementsBuilder<*>.(IrExpression) -> IrExpression,
+    ): IrExpression {
+        val sourceKey = checkNotNull(from.key) { "a map has a key" }
+        val map = irTemporary(source)
+        val builder = checkNotNull(linkedHashMap) { "the JDK collection classes are on every JVM classpath" }
+        val constructor = builder.owner.constructors.single { constructor ->
+            constructor.parameters.none { it.kind == IrParameterKind.Regular }
+        }
+        val targetArguments = (target as IrSimpleType).arguments.map { checkNotNull((it as? IrTypeProjection)?.type) }
+        val out = irTemporary(irCallConstructor(constructor.symbol, targetArguments))
+        val entryType = builtIns.mapEntryClass.typeWith(sourceKey, from.element)
+        val entriesGetter =
+            checkNotNull(builtIns.mapClass.owner.properties.single { it.name.asString() == "entries" }.getter)
+        val entries = irTemporary(
+            irCall(entriesGetter.symbol, builtIns.setClass.typeWith(entryType)).apply { arguments[0] = irGet(map) },
+        )
+        val put = member(builtIns.mutableMapClass, "put")
+        loop(entries, entryType) { item ->
+            val entry = irTemporary(item)
+            +irCall(put.symbol).apply {
+                arguments[0] = irGet(out)
+                arguments[1] = key(entryPart(entry, "key", sourceKey))
+                arguments[2] = value(entryPart(entry, "value", from.element))
+            }
+        }
+        return irGet(out)
+    }
+
+    private fun IrStatementsBuilder<*>.entryPart(entry: IrVariable, name: String, type: IrType): IrExpression {
+        val getter = checkNotNull(builtIns.mapEntryClass.owner.properties.single { it.name.asString() == name }.getter)
+        return irCall(getter.symbol, type).apply { arguments[0] = irGet(entry) }
     }
 
     /** `for (item in source)`, through the iterator an `Iterable` or an `Array` hands out. */

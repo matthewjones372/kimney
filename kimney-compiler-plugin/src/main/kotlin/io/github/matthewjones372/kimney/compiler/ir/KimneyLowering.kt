@@ -126,9 +126,12 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.Elements -> elements(plan, value, given)
 
-            // The IR model reports no map yet, so the engine plans none.
-            is Plan.Entries ->
-                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+            is Plan.Entries -> {
+                val from = planned(model.container(value.type), "a source map")
+                with(containers) {
+                    entries(plan.target, from, value, { lower(plan.key, it, given) }, { lower(plan.value, it, given) })
+                }
+            }
 
             is Plan.Construct -> {
                 val source = irTemporary(value)
