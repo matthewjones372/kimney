@@ -62,16 +62,16 @@ property win over it.
 
 ## Stack
 
-- [ ] **`spec-0002-engine`** — `TypeModel`, `derive`, identity and constructor
+- [x] **`spec-0002-engine`** — `TypeModel`, `derive`, identity and constructor
       rules, the four failures and their messages, fake-model tests.
       Done when: every failure variant has an engine test naming its text.
-- [ ] **`spec-0002-fir`** — FIR adapter and a call checker reporting
+- [x] **`spec-0002-fir`** — FIR adapter and a call checker reporting
       `KIMNEY_CANNOT_TRANSFORM` on `transformInto` calls.
       Done when: diagnostic goldens pass for each failure variant.
-- [ ] **`spec-0002-ir`** — IR adapter and lowering replacing the call with the
+- [x] **`spec-0002-ir`** — IR adapter and lowering replacing the call with the
       planned constructor calls, defaults included.
       Done when: box tests pass, including nested and defaulted fields.
-- [ ] **`spec-0002-agreement`** — every box source is also a no-diagnostic
+- [x] **`spec-0002-agreement`** — every box source is also a no-diagnostic
       FIR test; `example` transforms a nested pair.
       Done when: `./gradlew :example:run` prints a transformed value.
 
