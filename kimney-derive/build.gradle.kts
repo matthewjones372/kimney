@@ -3,7 +3,10 @@ kotlin {
     compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }
 
-java { targetCompatibility = JavaVersion.VERSION_17 }
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
 // The sources FunctionalStyleTest judges. Declared as task inputs as well as
 // handed over, so an edit to any of them reruns the test instead of hitting
