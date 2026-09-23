@@ -10,7 +10,18 @@ interface TypeModel<T> {
 
     /** The type of a readable property of [owner] with exactly this name, if it has one. */
     fun property(owner: T, name: String): T?
+
+    /** The entry names of an enum class, or null if [type] is not one. */
+    fun enumEntries(type: T): List<String>?
+
+    /** The direct subclasses of a non-generic sealed class or interface, or null if [type] is not one. */
+    fun sealedCases(type: T): List<Case<T>>?
+
+    fun isObject(type: T): Boolean
 }
+
+/** One direct subclass of a sealed type, matched to the other side by its simple [name]. */
+data class Case<T>(val name: String, val type: T)
 
 sealed interface Construction<out T> {
     data class Primary<T>(val params: List<Param<T>>) : Construction<T>

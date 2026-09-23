@@ -94,6 +94,10 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         when (plan) {
             Plan.Identity -> value
 
+            // The IR model reports no enum, sealed type or object yet, so the engine plans none of these.
+            is Plan.ObjectInstance, is Plan.EnumByName, is Plan.SealedByName ->
+                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+
             is Plan.Construct -> {
                 val source = irTemporary(value)
                 val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a primary constructor")

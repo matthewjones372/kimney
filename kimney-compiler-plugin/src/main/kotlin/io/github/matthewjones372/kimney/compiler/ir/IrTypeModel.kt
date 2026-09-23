@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kimney.compiler.ir
 
+import io.github.matthewjones372.kimney.derive.Case
 import io.github.matthewjones372.kimney.derive.Construction
 import io.github.matthewjones372.kimney.derive.Param
 import io.github.matthewjones372.kimney.derive.TypeModel
@@ -65,6 +66,13 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
             )
         }
     }
+
+    // Enums, sealed types and objects are modelled from spec 0004's next entries; until then none is seen.
+    override fun enumEntries(type: IrType): List<String>? = null
+
+    override fun sealedCases(type: IrType): List<Case<IrType>>? = null
+
+    override fun isObject(type: IrType): Boolean = false
 
     override fun property(owner: IrType, name: String): IrType? {
         val irClass = owner.takeUnless { it.isMarkedNullable() }?.classOrNull?.owner ?: return null

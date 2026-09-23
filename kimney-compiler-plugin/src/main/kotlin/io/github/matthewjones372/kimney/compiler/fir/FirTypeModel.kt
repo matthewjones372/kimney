@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kimney.compiler.fir
 
+import io.github.matthewjones372.kimney.derive.Case
 import io.github.matthewjones372.kimney.derive.Construction
 import io.github.matthewjones372.kimney.derive.Param
 import io.github.matthewjones372.kimney.derive.TypeModel
@@ -61,6 +62,13 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
             )
         }
     }
+
+    // Enums, sealed types and objects are modelled from spec 0004's next entries; until then none is seen.
+    override fun enumEntries(type: ConeKotlinType): List<String>? = null
+
+    override fun sealedCases(type: ConeKotlinType): List<Case<ConeKotlinType>>? = null
+
+    override fun isObject(type: ConeKotlinType): Boolean = false
 
     override fun property(owner: ConeKotlinType, name: String): ConeKotlinType? {
         val classType = owner.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType

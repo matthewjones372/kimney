@@ -57,6 +57,15 @@ sealed interface Failure {
         override val reason get() = "$source → $type contains itself, and recursive types are not supported yet."
     }
 
+    data class MissingCase(
+        override val path: Path,
+        override val type: String,
+        val case: String,
+        val kind: String,
+    ) : Failure {
+        override val reason get() = "$case has no $kind of the same name in $type."
+    }
+
     data class NotAParameter(override val path: Path, val method: String, val owner: String) : Failure {
         override val type: String? get() = null
         override val reason

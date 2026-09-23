@@ -18,7 +18,18 @@ sealed interface Plan<out T> {
     data object Identity : Plan<Nothing>
 
     data class Construct<T>(val target: T, val args: List<Arg<T>>) : Plan<T>
+
+    /** The target object, with nothing read from the source. */
+    data class ObjectInstance<T>(val target: T) : Plan<T>
+
+    /** Each source entry to the target entry of the same name. */
+    data class EnumByName<T>(val source: T, val target: T, val entries: List<String>) : Plan<T>
+
+    /** Each source case to the target case of the same name, in source order. */
+    data class SealedByName<T>(val target: T, val arms: List<Arm<T>>) : Plan<T>
 }
+
+data class Arm<T>(val source: T, val target: T, val plan: Plan<T>)
 
 sealed interface Arg<out T> {
     val param: String
