@@ -1,0 +1,2 @@
+/recursive.kt:(229,258): error: Cannot transform Tree → TreeDto:
+    TreeDto.child: TreeDto — Tree → TreeDto contains itself, and recursive types are not supported yet.

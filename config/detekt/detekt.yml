@@ -37,6 +37,10 @@ style:
     # No wildcard imports, anywhere. `.editorconfig` tells ktlint and the IDE
     # the same thing.
     active: true
+  ReturnCount:
+    # A compiler-API lookup answers `?: return null` at each step it can fail;
+    # those are guards, not a second exit to reason about.
+    excludeGuardClauses: true
   MagicNumber:
     excludes: ['**/test/**']
   MaxLineLength:

@@ -1,0 +1,5 @@
+/noPrimaryConstructor.kt:(302,332): error: Cannot transform Source → Hidden:
+    Hidden — Hidden has no public primary constructor: it is private.
+
+/noPrimaryConstructor.kt:(381,418): error: Cannot transform Source → SecondaryOnly:
+    SecondaryOnly — SecondaryOnly has no public primary constructor: it has only secondary constructors.
