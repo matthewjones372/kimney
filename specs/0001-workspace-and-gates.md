@@ -51,16 +51,16 @@ who forgot the plugin a sentence instead of a stack trace.
 
 ## Stack
 
-- [ ] **`spec-0001-build`** — root build, version catalog, `.editorconfig`,
+- [x] **`spec-0001-build`** — root build, version catalog, `.editorconfig`,
       detekt config, spotless, Kover (90% floor), CI workflow, empty modules.
       Done when: `./gradlew build` is green and a wildcard import fails it.
-- [ ] **`spec-0001-runtime`** — `transformInto` stub, `KimneyNotApplied`, BCV
+- [x] **`spec-0001-runtime`** — `transformInto` stub, `KimneyNotApplied`, BCV
       `.api` file, `NoThirdPartyDependenciesTest` for runtime and derive.
       Done when: adding any dependency to either module fails `check`.
-- [ ] **`spec-0001-plugin`** — `CompilerPluginRegistrar` registering empty FIR
+- [x] **`spec-0001-plugin`** — `CompilerPluginRegistrar` registering empty FIR
       and IR extensions; test harness wired with one box test that passes.
       Done when: a box test compiles through the plugin and returns `"OK"`.
-- [ ] **`spec-0001-gradle`** — Gradle plugin applying the compiler plugin,
+- [x] **`spec-0001-gradle`** — Gradle plugin applying the compiler plugin,
       Kotlin version refusal, `example` applying it by id.
       Done when: `example` builds, and a functional test on 2.4.20 fails with
       the message above.
