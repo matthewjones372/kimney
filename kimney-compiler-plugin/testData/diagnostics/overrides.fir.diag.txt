@@ -1,0 +1,15 @@
+/overrides.kt:(583,676): error: Cannot transform User → UserDto:
+    UserDto.source: String — User has no property 'source'. Add it to User, give UserDto.source a default value, or add .withFieldConst(UserDto::source, …).
+    UserDto.age: Long — User has no property 'age'. Add it to User, give UserDto.age a default value, or add .withFieldConst(UserDto::age, …).
+
+/overrides.kt:(719,943): error: Cannot transform User → UserDto:
+    UserDto.nickname — withFieldConst names 'nickname', which is not a constructor parameter of UserDto.
+
+/overrides.kt:(978,1198): error: Cannot transform User → UserDto:
+    UserDto.name — overridden twice, by withFieldRenamed and withFieldConst. Keep one.
+
+/overrides.kt:(1235,1418): error: Cannot transform User → UserDto:
+    UserDto.age: Long — withFieldConst gives String, which is not a Long.
+
+/overrides.kt:(1458,1637): error: Cannot transform User → UserDto:
+    UserDto.name: String — withFieldRenamed reads User.inherited, which kimney cannot read: it is inherited, an extension or not public.

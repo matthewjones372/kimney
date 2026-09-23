@@ -124,6 +124,6 @@ class OverrideTest {
     fun `an override chain that escapes its expression has a message of its own`() {
         Failure.OverrideNotStatic(Path("Into<User, UserDto>"), "UserDto").line shouldBe
             "Into<User, UserDto> — the overrides must be one chain from into() to .transform(), written as a " +
-            "single expression with property references like UserDto::name."
+            "single expression with property references like UserDto::name and a lambda for withFieldComputed."
     }
 }

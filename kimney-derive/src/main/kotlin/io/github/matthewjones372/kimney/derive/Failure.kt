@@ -98,6 +98,6 @@ sealed interface Failure {
         override val type: String? get() = null
         override val reason
             get() = "the overrides must be one chain from into() to .transform(), written as a single expression " +
-                "with property references like $target::name."
+                "with property references like $target::name and a lambda for withFieldComputed."
     }
 }
