@@ -16,10 +16,10 @@ complexity:
 
 exceptions:
   TooGenericExceptionCaught:
-    # The two adapter entry points turn anything the plugin throws into an
-    # internal-error diagnostic, so the compiler never crashes on kimney's
-    # account. See AGENTS.md.
-    excludes: ['**/fir/KimneyCallChecker.kt', '**/ir/KimneyLowering.kt']
+    # The one guard both adapters run through turns anything the plugin throws
+    # into an internal-error diagnostic, so the compiler never crashes on
+    # kimney's account. See AGENTS.md.
+    excludes: ['**/compiler/Guard.kt']
   SwallowedException:
     excludes: ['**/test/**']
 

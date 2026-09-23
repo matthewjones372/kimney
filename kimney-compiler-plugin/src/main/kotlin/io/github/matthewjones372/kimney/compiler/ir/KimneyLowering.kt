@@ -2,7 +2,7 @@ package io.github.matthewjones372.kimney.compiler.ir
 
 import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
-import io.github.matthewjones372.kimney.compiler.internalError
+import io.github.matthewjones372.kimney.compiler.guarded
 import io.github.matthewjones372.kimney.derive.Arg
 import io.github.matthewjones372.kimney.derive.Derived
 import io.github.matthewjones372.kimney.derive.Plan
@@ -41,7 +41,8 @@ class KimneyLowering(
 
     override fun visitCall(expression: IrCall): IrExpression {
         val call = super.visitCall(expression) as? IrCall ?: return expression
-        return try {
+        val report = { message: String -> messages.report(CompilerMessageSeverity.ERROR, message) }
+        return guarded(fallback = { call }, report = report) {
             when (call.symbol.owner.callableId) {
                 TRANSFORM_INTO -> call.arguments[0]?.let { lowered(call, IrChain(it, emptyList(), emptyList())) }
                     ?: call
@@ -50,9 +51,6 @@ class KimneyLowering(
 
                 else -> call
             }
-        } catch (e: Exception) {
-            messages.report(CompilerMessageSeverity.ERROR, internalError(e))
-            call
         }
     }
 

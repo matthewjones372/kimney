@@ -4,8 +4,7 @@ import io.github.matthewjones372.kimney.compiler.INTO
 import io.github.matthewjones372.kimney.compiler.OVERRIDES
 import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
-import io.github.matthewjones372.kimney.compiler.internalError
-import io.github.matthewjones372.kimney.compiler.isControlFlow
+import io.github.matthewjones372.kimney.compiler.guarded
 import io.github.matthewjones372.kimney.derive.Derived
 import io.github.matthewjones372.kimney.derive.Failure
 import io.github.matthewjones372.kimney.derive.Override
@@ -28,7 +27,10 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(expression: FirFunctionCall) {
         val id = expression.callableId ?: return
-        try {
+        val report = { message: String ->
+            reporter.reportOn(expression.source, KimneyErrors.KIMNEY_INTERNAL_ERROR, message)
+        }
+        guarded(fallback = {}, report = report) {
             when (id) {
                 TRANSFORM_INTO -> expression.extensionReceiver?.resolvedType?.let {
                     derived(expression, it, emptyList())
@@ -38,9 +40,6 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
 
                 INTO, in OVERRIDES -> escapes(expression)
             }
-        } catch (e: Exception) {
-            if (e.isControlFlow()) throw e
-            reporter.reportOn(expression.source, KimneyErrors.KIMNEY_INTERNAL_ERROR, internalError(e))
         }
     }
 

@@ -143,10 +143,10 @@ person would have written. A `KClass` or a `KProperty` reaching runtime from
 generated code is a bug.
 
 **The plugin never crashes the compiler.** A type the engine cannot model is a
-`Failure` with a message, not an exception. `catch (t: Throwable)` is permitted
-only at the two adapter entry points, where it becomes an internal-error
-diagnostic naming the call and asking for an issue; detekt permits it nowhere
-else.
+`Failure` with a message, not an exception. Both adapters run each call
+through `guarded` in `Guard.kt`, which turns anything thrown into an
+internal-error diagnostic naming the call and asking for an issue. It is the
+one generic `catch` in the codebase; detekt permits it nowhere else.
 
 Public API returns read-only types. `FunctionalStyleTest` lists every file
 permitted a mutable accumulator, each with its reason.
