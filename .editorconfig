@@ -1,0 +1,48 @@
+# Formatting rules for the repo. Spotless reads this file for its ktlint step,
+# and so does IntelliJ, so the editor and the build agree.
+#
+# Each disabled rule below rewrites deliberately laid-out code into a different
+# house style. A formatter is here to settle whitespace, not the shape of the
+# source.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+
+# Matches `kotlin.code.style=official` in gradle.properties.
+ktlint_code_style = intellij_idea
+max_line_length = 120
+
+ij_kotlin_allow_trailing_comma = true
+ij_kotlin_allow_trailing_comma_on_call_site = true
+
+# No wildcard imports, anywhere. IntelliJ is told the same thing, so an
+# optimize-imports never puts one back.
+ij_kotlin_name_count_to_use_star_import = 2147483647
+ij_kotlin_name_count_to_use_star_import_for_members = 2147483647
+
+ktlint_standard_no-multi-spaces = disabled
+ktlint_standard_filename = disabled
+ktlint_standard_function-signature = disabled
+ktlint_standard_class-signature = disabled
+ktlint_standard_function-expression-body = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_parameter-list-wrapping = disabled
+ktlint_standard_argument-list-wrapping = disabled
+ktlint_standard_multiline-if-else = disabled
+ktlint_standard_statement-wrapping = disabled
+ktlint_standard_comment-wrapping = disabled
+ktlint_standard_discouraged-comment-location = disabled
+ktlint_standard_kdoc = disabled
+
+# Diagnostic golden inputs are compiler test data, laid out to put markers on
+# exact columns. Formatting them would move the thing under test.
+[**/testData/**]
+ktlint = disabled
