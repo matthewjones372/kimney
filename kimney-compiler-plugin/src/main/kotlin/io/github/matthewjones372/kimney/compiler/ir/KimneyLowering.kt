@@ -107,6 +107,10 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         when (plan) {
             Plan.Identity -> value
 
+            // The chain reader passes no transformer yet, so the engine plans none.
+            is Plan.Transformed ->
+                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+
             is Plan.ObjectInstance -> irGetObjectValue(plan.target, plan.target.classOrFail)
 
             is Plan.EnumByName -> with(enums) { enumByName(plan, value) }

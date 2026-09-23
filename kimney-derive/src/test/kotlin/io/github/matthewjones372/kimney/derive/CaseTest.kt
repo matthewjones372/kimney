@@ -79,7 +79,8 @@ class CaseTest {
         val failed = derive(shapes, "Bad", "ShapeDto").shouldBeInstanceOf<Derived.Failed>()
 
         failed.failures.map { it.line } shouldBe listOf(
-            "ShapeDto.Circle.radius: Double — no rule transforms Int into Double.",
+            "ShapeDto.Circle.radius: Double — no rule transforms Int into Double. Or map Bad.Circle → " +
+                "ShapeDto.Circle with .withTransformer(Transformer<Bad.Circle, ShapeDto.Circle> { … }).",
             "ShapeDto — Bad.Oval has no subclass of the same name in ShapeDto.",
         )
     }

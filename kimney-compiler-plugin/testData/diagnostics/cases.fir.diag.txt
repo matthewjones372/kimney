@@ -2,7 +2,7 @@
     StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.
 
 /cases.kt:(831,862): error: Cannot transform Shape → ShapeDto:
-    ShapeDto.Circle.radius: Double — no rule transforms Int into Double.
+    ShapeDto.Circle.radius: Double — no rule transforms Int into Double. Or map Shape.Circle → ShapeDto.Circle with .withTransformer(Transformer<Shape.Circle, ShapeDto.Circle> { … }).
     ShapeDto — Shape.Hexagon has no subclass of the same name in ShapeDto.
 
 /cases.kt:(908,943): error: Cannot transform Account → AccountDto:

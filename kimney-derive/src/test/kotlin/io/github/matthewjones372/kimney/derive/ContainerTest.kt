@@ -53,8 +53,8 @@ class ContainerTest {
     @Test
     fun `a failure inside an element has the element in its path`() {
         lines("List<Bad>", "List<LineDto>") shouldBe listOf(
-            "List<LineDto>[].sku: String — Bad has no property 'sku'. " +
-                "Add it to Bad, or give LineDto.sku a default value.",
+            "List<LineDto>[].sku: String — Bad has no property 'sku'. Add it to Bad, or give LineDto.sku a default " +
+                "value. Or map Bad → LineDto with .withTransformer(Transformer<Bad, LineDto> { … }).",
         )
     }
 

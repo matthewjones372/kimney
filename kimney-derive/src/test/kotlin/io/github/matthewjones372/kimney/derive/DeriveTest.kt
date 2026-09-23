@@ -84,7 +84,8 @@ class DeriveTest {
 
         failed.failures.map { it.path.toString() } shouldBe listOf("UserDto.email", "UserDto.address.zip")
         failed.failures[1].line shouldBe "UserDto.address.zip: String — Address has no property 'zip'. " +
-            "Add it to Address, or give AddressDto.zip a default value."
+            "Add it to Address, or give AddressDto.zip a default value. " +
+            "Or map Address → AddressDto with .withTransformer(Transformer<Address, AddressDto> { … })."
     }
 
     @Test

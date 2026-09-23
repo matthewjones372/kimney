@@ -101,7 +101,7 @@ class OverrideTest {
     }
 
     @Test
-    fun `a missing top-level field suggests the override, a nested one does not`() {
+    fun `a missing top-level field suggests the override, a nested one a transformer instead`() {
         val nested = FakeModel(
             constructions = mapOf(
                 "UserDto" to primary(param("email", "String"), param("address", "AddressDto")),
@@ -116,7 +116,8 @@ class OverrideTest {
             "UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default " +
                 "value, or add .withFieldConst(UserDto::email, …).",
             "UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip " +
-                "a default value.",
+                "a default value. Or map Address → AddressDto with " +
+                ".withTransformer(Transformer<Address, AddressDto> { … }).",
         )
     }
 

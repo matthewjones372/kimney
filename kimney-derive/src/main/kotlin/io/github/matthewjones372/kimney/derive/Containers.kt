@@ -72,7 +72,8 @@ private fun <T> injective(plan: Plan<T>): Boolean = when (plan) {
 
     is Plan.Unwrap -> injective(plan.plan)
 
-    is Plan.Construct, is Plan.ObjectInstance, is Plan.EnumByName, is Plan.NullSafe,
+    // A user's transformer may well send two keys to one.
+    is Plan.Transformed, is Plan.Construct, is Plan.ObjectInstance, is Plan.EnumByName, is Plan.NullSafe,
     is Plan.Elements, is Plan.Entries, is Plan.SealedByName,
     -> false
 }

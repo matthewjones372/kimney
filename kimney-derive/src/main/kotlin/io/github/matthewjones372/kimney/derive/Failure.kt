@@ -108,6 +108,30 @@ sealed interface Failure {
                 "could turn two keys into one."
     }
 
+    data class AmbiguousTransformer(
+        override val path: Path,
+        override val type: String,
+        val source: String,
+        val indices: List<Int>,
+    ) : Failure {
+        override val reason: String
+            get() {
+                val count = if (indices.size == 2) "two" else "${indices.size}"
+                val which = indices.map { "#${it + 1}" }
+                val named = which.dropLast(1).joinToString(", ") + " and " + which.last()
+                return "$count transformers fit $source → $type: withTransformer $named. Pass one."
+            }
+    }
+
+    /** [inner], with a transformer offered for the nested pair it sits in. */
+    data class WithTransformerHint(val inner: Failure, val source: String, val target: String) : Failure {
+        override val path get() = inner.path
+        override val type get() = inner.type
+        override val reason
+            get() = "${inner.reason} Or map $source → $target with " +
+                ".withTransformer(Transformer<$source, $target> { … })."
+    }
+
     data class MissingCase(
         override val path: Path,
         override val type: String,

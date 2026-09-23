@@ -1,6 +1,6 @@
 /nullables.kt:(1042,1073): error: Cannot transform User → StrictDto:
     StrictDto.name: String — User.name is String?, and a null has nowhere to go. Make StrictDto.name nullable, or fill it with .withFieldComputed(StrictDto::name) { … }.
-    StrictDto.address.zip: String — Address.zip is String?, and a null has nowhere to go. Make StrictAddressDto.zip nullable.
+    StrictDto.address.zip: String — Address.zip is String?, and a null has nowhere to go. Make StrictAddressDto.zip nullable. Or map Address → StrictAddressDto with .withTransformer(Transformer<Address, StrictAddressDto> { … }).
 
 /nullables.kt:(1109,1137): error: Cannot transform String? → String:
     String — the source is String?, and a null has nowhere to go. Transform into String? instead.

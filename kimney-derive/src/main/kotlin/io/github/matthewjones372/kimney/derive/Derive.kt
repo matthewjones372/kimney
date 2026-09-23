@@ -2,10 +2,21 @@ package io.github.matthewjones372.kimney.derive
 
 /**
  * The whole of kimney's decision about one call: a plan to build [target] from [source], or every reason not.
- * [overrides] name top-level fields of [target] only.
+ * [overrides] name top-level fields of [target] only; [transformers] serve every pair below the root they fit.
  */
-fun <T> derive(model: TypeModel<T>, source: T, target: T, overrides: List<Override<T>> = emptyList()): Derived<T> =
-    Derivation(model).pair(Site(source, target, Path(model.render(target)), emptyList()), overrides)
+fun <T> derive(
+    model: TypeModel<T>,
+    source: T,
+    target: T,
+    overrides: List<Override<T>> = emptyList(),
+    transformers: List<Supplied<T>> = emptyList(),
+): Derived<T> {
+    val root = Site(source, target, Path(model.render(target)), emptyList())
+    return Derivation(model, transformers).pair(root, overrides)
+}
+
+/** A user's transformer from [source] to [target], at [index] in the chain. */
+data class Supplied<T>(val source: T, val target: T, val index: Int)
 
 /**
  * One pair being derived, where it sits, and the pairs above it. [owner] is the class the field at [path] belongs
@@ -23,13 +34,29 @@ internal data class Site<T>(
         Site(source, target, path / field, seen + (this.source to this.target), owner, origin)
 }
 
-/** One constructor argument, or the failures that stop it; never both. */
-private typealias Step<T> = Pair<Arg<T>?, List<Failure>>
-
-private class Derivation<T>(val model: TypeModel<T>) {
+private class Derivation<T>(val model: TypeModel<T>, private val transformers: List<Supplied<T>>) {
+    private val constructors = ConstructorRule(model) { pair(it) }
 
     // With overrides the target is built, even from its own type: `into<_, User>()` is a copy with changes.
-    fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> = when {
+    fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> {
+        val fitting = model.fitting(site, transformers)
+        return when {
+            fitting.size == 1 -> Derived.Planned(Plan.Transformed(fitting.single().index, site.target))
+
+            fitting.size > 1 -> failed(
+                Failure.AmbiguousTransformer(
+                    site.path,
+                    model.render(site.target),
+                    model.render(site.source),
+                    fitting.map { it.index },
+                ),
+            )
+
+            else -> unsupplied(site, overrides)
+        }
+    }
+
+    private fun unsupplied(site: Site<T>, overrides: List<Override<T>>): Derived<T> = when {
         overrides.isEmpty() && model.isSubtypeOf(site.source, site.target) -> Derived.Planned(Plan.Identity)
 
         site.seen.any { (s, t) -> model.same(s, site.source) && model.same(t, site.target) } ->
@@ -40,7 +67,7 @@ private class Derivation<T>(val model: TypeModel<T>) {
 
     /** Every rule but the constructor answers by the target's shape; overrides can only fill a constructor. */
     private fun byShape(site: Site<T>, overrides: List<Override<T>>): Derived<T> {
-        val shaped = shapedRule(site) ?: return construct(site, overrides)
+        val shaped = shapedRule(site) ?: return constructors.construct(site, overrides)
         return if (overrides.isEmpty()) {
             shaped()
         } else {
@@ -65,121 +92,50 @@ private class Derivation<T>(val model: TypeModel<T>) {
             model.container(site.target) != null -> { -> model.containers(site, ::pair) }
 
             model.isObject(site.target) -> { ->
-                if (model.isObject(site.source)) Derived.Planned(Plan.ObjectInstance(site.target)) else noRule(site)
+                if (model.isObject(site.source)) {
+                    Derived.Planned(Plan.ObjectInstance(site.target))
+                } else {
+                    model.noRule(site)
+                }
             }
 
             enumEntries != null -> { ->
-                model.enumEntries(site.source)?.let { model.enumByName(site, it, enumEntries) } ?: noRule(site)
+                model.enumEntries(site.source)?.let { model.enumByName(site, it, enumEntries) }
+                    ?: model.noRule(site)
             }
 
             cases != null -> { ->
-                model.sealedCases(site.source)?.let { model.sealedByName(site, it, cases, ::pair) } ?: noRule(site)
+                model.sealedCases(site.source)?.let { model.sealedByName(site, it, cases, ::pair) }
+                    ?: model.noRule(site)
             }
 
             else -> null
         }
     }
-
-    private fun noRule(site: Site<T>): Derived<T> =
-        failed(Failure.NoRuleFor(site.path, model.render(site.target), model.render(site.source)))
-
-    private fun construct(site: Site<T>, overrides: List<Override<T>>): Derived<T> {
-        val target = model.render(site.target)
-        return when (val construction = model.construction(site.target)) {
-            is Construction.Primary -> primary(site, construction.params, overrides)
-
-            is Construction.NotPublic ->
-                failed(Failure.NoPrimaryConstructor(site.path, target, "it is ${construction.visibility}"))
-
-            Construction.SecondaryOnly ->
-                failed(Failure.NoPrimaryConstructor(site.path, target, "it has only secondary constructors"))
-
-            Construction.NotAClass -> noRule(site)
-        }
-    }
-
-    private fun primary(site: Site<T>, params: List<Param<T>>, overrides: List<Override<T>>): Derived<T> {
-        val names = params.map { it.name }.toSet()
-        val stray = overrides.filter { it.field !in names }
-            .map { Failure.NotAParameter(site.path / it.field, it.method, model.render(site.target)) }
-        val duplicated = overrides.groupBy { it.field }.filterValues { it.size > 1 }
-        val duplicates = duplicated.map { (field, all) ->
-            Failure.DuplicateOverride(site.path / field, all.map { it.method })
-        }
-        val steps = params.filterNot { it.name in duplicated }.map { param ->
-            overrides.firstOrNull { it.field == param.name }
-                ?.let { overridden(it, param, site) }
-                ?: derived(param, site)
-        }
-        val failures = stray + duplicates + steps.flatMap { it.second }
-        return if (failures.isEmpty()) {
-            Derived.Planned(Plan.Construct(site.target, steps.mapNotNull { it.first }))
-        } else {
-            Derived.Failed(failures)
-        }
-    }
-
-    private fun overridden(override: Override<T>, param: Param<T>, site: Site<T>): Step<T> {
-        val field = site.path / param.name
-        return when (override) {
-            is Override.Const -> checked(override.valueType, param, field, override.method) {
-                Arg.Const(param.name, override.index)
-            }
-
-            is Override.Computed -> checked(override.resultType, param, field, override.method) {
-                Arg.Computed(param.name, override.index)
-            }
-
-            is Override.Renamed -> model.property(site.source, override.from)
-                ?.let { fromProperty(param, override.from, beneath(site, param, it, override.from)) }
-                ?: (null to listOf(unreadable(field, param, site, override.from)))
-        }
-    }
-
-    // The compiler widens an override's type argument until the value fits, so the field's type is checked here.
-    private fun checked(given: T, param: Param<T>, field: Path, method: String, arg: () -> Arg<T>): Step<T> =
-        if (model.isSubtypeOf(given, param.type)) {
-            arg() to emptyList()
-        } else {
-            null to listOf(Failure.OverrideTypeMismatch(field, model.render(param.type), method, model.render(given)))
-        }
-
-    private fun derived(param: Param<T>, site: Site<T>): Step<T> {
-        val property = model.property(site.source, param.name)
-        return when {
-            property != null -> fromProperty(param, param.name, beneath(site, param, property, param.name))
-
-            param.hasDefault -> Arg.Default(param.name) to emptyList()
-
-            else -> null to listOf(
-                Failure.MissingSource(
-                    site.path / param.name,
-                    model.render(param.type),
-                    model.render(site.source),
-                    model.render(site.target),
-                ),
-            )
-        }
-    }
-
-    private fun fromProperty(param: Param<T>, property: String, nested: Site<T>): Step<T> =
-        when (val derived = pair(nested)) {
-            is Derived.Planned -> Arg.FromProperty(param.name, property, derived.plan) to emptyList()
-            is Derived.Failed -> null to derived.failures
-        }
-
-    private fun beneath(site: Site<T>, param: Param<T>, property: T, name: String): Site<T> = site.below(
-        param.name,
-        property,
-        param.type,
-        owner = model.render(site.target),
-        origin = "${model.render(site.source)}.$name",
-    )
 }
 
-private fun failed(failure: Failure): Derived<Nothing> = Derived.Failed(listOf(failure))
+internal fun failed(failure: Failure): Derived<Nothing> = Derived.Failed(listOf(failure))
 
-private fun <T> Derivation<T>.unreadable(field: Path, param: Param<T>, site: Site<T>, property: String): Failure =
-    Failure.UnreadableSource(field, model.render(param.type), model.render(site.source), property)
+internal fun <T> TypeModel<T>.noRule(site: Site<T>): Derived<T> =
+    failed(Failure.NoRuleFor(site.path, render(site.target), render(site.source)))
 
 private fun <T> TypeModel<T>.same(a: T, b: T): Boolean = isSubtypeOf(a, b) && isSubtypeOf(b, a)
+
+/** The first failure inside a nested pair offers a transformer for that pair, unless one inside it already did. */
+internal fun <T> TypeModel<T>.offerTransformer(site: Site<T>, failed: Derived.Failed): Derived.Failed {
+    val first = failed.failures.first()
+    return if (first is Failure.WithTransformerHint) {
+        failed
+    } else {
+        val hinted = Failure.WithTransformerHint(first, render(site.source), render(site.target))
+        Derived.Failed(listOf(hinted) + failed.failures.drop(1))
+    }
+}
+
+// The root is the chain's own pair, so a transformer serves only what lies below it.
+private fun <T> TypeModel<T>.fitting(site: Site<T>, transformers: List<Supplied<T>>): List<Supplied<T>> =
+    if (site.path.fields.isEmpty()) {
+        emptyList()
+    } else {
+        transformers.filter { isSubtypeOf(site.source, it.source) && isSubtypeOf(it.target, site.target) }
+    }

@@ -19,6 +19,9 @@ sealed interface Plan<out T> {
 
     data class Construct<T>(val target: T, val args: List<Arg<T>>) : Plan<T>
 
+    /** The user's transformer at [index] in the chain, applied to the source. */
+    data class Transformed<T>(val index: Int, val target: T) : Plan<T>
+
     /** The target object, with nothing read from the source. */
     data class ObjectInstance<T>(val target: T) : Plan<T>
 
@@ -60,4 +63,17 @@ sealed interface Arg<out T> {
 
     /** Left out of the call, so the parameter's default applies. */
     data class Default(override val param: String) : Arg<Nothing>
+}
+
+/** The chain indices of every transformer this plan calls, so an unused one can be named. */
+fun <T> Plan<T>.transformersUsed(): Set<Int> = when (this) {
+    is Plan.Transformed -> setOf(index)
+    Plan.Identity, is Plan.ObjectInstance, is Plan.EnumByName -> emptySet()
+    is Plan.Construct -> args.flatMap { (it as? Arg.FromProperty)?.plan?.transformersUsed().orEmpty() }.toSet()
+    is Plan.NullSafe -> plan.transformersUsed()
+    is Plan.Wrap -> plan.transformersUsed()
+    is Plan.Unwrap -> plan.transformersUsed()
+    is Plan.Elements -> plan.transformersUsed()
+    is Plan.Entries -> key.transformersUsed() + value.transformersUsed()
+    is Plan.SealedByName -> arms.flatMap { it.plan.transformersUsed() }.toSet()
 }

@@ -53,7 +53,8 @@ class NullAndValueTest {
     fun `inside a sealed case the hint drops the override it cannot reach`() {
         lines("Shape", "ShapeDto") shouldBe listOf(
             "ShapeDto.Circle.label: String — Shape.Circle.label is String?, and a null has nowhere to go. " +
-                "Make ShapeDto.Circle.label nullable.",
+                "Make ShapeDto.Circle.label nullable. Or map Shape.Circle → ShapeDto.Circle with " +
+                ".withTransformer(Transformer<Shape.Circle, ShapeDto.Circle> { … }).",
         )
     }
 
