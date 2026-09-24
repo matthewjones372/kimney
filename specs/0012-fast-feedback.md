@@ -1,50 +1,42 @@
-# 0012 — Faster answers, and docs that cannot quote a stale error
+# 0012 — The build was fast; the daemon was full
 
 ## Problem
 
-A full `./gradlew build` now takes about ten minutes locally, almost all of it
-the compiler plugin's generated test classes running one after another in a
-single JVM. CI runs that same build once per JDK, so a one-line engine change
-waits behind every box test. Separately, the README, cookbook and reference
-quote kimney's error messages by hand; when a message changes — as 0006's
-transformer hint changed four — nothing notices the page is stale.
+Full builds had been taking about ten minutes. Measured on 2026-09-24, they
+do not: a forced rebuild of everything (`./gradlew build --rerun-tasks`) takes
+19 seconds on a fresh daemon, the compiler plugin's tests 14.5 of them, and a
+cached build one. The slow builds ran on a Gradle daemon 17 hours old whose
+metaspace was 99.3% of its 1 GB cap — every compile and every detekt run with
+types loads compiler classes into the daemon — and kimney shares that daemon
+with pelican, because the two builds ask for identical JVM settings.
+
+Separately, the README, cookbook and reference quote kimney's error messages
+by hand; when a message changes — as 0006's transformer hint changed four —
+nothing notices the page is stale.
 
 ## Not doing
 
-- **No test deletion or sampling.** Every test still runs on every build.
-- **No change to what `./gradlew build` means**: it still runs every gate.
-- **No new CI provider** and nothing that needs a secret.
+- **No parallel test forks and no CI split.** The first draft of this spec
+  proposed both, on the guess that the tests were slow. They are not.
+- **No change to what `./gradlew build` means.**
 
 ## Shape
 
-- The compiler plugin's test task forks one JVM per generated class, up to
-  half the machine's cores. The framework's test classes share nothing
-  between them, so they parallelise without changes.
-- CI splits into two jobs that run side by side: `engine` (runtime, derive,
-  the Gradle plugin, the example) and `compiler` (the compiler plugin's tests),
-  each on JDK 21 and 25. A Kover job merges their reports and applies the floor.
+- `gradle.properties` gives kimney's daemon `-Xmx3g -XX:MaxMetaspaceSize=2g`,
+  with the measurement above beside it. Different settings from pelican's also
+  mean kimney stops sharing a daemon with it.
 - `./gradlew quickCheck` runs everything but the compiler plugin's tests, for
   the inner loop on engine and docs work.
-- `DocsQuoteGoldensTest`: every kimney message quoted in `README.md`,
-  `docs/*.md` — a line in a plain code block, or a table cell in backticks,
-  that reads `<path>… — <reason>` — must appear verbatim in some
+- `DocsQuoteGoldensTest`: every kimney message quoted in `README.md` or
+  `docs/*.md` — a line of a plain code block, or a table cell in backticks,
+  that reads `<path> — <reason>` — must appear verbatim in some
   `testData/**/*.diag.txt`. A quote nothing produces fails the build.
-
-## Why this shape
-
-Forking per class is the cheapest real speed-up: the framework already
-isolates each test, so the only cost is JVM start-up, which the box tests
-dwarf. Splitting CI by module rather than by test keeps each job's failure
-readable. Checking quotes against goldens rather than regenerating the docs
-keeps the docs hand-written — they choose which messages to show — while
-making each one a claim a test holds.
 
 ## Stack
 
-- [ ] **`spec-0012-parallel`** — forks for the compiler tests; `quickCheck`.
-      Done when: a full build is measurably faster, quoted before and after.
-- [ ] **`spec-0012-ci`** — the split workflow and the merged coverage job.
-      Done when: the workflow validates, and each job runs the tasks it names.
+- [ ] **`spec-0012-daemon`** — the daemon settings and `quickCheck`.
+      Done when: `quickCheck` runs without the compiler tests, and the settings
+      carry their reason.
 - [ ] **`spec-0012-quotes`** — `DocsQuoteGoldensTest`.
       Done when: it passes, and editing one quoted message fails it.
 
@@ -58,5 +50,5 @@ making each one a claim a test holds.
 ## Decisions
 
 - Drafted and committed on the maintainer's instruction to do the remaining
-  work with the recommended answers; forks at half the cores, `quickCheck` as
-  the name, and quotes matched verbatim.
+  work with the recommended answers; rewritten after measuring, which
+  removed the two entries the first draft guessed at.
