@@ -55,10 +55,6 @@ sealed interface Failure {
         override val reason get() = "no rule transforms $source into $type."
     }
 
-    data class Recursive(override val path: Path, override val type: String, val source: String) : Failure {
-        override val reason get() = "$source → $type contains itself, and recursive types are not supported yet."
-    }
-
     data class NullableToNonNull(
         override val path: Path,
         override val type: String,

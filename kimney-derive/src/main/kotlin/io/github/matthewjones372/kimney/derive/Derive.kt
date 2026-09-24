@@ -11,7 +11,8 @@ fun <T> derive(
     overrides: List<Override<T>> = emptyList(),
     transformers: List<Supplied<T>> = emptyList(),
 ): Derived<T> {
-    val root = Site(source, target, Path(model.render(target)), emptyList())
+    // A root with overrides is not a pair recursion may return to: its overrides name its own fields only.
+    val root = Site(source, target, Path(model.render(target)), emptyList(), shareable = overrides.isEmpty())
     return Derivation(model, transformers).pair(root, overrides)
 }
 
@@ -29,12 +30,16 @@ internal data class Site<T>(
     val source: T,
     val target: T,
     val path: Path,
-    val seen: List<Pair<T, T>>,
+    val seen: List<Pair<T, T>?>,
     val owner: String? = null,
     val origin: String? = null,
+    val shareable: Boolean = true,
 ) {
+    /** Where this pair sits on the path: a reference to it back from below names it by this. */
+    val depth: Int get() = seen.size
+
     fun below(field: String, source: T, target: T, owner: String? = null, origin: String? = null): Site<T> =
-        Site(source, target, path / field, seen + (this.source to this.target), owner, origin)
+        Site(source, target, path / field, seen + (this.source to this.target).takeIf { shareable }, owner, origin)
 }
 
 private class Derivation<T>(val model: TypeModel<T>, private val transformers: List<Supplied<T>>) {
@@ -60,14 +65,25 @@ private class Derivation<T>(val model: TypeModel<T>, private val transformers: L
         }
     }
 
-    private fun unsupplied(site: Site<T>, overrides: List<Override<T>>): Derived<T> = when {
-        overrides.isEmpty() && model.isSubtypeOf(site.source, site.target) -> Derived.Planned(Plan.Identity)
-
-        site.seen.any { (s, t) -> model.same(s, site.source) && model.same(t, site.target) } ->
-            failed(Failure.Recursive(site.path, model.render(site.target), model.render(site.source)))
-
-        else -> byShape(site, overrides)
+    private fun unsupplied(site: Site<T>, overrides: List<Override<T>>): Derived<T> {
+        val above = site.seen.indexOfFirst {
+            it != null && model.same(it.first, site.source) &&
+                model.same(it.second, site.target)
+        }
+        return when {
+            overrides.isEmpty() && model.isSubtypeOf(site.source, site.target) -> Derived.Planned(Plan.Identity)
+            above >= 0 -> Derived.Planned(Plan.Reference(above))
+            else -> named(site, byShape(site, overrides))
+        }
     }
+
+    /** A plan that refers back to its own pair becomes named, so the lowering can give it a function to call. */
+    private fun named(site: Site<T>, derived: Derived<T>): Derived<T> =
+        if (derived is Derived.Planned && derived.plan.refersTo(site.depth)) {
+            Derived.Planned(Plan.Named(site.depth, site.source, site.target, derived.plan))
+        } else {
+            derived
+        }
 
     /** Every rule but the constructor answers by the target's shape; overrides can only fill a constructor. */
     private fun byShape(site: Site<T>, overrides: List<Override<T>>): Derived<T> {

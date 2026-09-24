@@ -19,6 +19,12 @@ sealed interface Plan<out T> {
 
     data class Construct<T>(val target: T, val args: List<Arg<T>>) : Plan<T>
 
+    /** [plan], given a name by the [depth] of its pair on the path, so a [Reference] below can call it again. */
+    data class Named<T>(val depth: Int, val source: T, val target: T, val plan: Plan<T>) : Plan<T>
+
+    /** The enclosing [Named] plan with this [depth], applied again: the pair has met itself. */
+    data class Reference(val depth: Int) : Plan<Nothing>
+
     /** The user's transformer at [index] in the chain, applied to the source. */
     data class Transformed<T>(val index: Int, val target: T) : Plan<T>
 
@@ -68,7 +74,8 @@ sealed interface Arg<out T> {
 /** The chain indices of every transformer this plan calls, so an unused one can be named. */
 fun <T> Plan<T>.transformersUsed(): Set<Int> = when (this) {
     is Plan.Transformed -> setOf(index)
-    Plan.Identity, is Plan.ObjectInstance, is Plan.EnumByName -> emptySet()
+    Plan.Identity, is Plan.ObjectInstance, is Plan.EnumByName, is Plan.Reference -> emptySet()
+    is Plan.Named -> plan.transformersUsed()
     is Plan.Construct -> args.flatMap { (it as? Arg.FromProperty)?.plan?.transformersUsed().orEmpty() }.toSet()
     is Plan.NullSafe -> plan.transformersUsed()
     is Plan.Wrap -> plan.transformersUsed()
@@ -76,4 +83,18 @@ fun <T> Plan<T>.transformersUsed(): Set<Int> = when (this) {
     is Plan.Elements -> plan.transformersUsed()
     is Plan.Entries -> key.transformersUsed() + value.transformersUsed()
     is Plan.SealedByName -> arms.flatMap { it.plan.transformersUsed() }.toSet()
+}
+
+/** Whether a [Plan.Reference] to [depth] occurs outside any [Plan.Named] that already binds it. */
+internal fun <T> Plan<T>.refersTo(depth: Int): Boolean = when (this) {
+    is Plan.Reference -> this.depth == depth
+    is Plan.Named -> this.depth != depth && plan.refersTo(depth)
+    Plan.Identity, is Plan.ObjectInstance, is Plan.EnumByName, is Plan.Transformed -> false
+    is Plan.Construct -> args.any { (it as? Arg.FromProperty)?.plan?.refersTo(depth) == true }
+    is Plan.NullSafe -> plan.refersTo(depth)
+    is Plan.Wrap -> plan.refersTo(depth)
+    is Plan.Unwrap -> plan.refersTo(depth)
+    is Plan.Elements -> plan.refersTo(depth)
+    is Plan.Entries -> key.refersTo(depth) || value.refersTo(depth)
+    is Plan.SealedByName -> arms.any { it.plan.refersTo(depth) }
 }

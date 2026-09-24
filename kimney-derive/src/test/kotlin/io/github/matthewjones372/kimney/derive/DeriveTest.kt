@@ -126,17 +126,4 @@ class DeriveTest {
         failed.failures.single().line shouldBe
             "Dto — Dto has no public primary constructor: it has only secondary constructors."
     }
-
-    @Test
-    fun `a type that contains itself is refused rather than derived forever`() {
-        val model = FakeModel(
-            constructions = mapOf("NodeDto" to primary(param("next", "NodeDto"))),
-            properties = mapOf("Node" to mapOf("next" to "Node")),
-        )
-
-        val failed = derive(model, "Node", "NodeDto").shouldBeInstanceOf<Derived.Failed>()
-
-        failed.failures.single().line shouldBe
-            "NodeDto.next: NodeDto — Node → NodeDto contains itself, and recursive types are not supported yet."
-    }
 }
