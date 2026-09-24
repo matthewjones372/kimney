@@ -101,3 +101,11 @@ tasks.test {
 
 // The fixtures are test harness, run by every test and asserted by none.
 kover { currentProject { sources { excludedSourceSets.add("testFixtures") } } }
+
+// Nor are they published: `java-test-fixtures` adds its variants to the component, and a POM, which has no
+// variants, would fold the compiler test framework and JUnit into the plugin's compile dependencies.
+listOf("testFixturesApiElements", "testFixturesRuntimeElements", "testFixturesSourcesElements").forEach { variant ->
+    (components["java"] as AdhocComponentWithVariants).withVariantsFromConfiguration(configurations[variant]) {
+        skip()
+    }
+}

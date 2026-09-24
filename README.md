@@ -8,7 +8,8 @@ you exactly why it cannot.
 
 [![Kotlin 2.4.10](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![K2 compiler plugin](https://img.shields.io/badge/K2-compiler%20plugin-7F52FF)](docs/reference.md)
-[![status: pre-release](https://img.shields.io/badge/status-pre--release-orange)](docs/roadmap.md)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/kimney-runtime)](https://central.sonatype.com/artifact/io.github.matthewjones372/kimney-runtime)
+[![status: 0.x](https://img.shields.io/badge/status-0.x-orange)](docs/roadmap.md)
 [![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 [A first look](#a-first-look) · [When it cannot](#when-it-cannot) ·
@@ -135,28 +136,19 @@ Not yet: overrides on nested fields (a transformer covers the pair). The
 
 ## Trying it
 
-kimney is not on Maven Central yet. Two ways to use it from another project:
-
-**From Maven Local.** Publish everything, the Gradle plugin and its marker
-included, then resolve it like any published plugin:
-
-```bash
-./gradlew publishToMavenLocal
-```
+kimney is on Maven Central, the Gradle plugin and its marker included. The
+plugin is not on the Gradle Plugin Portal, so `pluginManagement` names Central:
 
 ```kotlin
 // settings.gradle.kts
 pluginManagement {
     repositories {
-        mavenLocal()
+        mavenCentral()
         gradlePluginPortal()
     }
 }
 dependencyResolutionManagement {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
+    repositories { mavenCentral() }
 }
 ```
 
@@ -164,9 +156,13 @@ dependencyResolutionManagement {
 // build.gradle.kts
 plugins {
     kotlin("jvm") version "2.4.10"
-    id("io.github.matthewjones372.kimney") version "0.1.0-SNAPSHOT"
+    id("io.github.matthewjones372.kimney") version "0.1.0"
 }
 ```
+
+**From Maven Local**, to try a change before it is released: run
+`./gradlew publishToMavenLocal` here and put `mavenLocal()` first in both
+repository lists above, with the `-SNAPSHOT` version from `gradle.properties`.
 
 **As a composite build**, to work on kimney and a project together:
 
@@ -185,6 +181,16 @@ both. Both setups were checked from a separate project.
 
 Inside this repository, [`example/`](example) applies the plugin the same way
 a consumer does, and runs every cookbook recipe on each build.
+
+### Known limitations in 0.1.0
+
+- **One Kotlin version.** 0.1.0 is built for Kotlin 2.4.10; each kimney
+  release names the one it is built for.
+- **Errors appear on build, not in the editor.** IntelliJ's K2 mode loads only
+  bundled compiler plugins by default, so kimney's diagnostics show when Gradle
+  compiles. The IDE has not been checked with the plugin enabled.
+- **JVM only.** The Gradle plugin applies to JVM compilations.
+- **No nested field overrides.** A transformer for the nested pair covers them.
 
 ### Releasing
 

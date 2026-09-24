@@ -191,8 +191,9 @@ Be honest with yourself about these:
   the number of pairs and fields. For a handful, write them by hand.
 - **You cannot pin Kotlin.** A compiler plugin is built for one compiler;
   kimney is built for 2.4.10, and a build on any other stops at configuration.
-- **You need it published today.** kimney is pre-release and not on Maven
-  Central yet; [the README](../README.md#trying-it) shows the composite build.
+- **You need a 1.0.** kimney is 0.x: on Maven Central, but its surface may
+  still change between releases, and editor support is unchecked
+  ([known limitations](../README.md#known-limitations-in-010)).
 - **You need what is not there yet**: overrides on nested fields, which a
   transformer for the pair covers instead. The
   [roadmap](roadmap.md) has them in order.
