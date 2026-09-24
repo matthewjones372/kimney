@@ -164,7 +164,8 @@ And what it costs at runtime: nothing. `transformInto` compiles to the
 constructor calls, null checks, `when`s and loops you would have written. No
 reflection, no mapping registry, no generated mapper classes, and the tests
 check that no lambda object is created where a hand-written mapping would
-not create one.
+not create one. [What it costs](what-it-costs.md) has the benchmark: the same
+time and the same allocation as the hand-written mapping.
 
 The row about a target field with a default is the one place kimney is no better than
 by hand. A default is

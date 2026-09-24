@@ -34,6 +34,8 @@ kover {
                     // The example proves the consumer path by compiling; it has
                     // no behaviour of its own to test.
                     classes("example.*")
+                    // Run by JMH in forked JVMs, never by a test.
+                    classes("kimney.benchmarks.*")
                 }
             }
         }
@@ -43,7 +45,7 @@ kover {
 apiValidation {
     // Only the runtime is linked against by user code; the rest is loaded by
     // the compiler or is the example.
-    ignoredProjects += listOf("kimney-derive", "kimney-compiler-plugin", "example")
+    ignoredProjects += listOf("kimney-derive", "kimney-compiler-plugin", "example", "benchmarks")
 }
 
 /** What each published artifact is, as a Maven search result should say. */

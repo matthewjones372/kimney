@@ -17,4 +17,6 @@ include(
     "kimney-derive",
     "kimney-compiler-plugin",
     "example",
+    // A JMH harness, run only when asked for: ./gradlew :benchmarks:jmh
+    "benchmarks",
 )

@@ -24,6 +24,7 @@ draft, not a substitute for it.
 | 0015 | A sealed case into its target's sealed parent |
 | 0016 | Generic sealed types and value classes |
 | 0017 | Mutable collections as sources and targets |
+| 0018 | What it costs, measured |
 
 ## Rule order
 

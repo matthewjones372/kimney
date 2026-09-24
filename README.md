@@ -14,7 +14,7 @@ you exactly why it cannot.
 [A first look](#a-first-look) · [When it cannot](#when-it-cannot) ·
 [What it covers](#what-it-covers) · [Trying it](#trying-it) · [Why](docs/why.md) ·
 [Cookbook](docs/cookbook.md) · [Reference](docs/reference.md) ·
-[Roadmap](docs/roadmap.md)
+[What it costs](docs/what-it-costs.md) · [Roadmap](docs/roadmap.md)
 
 </div>
 
@@ -28,7 +28,7 @@ You write the call. At compile time kimney works out the constructor calls,
 the nested mappings, the enum and sealed `when`s and the collection loops —
 and generates exactly that code. There is no reflection, no runtime mapping
 table and no annotation processor: what runs is what you would have written
-by hand, because it is.
+by hand, because it is — [measured](docs/what-it-costs.md) to the byte.
 
 When it cannot derive a mapping, the call does not compile, and the error
 names every field it could not fill, the path to it, and what would fix it.

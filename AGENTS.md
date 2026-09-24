@@ -115,6 +115,7 @@ kimney-derive           type model + rules → Plan or failures; the whole brain
 kimney-compiler-plugin  FIR checker and IR lowering, adapters onto kimney-derive
 kimney-gradle-plugin    included build; applies the compiler plugin
 example/                applies the Gradle plugin by id, as a consumer does
+benchmarks/             kimney against hand-written mappings, by JMH; run only when asked
 ```
 
 `kimney-runtime` and `kimney-derive` depend on the Kotlin standard library and
