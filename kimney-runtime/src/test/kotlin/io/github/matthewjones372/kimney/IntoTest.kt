@@ -29,6 +29,10 @@ class IntoTest {
             .message shouldStartWith "withFieldRenamed reached runtime"
         shouldThrow<KimneyNotApplied> { chain.withTransformer(Transformer<User, UserDto> { UserDto(it.name) }) }
             .message shouldStartWith "withTransformer reached runtime"
+        shouldThrow<KimneyNotApplied> { chain.withEnumEntryRenamed(Level.LOW, Level.HIGH) }
+            .message shouldStartWith "withEnumEntryRenamed reached runtime"
+        shouldThrow<KimneyNotApplied> { chain.withEnumFallback(Level.LOW) }
+            .message shouldStartWith "withEnumFallback reached runtime"
     }
 
     @Test
@@ -55,3 +59,5 @@ class IntoTest {
         Partial.Errors(listOf(PartialError("A.b", "is null"))).valueOrNull() shouldBe null
     }
 }
+
+private enum class Level { LOW, HIGH }

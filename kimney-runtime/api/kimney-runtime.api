@@ -1,6 +1,8 @@
 public final class io/github/matthewjones372/kimney/Into {
 	public final fun transform ()Ljava/lang/Object;
 	public final fun transformPartial ()Lio/github/matthewjones372/kimney/Partial;
+	public final fun withEnumEntryRenamed (Ljava/lang/Enum;Ljava/lang/Enum;)Lio/github/matthewjones372/kimney/Into;
+	public final fun withEnumFallback (Ljava/lang/Enum;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldComputed (Lkotlin/reflect/KProperty1;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldConst (Lkotlin/reflect/KProperty1;Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldRenamed (Lkotlin/reflect/KProperty1;Lkotlin/reflect/KProperty1;)Lio/github/matthewjones372/kimney/Into;

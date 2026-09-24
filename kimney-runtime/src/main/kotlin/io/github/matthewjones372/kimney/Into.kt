@@ -24,6 +24,19 @@ public class Into<A, B> internal constructor() {
     public fun <S, T> withPartialTransformer(transformer: PartialTransformer<S, T>): Into<A, B> =
         throw KimneyNotApplied("withPartialTransformer")
 
+    /**
+     * Sends the entry [from] to [to] wherever an enum of [from]'s class becomes one of [to]'s, instead of to the
+     * entry of the same name. Both must be written as the entries themselves: `Status.ARCHIVED`.
+     */
+    public fun <S : Enum<S>, T : Enum<T>> withEnumEntryRenamed(from: S, to: T): Into<A, B> =
+        throw KimneyNotApplied("withEnumEntryRenamed")
+
+    /**
+     * Sends every entry with no entry of the same name, and no rename, to [to], wherever an enum becomes one of
+     * [to]'s class. It is also what an entry compiled in after this call becomes.
+     */
+    public fun <T : Enum<T>> withEnumFallback(to: T): Into<A, B> = throw KimneyNotApplied("withEnumFallback")
+
     public fun transform(): B = throw KimneyNotApplied("transform")
 
     /** As [transform], collecting what does not fit into [Partial.Errors] rather than refusing to compile. */
