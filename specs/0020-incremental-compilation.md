@@ -66,13 +66,13 @@ Recommended: record in the adapter.
 
 ## Stack
 
-- [ ] **`spec-0020-ic-test`** — a Gradle TestKit test in a new `ic-test`
+- [x] **`spec-0020-ic-test`** ([#1](https://github.com/matthewjones372/kimney/pull/1)) — a Gradle TestKit test in a new `ic-test`
       project: publishes runtime, compiler plugin and Gradle plugin to a
       build-local repository, writes the petshop shape (`domain` + `api`),
       builds, adds `Rabbit`, builds again, expects the error; plus the same
       for a sealed case, a constructor parameter and a property type change.
       Done when: enabled on `main`, the enum case fails for the reason in Problem.
-- [ ] **`spec-0020-lookups`** — the recorder in `FirTypeModel` and the checker.
+- [x] **`spec-0020-lookups`** ([#2](https://github.com/matthewjones372/kimney/pull/2)) — the recorder in `FirTypeModel` and the checker.
       Done when: every `ic-test` case passes, on each tested Kotlin.
 
 ## Acceptance
