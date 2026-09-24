@@ -34,10 +34,10 @@ nothing notices the page is stale.
 
 ## Stack
 
-- [ ] **`spec-0012-daemon`** — the daemon settings and `quickCheck`.
+- [x] **`spec-0012-daemon`** — the daemon settings and `quickCheck`.
       Done when: `quickCheck` runs without the compiler tests, and the settings
       carry their reason.
-- [ ] **`spec-0012-quotes`** — `DocsQuoteGoldensTest`.
+- [x] **`spec-0012-quotes`** — `DocsQuoteGoldensTest`.
       Done when: it passes, and editing one quoted message fails it.
 
 ## Acceptance

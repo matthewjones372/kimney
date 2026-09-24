@@ -20,8 +20,12 @@ configurations.configureEach {
 // The pages DocsMatchTheirFilesTest holds to the recipes they quote, declared as inputs so an edit to either side
 // reruns it rather than hitting the cache.
 tasks.named<Test>("test") {
-    inputs.files(rootProject.file("README.md"), rootProject.file("docs/cookbook.md"), rootProject.file("docs/why.md"))
+    inputs.files(rootProject.file("README.md"), rootProject.fileTree("docs") { include("*.md") })
         .withPropertyName("quotingPages")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    // The goldens DocsQuoteGoldensTest holds the pages' quoted messages to.
+    inputs.files(rootProject.fileTree("kimney-compiler-plugin/testData") { include("**/*.diag.txt") })
+        .withPropertyName("goldens")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     val repoRoot = rootDir.path
     jvmArgumentProviders.add(CommandLineArgumentProvider { listOf("-Dkimney.repoRoot=$repoRoot") })

@@ -82,8 +82,8 @@ The other failures:
 |---|---|
 | No public primary constructor | `Hidden — Hidden has no public primary constructor: it is private.` |
 | No rule for the pair | `OrderDto.count: Long — no rule transforms Int into Long.` |
-| Null into non-null | `UserDto.name: String — User.name is String?, and a null has nowhere to go. Make UserDto.name nullable, or fill it with .withFieldComputed(UserDto::name) { … }.` |
-| Crossing kinds | `OrderDto.tags: List<TagDto> — a Set is not turned into a List. Fill it with .withFieldComputed(OrderDto::tags) { … }.` |
+| Null into non-null | `StrictDto.name: String — User.name is String?, and a null has nowhere to go. Make StrictDto.name nullable, or fill it with .withFieldComputed(StrictDto::name) { … }.` |
+| Crossing kinds | `StrictOrder.tags: List<TagDto> — a Set is not turned into a List. Fill it with .withFieldComputed(StrictOrder::tags) { … }.` |
 | A map key that could collide | `StrictOrder.keyed[key]: LineDto — keys are transformed only as themselves or through a value class, since Line into LineDto could turn two keys into one.` |
 | A missing case | `StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.` |
 | A type containing itself | `TreeDto.child: TreeDto — Tree → TreeDto contains itself, and recursive types are not supported yet.` |

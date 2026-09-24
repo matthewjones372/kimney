@@ -102,7 +102,10 @@ A code example in the README or the cookbook is a file in
 `example/src/main/kotlin/example/cookbook/` (one package per recipe), quoted whole under a
 `// file: <path>` line. `CookbookTest` runs each one and
 `DocsMatchTheirFilesTest` fails the build if a quote and its file differ, so
-change the file and paste it back, never the page alone.
+change the file and paste it back, never the page alone. A kimney message a
+page quotes — in a plain code block or a backticked table cell — must appear
+verbatim in a golden under `testData/`; `DocsQuoteGoldensTest` holds it there,
+so copy messages from goldens, never from memory.
 
 ## Layout
 
