@@ -155,6 +155,12 @@ The root pair is the chain's own and never goes to a transformer.
 | Two transformers fit one pair | `TeamDto.lead: UserDto — two transformers fit User → UserDto: withTransformer #1 and #3. Pass one.` |
 | A transformer fits nothing (warning) | `withTransformer(Int → Long) is not used: no pair below the root fits it. A type it names may have changed.` |
 
+A `Transformer` context parameter of any function or lambda around the call
+is offered the same way, innermost first: `context(showMoney) {
+invoice.transformInto<InvoiceDto>() }`. It is never reported unused. When a
+passed and a context transformer both fit, the error names both:
+`withTransformer #1 and context parameter 'money'`.
+
 The first failure inside a nested class offers one: `… Or map Address →
 AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).`
 

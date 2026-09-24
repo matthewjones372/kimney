@@ -109,4 +109,17 @@ class CookbookTest {
                 motto = "(none)",
             )
     }
+
+    @Test
+    fun `a transformer in context serves every call beneath it`() {
+        val invoice = example.cookbook.context.Invoice(
+            example.cookbook.context.Money(1250, "GBP"),
+            example.cookbook.context.Money(250, "GBP"),
+        )
+
+        example.cookbook.context.present(invoice) shouldBe example.cookbook.context.InvoiceDto(
+            example.cookbook.context.MoneyDto("GBP 12.50"),
+            example.cookbook.context.MoneyDto("GBP 2.50"),
+        )
+    }
 }

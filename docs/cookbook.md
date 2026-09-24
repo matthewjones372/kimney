@@ -38,6 +38,7 @@ at configuration and names both.
 - [Lists, sets and maps](#lists-sets-and-maps)
 - [A `Set` into a `List`](#a-set-into-a-list)
 - [Your own transformer for a nested pair](#your-own-transformer-for-a-nested-pair)
+- [A transformer for everything in scope](#a-transformer-for-everything-in-scope)
 - [Reading the errors](#reading-the-errors)
 - [Compiled without the plugin](#compiled-without-the-plugin)
 
@@ -350,6 +351,47 @@ underneath it.
 
 The chain evaluates each transformer once, in the order written, and calls
 `transform` where its pair appears.
+
+## A transformer for everything in scope
+
+A transformer every mapping in a layer should use — how money is shown, how an
+id is encoded — does not need passing to each chain. Put it in a context
+parameter, and every `transformInto` and chain beneath it uses it for the
+pairs it fits.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/context/ContextTransformers.kt
+package example.cookbook.context
+
+import io.github.matthewjones372.kimney.Transformer
+import io.github.matthewjones372.kimney.transformInto
+
+data class Money(val pence: Long, val currency: String)
+
+data class MoneyDto(val display: String)
+
+data class Invoice(val total: Money, val tax: Money)
+
+data class InvoiceDto(val total: MoneyDto, val tax: MoneyDto)
+
+/** How money is shown, decided once for the whole API layer. */
+val showMoney = Transformer<Money, MoneyDto> {
+    MoneyDto("${it.currency} ${it.pence / 100}.${(it.pence % 100).toString().padStart(2, '0')}")
+}
+
+// `this.` is required: a context parameter is also an `Any?`, so a bare transformInto() could mean either.
+context(money: Transformer<Money, MoneyDto>)
+fun Invoice.toDto(): InvoiceDto = this.transformInto()
+
+fun present(invoice: Invoice): InvoiceDto = context(showMoney) { invoice.toDto() }
+```
+
+Inside a function with a context parameter, write `this.transformInto()`:
+`transformInto` extends `Any?`, so the context parameter is a receiver it could
+mean too, and Kotlin asks you to say which. A context transformer is matched
+exactly like one passed with `withTransformer`. One that fits nothing is not a warning, since it is there
+for every call below it, most of which will not need it. Two that fit the same
+pair — one passed, one in context — is an error naming both.
 
 ## Reading the errors
 

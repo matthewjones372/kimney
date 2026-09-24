@@ -92,6 +92,9 @@ tasks.test {
             )
         },
     )
+    // `-Pkimney.updateTestData=true` has the framework write what it saw back into testData, to read the
+    // difference behind "Actual data differs"; review the diff, never commit it unread.
+    systemProperty("kotlin.test.update.test.data", providers.gradleProperty("kimney.updateTestData").getOrElse("false"))
     systemProperty("idea.ignore.disabled.plugins", "true")
     systemProperty("idea.home.path", rootDir)
 }

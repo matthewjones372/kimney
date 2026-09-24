@@ -52,13 +52,13 @@ parameters — and naming them in a message.
 
 ## Stack
 
-- [ ] **`spec-0011-engine`** — `Supplied` carries a label; ambiguity names it.
+- [x] **`spec-0011-engine`** — `Supplied` carries a label; ambiguity names it.
       Done when: engine tests cover a chain and a context transformer fitting
       one pair.
-- [ ] **`spec-0011-fir`** — the checker collects context transformers in scope.
+- [x] **`spec-0011-fir`** — the checker collects context transformers in scope.
       Done when: goldens pass for a function's and a lambda's context, and for
       ambiguity between chain and context.
-- [ ] **`spec-0011-ir`** — the lowering reads them; box and agreement; docs.
+- [x] **`spec-0011-ir`** — the lowering reads them; box and agreement; docs.
       Done when: box tests pass for `transformInto` and a chain inside
       `context(...) { }`, and for a nested function's context.
 

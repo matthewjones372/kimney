@@ -9,8 +9,10 @@ import io.github.matthewjones372.kimney.derive.Arg
 import io.github.matthewjones372.kimney.derive.Container
 import io.github.matthewjones372.kimney.derive.Derived
 import io.github.matthewjones372.kimney.derive.Plan
+import io.github.matthewjones372.kimney.derive.Supplied
 import io.github.matthewjones372.kimney.derive.derive
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
+import org.jetbrains.kotlin.backend.common.ScopeWithIr
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
@@ -28,8 +30,12 @@ import org.jetbrains.kotlin.ir.builders.irIs
 import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.builders.irWhen
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
+import org.jetbrains.kotlin.ir.declarations.IrValueDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -38,9 +44,10 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
 import org.jetbrains.kotlin.ir.types.classOrFail
+import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.makeNullable
-import org.jetbrains.kotlin.ir.util.callableId
+import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 
@@ -56,7 +63,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         val call = super.visitCall(expression) as? IrCall ?: return expression
         val report = { message: String -> report(call, message) }
         return guarded(fallback = { call }, report = report) {
-            when (call.symbol.owner.callableId) {
+            when (call.kimneyId) {
                 TRANSFORM_INTO -> call.arguments[0]?.let { lowered(call, IrChain(it, emptyList(), emptyList())) }
                     ?: call
 
@@ -68,18 +75,22 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         }
     }
 
-    private fun lowered(call: IrCall, chain: IrChain): IrExpression =
-        when (val derived = derive(model, chain.source.type, call.type, chain.overrides, chain.transformers)) {
+    private fun lowered(call: IrCall, chain: IrChain): IrExpression {
+        val inContext = allScopes.contextTransformers(start = chain.given.size)
+        val transformers = chain.transformers + inContext.map { it.first }
+        return when (val derived = derive(model, chain.source.type, call.type, chain.overrides, transformers)) {
             is Derived.Planned -> builder(call).irBlock(resultType = call.type) {
                 val source = irTemporary(chain.source)
                 // Evaluated here, in written order, so side effects happen as the chain reads.
-                val given = chain.given.map { it?.let { expression -> irTemporary(given(expression, source)) } }
+                val given = chain.given.map { it?.let { expression -> irTemporary(given(expression, source)) } } +
+                    inContext.map { it.second }
                 +lower(derived.plan, irGet(source), given)
             }
 
             is Derived.Failed ->
                 disagreed(call, derived.message(model.render(chain.source.type), model.render(call.type)))
         }
+    }
 
     // The checker reports these first, so reaching one means the two adapters disagree.
     private fun disagreed(call: IrCall, why: String): IrCall = call.also {
@@ -106,7 +117,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private fun IrStatementsBuilder<*>.lower(
         plan: Plan<IrType>,
         value: IrExpression,
-        given: List<IrVariable?>,
+        given: List<IrValueDeclaration?>,
     ): IrExpression =
         when (plan) {
             Plan.Identity -> value
@@ -172,7 +183,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private fun IrStatementsBuilder<*>.elements(
         plan: Plan.Elements<IrType>,
         value: IrExpression,
-        given: List<IrVariable?>,
+        given: List<IrValueDeclaration?>,
     ): IrExpression {
         val from = planned(model.container(value.type), "a source container").element
         val element: IrStatementsBuilder<*>.(IrExpression) -> IrExpression = { item -> lower(plan.plan, item, given) }
@@ -189,7 +200,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private fun IrStatementsBuilder<*>.nullSafe(
         plan: Plan.NullSafe<IrType>,
         value: IrExpression,
-        given: List<IrVariable?>,
+        given: List<IrValueDeclaration?>,
     ): IrExpression {
         val source = irTemporary(value)
         val present = irBlock { +lower(plan.plan, irImplicitCast(irGet(source), source.type.makeNotNull()), given) }
@@ -200,7 +211,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private fun IrStatementsBuilder<*>.sealedByName(
         plan: Plan.SealedByName<IrType>,
         value: IrExpression,
-        given: List<IrVariable?>,
+        given: List<IrValueDeclaration?>,
     ): IrExpression {
         val source = irTemporary(value)
         val branches = plan.arms.map { arm ->
@@ -223,3 +234,21 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 /** The engine planned from these same lookups, so a miss here is the adapters disagreeing with themselves. */
 internal fun <A : Any> planned(value: A?, what: String): A =
     checkNotNull(value) { "the plan relies on $what that the IR does not have" }
+
+/** Every `Transformer` context parameter of the functions and lambdas around the call, innermost first. */
+internal fun List<ScopeWithIr>.contextTransformers(start: Int): List<Pair<Supplied<IrType>, IrValueParameter>> =
+    asReversed()
+        .mapNotNull { it.irElement as? IrFunction }
+        .flatMap { function -> function.parameters.filter { it.kind == IrParameterKind.Context } }
+        .mapNotNull { parameter ->
+            val type = parameter.type as? IrSimpleType
+            val arguments = type?.takeIf { it.classOrNull?.owner?.let(::isTransformer) == true }?.arguments
+                ?.map { (it as? IrTypeProjection)?.type }
+            val (from, to) = arguments ?: return@mapNotNull null
+            if (from == null || to == null) null else Triple(from, to, parameter)
+        }
+        .mapIndexed { i, (from, to, parameter) ->
+            Supplied(from, to, start + i, context = parameter.name.asString()) to parameter
+        }
+
+private fun isTransformer(irClass: IrClass): Boolean = irClass.classId == TRANSFORMER
