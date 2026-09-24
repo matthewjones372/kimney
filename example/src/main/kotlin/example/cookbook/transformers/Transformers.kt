@@ -19,7 +19,7 @@ val userToDto = Transformer<User, UserDto> {
 /** A null gets a value only where someone says which. */
 val noMotto = Transformer<String?, String> { it ?: "(none)" }
 
-fun toDto(team: Team): TeamDto = team.into<_, TeamDto>()
+fun Team.toDto(): TeamDto = into<_, TeamDto>()
     .withTransformer(userToDto)
     .withTransformer(noMotto)
     .transform()

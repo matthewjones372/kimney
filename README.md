@@ -54,10 +54,10 @@ data class User(val name: String, val email: String, val admin: Boolean)
 
 data class UserDto(val name: String, val email: String)
 
-fun toDto(user: User): UserDto = user.transformInto<UserDto>()
+fun User.toDto(): UserDto = transformInto()
 ```
 
-`transformInto` compiles to `UserDto(user.name, user.email)`. Nested classes,
+`transformInto` compiles to `UserDto(name, email)`. Nested classes,
 defaults, enums, sealed types, optionals, value classes and collections are
 derived the same way, as deep as they go.
 
@@ -74,7 +74,7 @@ data class Person(val fullName: String, val born: Int, val email: String)
 
 data class PersonDto(val name: String, val age: Int, val email: String, val source: String)
 
-fun toDto(person: Person, year: Int): PersonDto = person.into<_, PersonDto>()
+fun Person.toDto(year: Int): PersonDto = into<_, PersonDto>()
     .withFieldRenamed(Person::fullName, PersonDto::name)
     .withFieldComputed(PersonDto::age) { year - it.born }
     .withFieldConst(PersonDto::source, "import")

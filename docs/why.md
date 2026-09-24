@@ -24,16 +24,16 @@ data class Signup(val email: String, val marketingConsent: Boolean)
 // callers compiling, which is exactly why nothing tells the mapper it is now wrong.
 data class SignupDto(val email: String, val marketingConsent: Boolean = false)
 
-fun byHand(signup: Signup): SignupDto = SignupDto(email = signup.email)
+fun Signup.toDtoByHand(): SignupDto = SignupDto(email = email)
 
-fun byKimney(signup: Signup): SignupDto = signup.transformInto<SignupDto>()
+fun Signup.toDto(): SignupDto = transformInto()
 
 enum class Plan { FREE, PRO, ENTERPRISE }
 
 enum class PlanDto { FREE, PRO, UNKNOWN }
 
 // Written when there were two plans. ENTERPRISE arrived later and fell into the `else` without a word.
-fun planByHand(plan: Plan): PlanDto = when (plan) {
+fun Plan.toDtoByHand(): PlanDto = when (this) {
     Plan.FREE -> PlanDto.FREE
     Plan.PRO -> PlanDto.PRO
     else -> PlanDto.UNKNOWN
@@ -41,12 +41,12 @@ fun planByHand(plan: Plan): PlanDto = when (plan) {
 ```
 
 **The consent that disappears.** `marketingConsent` was added to `Signup`
-and to `SignupDto` after `byHand` was written. The DTO field has a default so
-that existing callers keep compiling — and `byHand` is one of them. It still
-compiles, and it records every signup as not consenting. `byKimney` needs no
+and to `SignupDto` after `toDtoByHand` was written. The DTO field has a default so
+that existing callers keep compiling — and `toDtoByHand` is one of them. It still
+compiles, and it records every signup as not consenting. The kimney `toDto` needs no
 edit: it was derived again, found the new property, and carries it.
 
-**The plan that becomes `UNKNOWN`.** `planByHand` was written for two plans.
+**The plan that becomes `UNKNOWN`.** `Plan.toDtoByHand` was written for two plans.
 When `ENTERPRISE` was added, it went into the `else`, and every enterprise
 customer is now `UNKNOWN` downstream. kimney has no `else` to fall into: an
 entry the target lacks is a compile error on every call that meets it. Here

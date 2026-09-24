@@ -10,4 +10,4 @@ data class AddressDto(val street: String, val zip: String, val country: String =
 
 data class CustomerDto(val name: String, val address: AddressDto, val tier: String = "standard")
 
-fun toDto(customer: Customer): CustomerDto = customer.transformInto<CustomerDto>()
+fun Customer.toDto(): CustomerDto = transformInto()

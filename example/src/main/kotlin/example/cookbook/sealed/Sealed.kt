@@ -18,4 +18,4 @@ sealed interface PaymentDto {
     data object Cash : PaymentDto
 }
 
-fun toDto(payment: Payment): PaymentDto = payment.transformInto<PaymentDto>()
+fun Payment.toDto(): PaymentDto = transformInto()

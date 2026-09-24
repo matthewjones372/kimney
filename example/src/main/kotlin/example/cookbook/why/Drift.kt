@@ -8,16 +8,16 @@ data class Signup(val email: String, val marketingConsent: Boolean)
 // callers compiling, which is exactly why nothing tells the mapper it is now wrong.
 data class SignupDto(val email: String, val marketingConsent: Boolean = false)
 
-fun byHand(signup: Signup): SignupDto = SignupDto(email = signup.email)
+fun Signup.toDtoByHand(): SignupDto = SignupDto(email = email)
 
-fun byKimney(signup: Signup): SignupDto = signup.transformInto<SignupDto>()
+fun Signup.toDto(): SignupDto = transformInto()
 
 enum class Plan { FREE, PRO, ENTERPRISE }
 
 enum class PlanDto { FREE, PRO, UNKNOWN }
 
 // Written when there were two plans. ENTERPRISE arrived later and fell into the `else` without a word.
-fun planByHand(plan: Plan): PlanDto = when (plan) {
+fun Plan.toDtoByHand(): PlanDto = when (this) {
     Plan.FREE -> PlanDto.FREE
     Plan.PRO -> PlanDto.PRO
     else -> PlanDto.UNKNOWN

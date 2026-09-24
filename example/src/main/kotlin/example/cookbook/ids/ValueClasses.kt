@@ -14,8 +14,8 @@ data class UserRow(val id: Long, val name: String)
 
 data class Document(val owner: OwnerId)
 
-fun toRow(user: User): UserRow = user.transformInto<UserRow>()
+fun User.toRow(): UserRow = transformInto()
 
-fun fromRow(row: UserRow): User = row.transformInto<User>()
+fun UserRow.toUser(): User = transformInto()
 
-fun ownerOf(user: User): OwnerId = user.id.transformInto<OwnerId>()
+fun UserId.toOwnerId(): OwnerId = transformInto()

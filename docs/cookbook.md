@@ -3,6 +3,11 @@
 Recipes for the transformations people actually write, one per section. Each
 is whole — imports, types and the call — so it can be pasted and edited.
 
+Each recipe wraps its call in an extension function, `fun User.toDto(): UserDto
+= transformInto()`, which is the shape worth copying: the return type names the
+target, so the call needs no type argument, and callers read `user.toDto()`
+wherever the mapping is needed.
+
 Every recipe here is a file in [`example/`](../example/src/main/kotlin/example/cookbook),
 quoted verbatim: it compiles through the Gradle plugin on every build, a test
 runs it, and another fails the build if this page and the file drift apart.
@@ -53,10 +58,10 @@ data class User(val name: String, val email: String, val admin: Boolean)
 
 data class UserDto(val name: String, val email: String)
 
-fun toDto(user: User): UserDto = user.transformInto<UserDto>()
+fun User.toDto(): UserDto = transformInto()
 ```
 
-The call compiles to `UserDto(user.name, user.email)`: no reflection, no
+The call compiles to `UserDto(name, email)`: no reflection, no
 mapping table, nothing at runtime a hand-written mapper would not have.
 
 ## Nested classes and defaults
@@ -78,7 +83,7 @@ data class AddressDto(val street: String, val zip: String, val country: String =
 
 data class CustomerDto(val name: String, val address: AddressDto, val tier: String = "standard")
 
-fun toDto(customer: Customer): CustomerDto = customer.transformInto<CustomerDto>()
+fun Customer.toDto(): CustomerDto = transformInto()
 ```
 
 `toDto` gives `CustomerDto(name, AddressDto(street, zip, "GB"), "standard")`.
@@ -98,7 +103,7 @@ data class Person(val fullName: String, val born: Int, val email: String)
 
 data class PersonDto(val name: String, val age: Int, val email: String, val source: String)
 
-fun toDto(person: Person, year: Int): PersonDto = person.into<_, PersonDto>()
+fun Person.toDto(year: Int): PersonDto = into<_, PersonDto>()
     .withFieldRenamed(Person::fullName, PersonDto::name)
     .withFieldComputed(PersonDto::age) { year - it.born }
     .withFieldConst(PersonDto::source, "import")
@@ -129,7 +134,7 @@ import io.github.matthewjones372.kimney.into
 
 data class Account(val id: Long, val owner: String, val suspended: Boolean)
 
-fun suspend(account: Account): Account = account.into<_, Account>()
+fun Account.suspend(): Account = into<_, Account>()
     .withFieldConst(Account::suspended, true)
     .transform()
 ```
@@ -149,7 +154,7 @@ enum class Status { ACTIVE, SUSPENDED }
 
 enum class StatusDto { ACTIVE, SUSPENDED, UNKNOWN }
 
-fun toDto(status: Status): StatusDto = status.transformInto<StatusDto>()
+fun Status.toDto(): StatusDto = transformInto()
 ```
 
 Entries are compared by identity, never by ordinal, so an enum from another
@@ -182,7 +187,7 @@ sealed interface PaymentDto {
     data object Cash : PaymentDto
 }
 
-fun toDto(payment: Payment): PaymentDto = payment.transformInto<PaymentDto>()
+fun Payment.toDto(): PaymentDto = transformInto()
 ```
 
 A case added to `Payment` without one in `PaymentDto` stops the build at every
@@ -209,7 +214,7 @@ data class AddressDto(val street: String)
 
 data class ProfileDto(val nickname: String?, val billing: AddressDto?)
 
-fun toDto(profile: Profile): ProfileDto = profile.transformInto<ProfileDto>()
+fun Profile.toDto(): ProfileDto = transformInto()
 ```
 
 The other direction, `String? → String`, is refused: see
@@ -239,11 +244,11 @@ data class UserRow(val id: Long, val name: String)
 
 data class Document(val owner: OwnerId)
 
-fun toRow(user: User): UserRow = user.transformInto<UserRow>()
+fun User.toRow(): UserRow = transformInto()
 
-fun fromRow(row: UserRow): User = row.transformInto<User>()
+fun UserRow.toUser(): User = transformInto()
 
-fun ownerOf(user: User): OwnerId = user.id.transformInto<OwnerId>()
+fun UserId.toOwnerId(): OwnerId = transformInto()
 ```
 
 ## Lists, sets and maps
@@ -273,7 +278,7 @@ data class Order(val lines: List<Line>, val tags: Set<Tag>, val stock: Map<Sku, 
 
 data class OrderDto(val lines: List<LineDto>, val tags: Set<TagDto>, val stock: Map<String, Int>)
 
-fun toDto(order: Order): OrderDto = order.transformInto<OrderDto>()
+fun Order.toDto(): OrderDto = transformInto()
 ```
 
 The generated code is the loop `map` compiles to — one new collection, sized
@@ -295,7 +300,7 @@ data class Article(val title: String, val tags: Set<String>)
 
 data class ArticleDto(val title: String, val tags: List<String>)
 
-fun toDto(article: Article): ArticleDto = article.into<_, ArticleDto>()
+fun Article.toDto(): ArticleDto = into<_, ArticleDto>()
     .withFieldComputed(ArticleDto::tags) { it.tags.sorted() }
     .transform()
 ```
@@ -330,7 +335,7 @@ val userToDto = Transformer<User, UserDto> {
 /** A null gets a value only where someone says which. */
 val noMotto = Transformer<String?, String> { it ?: "(none)" }
 
-fun toDto(team: Team): TeamDto = team.into<_, TeamDto>()
+fun Team.toDto(): TeamDto = into<_, TeamDto>()
     .withTransformer(userToDto)
     .withTransformer(noMotto)
     .transform()
