@@ -40,4 +40,18 @@ class IntoTest {
     fun `a transformer is an ordinary value, usable without the plugin`() {
         Transformer<User, UserDto> { UserDto(it.name.uppercase()) }.transform(User("ada")) shouldBe UserDto("ADA")
     }
+
+    @Test
+    fun `the partial calls say they were not replaced`() {
+        shouldThrow<KimneyNotApplied> { User("Ada").transformIntoPartial<UserDto>() }
+            .message shouldStartWith "transformIntoPartial reached runtime"
+        shouldThrow<KimneyNotApplied> { chain.transformPartial() }.message shouldStartWith
+            "transformPartial reached runtime"
+    }
+
+    @Test
+    fun `a partial result gives its value or nothing`() {
+        Partial.Ok(1).valueOrNull() shouldBe 1
+        Partial.Errors(listOf(PartialError("A.b", "is null"))).valueOrNull() shouldBe null
+    }
 }

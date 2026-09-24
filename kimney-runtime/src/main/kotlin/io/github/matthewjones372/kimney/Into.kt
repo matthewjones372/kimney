@@ -21,6 +21,9 @@ public class Into<A, B> internal constructor() {
         throw KimneyNotApplied("withTransformer")
 
     public fun transform(): B = throw KimneyNotApplied("transform")
+
+    /** As [transform], collecting what does not fit into [Partial.Errors] rather than refusing to compile. */
+    public fun transformPartial(): Partial<B> = throw KimneyNotApplied("transformPartial")
 }
 
 /** Starts an override chain. The source type is inferred: `user.into<_, UserDto>()`. */

@@ -1,5 +1,6 @@
 public final class io/github/matthewjones372/kimney/Into {
 	public final fun transform ()Ljava/lang/Object;
+	public final fun transformPartial ()Lio/github/matthewjones372/kimney/Partial;
 	public final fun withFieldComputed (Lkotlin/reflect/KProperty1;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldConst (Lkotlin/reflect/KProperty1;Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldRenamed (Lkotlin/reflect/KProperty1;Lkotlin/reflect/KProperty1;)Lio/github/matthewjones372/kimney/Into;
@@ -12,6 +13,49 @@ public final class io/github/matthewjones372/kimney/IntoKt {
 
 public final class io/github/matthewjones372/kimney/KimneyNotApplied : java/lang/IllegalStateException {
 	public fun <init> (Ljava/lang/String;)V
+}
+
+public abstract interface class io/github/matthewjones372/kimney/Partial {
+}
+
+public final class io/github/matthewjones372/kimney/Partial$Errors : io/github/matthewjones372/kimney/Partial {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/matthewjones372/kimney/Partial$Errors;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kimney/Partial$Errors;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kimney/Partial$Errors;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getErrors ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kimney/Partial$Ok : io/github/matthewjones372/kimney/Partial {
+	public fun <init> (Ljava/lang/Object;)V
+	public final fun component1 ()Ljava/lang/Object;
+	public final fun copy (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Partial$Ok;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kimney/Partial$Ok;Ljava/lang/Object;ILjava/lang/Object;)Lio/github/matthewjones372/kimney/Partial$Ok;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/Object;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kimney/PartialError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/kimney/PartialError;
+	public static synthetic fun copy$default (Lio/github/matthewjones372/kimney/PartialError;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/kimney/PartialError;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/matthewjones372/kimney/PartialKt {
+	public static final fun transformIntoPartial (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Partial;
+	public static final fun valueOrNull (Lio/github/matthewjones372/kimney/Partial;)Ljava/lang/Object;
 }
 
 public final class io/github/matthewjones372/kimney/TransformKt {
