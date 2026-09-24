@@ -82,8 +82,8 @@ gradlePlugin {
             id = "io.github.matthewjones372.kimney"
             implementationClass = "io.github.matthewjones372.kimney.gradle.KimneyGradlePlugin"
             displayName = "kimney"
-            description = "Type-safe transformations between Kotlin types, derived at compile time by a K2 compiler " +
-                "plugin; a transformation that cannot be derived fails the build and names every reason."
+            description = "Compile-time, type-safe transformations for Kotlin, inspired by Scala Chimney: a K2 " +
+                "compiler plugin, and a transformation that cannot be derived fails the build naming every reason."
             tags = listOf("kotlin", "compiler-plugin", "mapping", "dto", "transformation")
         }
     }

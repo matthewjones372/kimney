@@ -22,8 +22,7 @@ you exactly why it cannot.
 ---
 
 kimney is a K2 compiler plugin for the mapping code every layered Kotlin
-service carries: domain to DTO, row to entity, event to message. It is
-Scala's [Chimney](https://github.com/scalalandio/chimney), for Kotlin.
+service carries: domain to DTO, row to entity, event to message.
 
 You write the call. At compile time kimney works out the constructor calls,
 the nested mappings, the enum and sealed `when`s and the collection loops —
