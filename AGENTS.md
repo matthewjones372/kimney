@@ -98,6 +98,12 @@ on either (`WildcardImport`, `UnusedImport`), and `.editorconfig` tells ktlint
 and the IDE the same thing. Every complete example in `docs/` carries its
 imports and its `plugins { }` block written out.
 
+A code example in the README or the cookbook is a file in
+`example/src/main/kotlin/example/cookbook/` (one package per recipe), quoted whole under a
+`// file: <path>` line. `CookbookTest` runs each one and
+`DocsMatchTheirFilesTest` fails the build if a quote and its file differ, so
+change the file and paste it back, never the page alone.
+
 ## Layout
 
 ```

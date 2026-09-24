@@ -1,7 +1,8 @@
 # Reference
 
 What kimney does today, and nothing it is planned to do. `docs/roadmap.md`
-has the plan.
+has the plan, and [the cookbook](cookbook.md) has a runnable recipe for each
+rule below.
 
 ## Applying
 

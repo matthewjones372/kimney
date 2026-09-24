@@ -16,3 +16,13 @@ configurations.configureEach {
         substitute(module("io.github.matthewjones372:kimney-runtime")).using(project(":kimney-runtime"))
     }
 }
+
+// The pages DocsMatchTheirFilesTest holds to the recipes they quote, declared as inputs so an edit to either side
+// reruns it rather than hitting the cache.
+tasks.named<Test>("test") {
+    inputs.files(rootProject.file("README.md"), rootProject.file("docs/cookbook.md"))
+        .withPropertyName("quotingPages")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    val repoRoot = rootDir.path
+    jvmArgumentProviders.add(CommandLineArgumentProvider { listOf("-Dkimney.repoRoot=$repoRoot") })
+}

@@ -1,28 +1,165 @@
+<div align="center">
+
 # kimney
 
-Compile-time derived transformations between Kotlin types, in the spirit of
-Scala's [Chimney](https://github.com/scalalandio/chimney).
+**Type-safe transformations between Kotlin types, derived at compile time.**
+Say what you want to turn into what; the compiler writes the mapping, or tells
+you exactly why it cannot.
+
+[![Kotlin 2.4.10](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![K2 compiler plugin](https://img.shields.io/badge/K2-compiler%20plugin-7F52FF)](docs/reference.md)
+[![status: pre-release](https://img.shields.io/badge/status-pre--release-orange)](docs/roadmap.md)
+[![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+
+[A first look](#a-first-look) · [When it cannot](#when-it-cannot) ·
+[What it covers](#what-it-covers) · [Trying it](#trying-it) ·
+[Cookbook](docs/cookbook.md) · [Reference](docs/reference.md) ·
+[Roadmap](docs/roadmap.md)
+
+</div>
+
+---
+
+kimney is a K2 compiler plugin for the mapping code every layered Kotlin
+service carries: domain to DTO, row to entity, event to message. It is
+Scala's [Chimney](https://github.com/scalalandio/chimney), for Kotlin.
+
+You write the call. At compile time kimney works out the constructor calls,
+the nested mappings, the enum and sealed `when`s and the collection loops —
+and generates exactly that code. There is no reflection, no runtime mapping
+table and no annotation processor: what runs is what you would have written
+by hand, because it is.
+
+When it cannot derive a mapping, the call does not compile, and the error
+names every field it could not fill, the path to it, and what would fix it.
+
+## A first look
 
 ```kotlin
-val dto = user.transformInto<UserDto>()
+// file: example/src/main/kotlin/example/cookbook/first/FirstTransform.kt
+package example.cookbook.first
+
+import io.github.matthewjones372.kimney.transformInto
+
+data class User(val name: String, val email: String, val admin: Boolean)
+
+data class UserDto(val name: String, val email: String)
+
+fun toDto(user: User): UserDto = user.transformInto<UserDto>()
 ```
 
-A K2 compiler plugin derives the constructor calls at compile time. When it
-cannot, the call does not compile, and the error names every target field it
-could not fill, the path to it, and how to fill it:
+`transformInto` compiles to `UserDto(user.name, user.email)`. Nested classes,
+defaults, enums, sealed types, optionals, value classes and collections are
+derived the same way, as deep as they go.
+
+Where names or values differ, an override chain says so, and every override is
+type-checked:
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/overrides/Overrides.kt
+package example.cookbook.overrides
+
+import io.github.matthewjones372.kimney.into
+
+data class Person(val fullName: String, val born: Int, val email: String)
+
+data class PersonDto(val name: String, val age: Int, val email: String, val source: String)
+
+fun toDto(person: Person, year: Int): PersonDto = person.into<_, PersonDto>()
+    .withFieldRenamed(Person::fullName, PersonDto::name)
+    .withFieldComputed(PersonDto::age) { year - it.born }
+    .withFieldConst(PersonDto::source, "import")
+    .transform()
+```
+
+## When it cannot
+
+A mapping kimney cannot derive is a compile error on the call. It comes from
+the K2 frontend checker, the phase IDE analysis runs too, rather than from code
+generation. It lists every problem at once, not the first:
 
 ```
-e: Main.kt:15:13 Cannot transform User → UserDto:
-    UserDto.email: String — User has no property 'email'. Add it to User, or give UserDto.email a default value.
+e: Main.kt:12:5 Cannot transform User → UserDto:
+    UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default value, or add .withFieldConst(UserDto::email, …).
     UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip a default value.
 ```
 
-No reflection and no runtime cost: the generated code is what you would have
-written by hand.
+It refuses what would silently lose information, and says what to write
+instead:
 
-**Status:** class-to-class by constructor works, with nested types, defaults,
-generics, overrides (`withFieldConst`, `withFieldComputed`, `withFieldRenamed`),
-enums, sealed types, nullables, value classes and collections; see
-[docs/reference.md](docs/reference.md). Nested transformers are next. The design lives in
-[docs/roadmap.md](docs/roadmap.md) and [specs/](specs/). How to work here:
-[AGENTS.md](AGENTS.md).
+```
+StrictDto.name: String — User.name is String?, and a null has nowhere to go. Make StrictDto.name nullable, or fill it with .withFieldComputed(StrictDto::name) { … }.
+StrictOrder.tags: List<TagDto> — a Set is not turned into a List. Fill it with .withFieldComputed(StrictOrder::tags) { … }.
+StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.
+```
+
+## What it covers
+
+For each pair of types, kimney tries these in order and uses the first that
+applies. Each is a recipe in the [cookbook](docs/cookbook.md).
+
+| Pair | Becomes | Recipe |
+|---|---|---|
+| A subtype of the target | itself | — |
+| `S → T?`, `S? → T?` | `S → T`, null kept as null | [Optional values](docs/cookbook.md#optional-values) |
+| Value class ↔ what it holds | unwrap and wrap, whatever the property is called | [Value class ids](docs/cookbook.md#value-class-ids-and-plain-columns) |
+| `List`, `Set`, `Collection`, `Iterable`, `Map`, `Array` | element by element, order kept | [Lists, sets and maps](docs/cookbook.md#lists-sets-and-maps) |
+| `object` → `object` | the target instance | — |
+| Enum → enum | entry by name | [Enums](docs/cookbook.md#enums-across-layers) |
+| Sealed → sealed | case by name, each case by every rule | [Sealed types](docs/cookbook.md#sealed-types) |
+| Class → class | the primary constructor: same-named properties, then defaults | [Nested classes](docs/cookbook.md#nested-classes-and-defaults) |
+
+An override — `withFieldConst`, `withFieldComputed` or `withFieldRenamed` —
+comes before all of these for the field it names.
+
+Not yet: your own transformers for nested pairs, recursive types, fallible
+("partial") transformations, and generic sealed hierarchies. The
+[roadmap](docs/roadmap.md) has the order.
+
+## Trying it
+
+kimney is not published yet. To use it from another project, include it as a
+composite build:
+
+```kotlin
+// settings.gradle.kts
+pluginManagement {
+    includeBuild("../kimney/kimney-gradle-plugin")
+}
+includeBuild("../kimney")
+```
+
+```kotlin
+// build.gradle.kts
+plugins {
+    kotlin("jvm") version "2.4.10"
+    id("io.github.matthewjones372.kimney")
+}
+```
+
+The Gradle plugin adds `kimney-runtime` to every JVM compilation and loads the
+compiler plugin into it. kimney is built for exactly one Kotlin version,
+2.4.10; on any other, the build stops at configuration and names both.
+
+Inside this repository, [`example/`](example) applies the plugin the same way
+a consumer does, and runs every cookbook recipe on each build.
+
+## How it works
+
+A pure derivation engine, `kimney-derive`, turns a source type and a target
+type into either a plan or the full list of reasons it cannot. It sees types
+only through an interface, which the plugin implements twice: once over the
+K2 frontend, so the checker reports errors on the call before any code is
+generated, and once over IR, so the lowering generates the plan. Both run the same engine, so the
+checker and the code generator cannot disagree about a rule — and tests that
+run every code-generation case back through the checker hold them to it.
+
+## Working on it
+
+Nothing is built without a spec: [`specs/`](specs) holds one per change, and
+[AGENTS.md](AGENTS.md) is how work is done here — layering, the testing order,
+and the gates `./gradlew build` enforces.
+
+## License
+
+[Apache 2.0](LICENSE).
