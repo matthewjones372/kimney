@@ -5,6 +5,7 @@ plugins {
     `java-gradle-plugin`
     `maven-publish`
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.plugin.publish)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.spotless)
     alias(libs.plugins.detekt)
@@ -44,12 +45,8 @@ buildConfig {
 }
 
 mavenPublishing {
-    configure(
-        com.vanniktech.maven.publish.GradlePlugin(
-            javadocJar = com.vanniktech.maven.publish.JavadocJar.Empty(),
-            sourcesJar = true,
-        ),
-    )
+    // With the Portal's plugin applied, it makes the sources and javadoc jars, for Central too.
+    configure(com.vanniktech.maven.publish.GradlePublishPlugin())
     pom {
         name.set("kimney-gradle-plugin")
         description.set("Applies kimney's compiler plugin and adds kimney-runtime to every JVM compilation.")
@@ -74,11 +71,19 @@ mavenPublishing {
     }
 }
 
+// `publishPlugins` sends it to the Gradle Plugin Portal, with `gradle.publish.key` and `gradle.publish.secret` in
+// ~/.gradle/gradle.properties; `publishToMavenCentral` still sends it to Central.
 gradlePlugin {
+    website = "https://github.com/matthewjones372/kimney"
+    vcsUrl = "https://github.com/matthewjones372/kimney.git"
     plugins {
         create("kimney") {
             id = "io.github.matthewjones372.kimney"
             implementationClass = "io.github.matthewjones372.kimney.gradle.KimneyGradlePlugin"
+            displayName = "kimney"
+            description = "Type-safe transformations between Kotlin types, derived at compile time by a K2 compiler " +
+                "plugin; a transformation that cannot be derived fails the build and names every reason."
+            tags = listOf("kotlin", "compiler-plugin", "mapping", "dto", "transformation")
         }
     }
 }
