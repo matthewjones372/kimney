@@ -2,7 +2,6 @@ package io.github.matthewjones372.kimney.ic
 
 import io.kotest.matchers.string.shouldContain
 import org.gradle.testkit.runner.GradleRunner
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
@@ -24,7 +23,6 @@ class IncrementalCompilationTest {
         shop.build().buildAndFail().output shouldContain SPECIES_MESSAGE
     }
 
-    @Disabled("spec 0020, spec-0020-lookups: the checker records none of the types it reads")
     @Test
     fun `an enum entry added in another module fails the next incremental build`(@TempDir dir: File) {
         val shop = Petshop(dir)
@@ -34,7 +32,6 @@ class IncrementalCompilationTest {
         shop.build().buildAndFail().output shouldContain SPECIES_MESSAGE
     }
 
-    @Disabled("spec 0020, spec-0020-lookups: the checker records none of the types it reads")
     @Test
     fun `a sealed case added in another module fails the next incremental build`(@TempDir dir: File) {
         val shop = Petshop(dir)
@@ -48,7 +45,6 @@ class IncrementalCompilationTest {
         shop.build().buildAndFail().output shouldContain "Event.Lost has no subclass of the same name in EventDto."
     }
 
-    @Disabled("spec 0020, spec-0020-lookups: the checker records none of the types it reads")
     @Test
     fun `a constructor parameter added to a nested target in another file fails the next incremental build`(
         @TempDir dir: File,
@@ -60,7 +56,6 @@ class IncrementalCompilationTest {
         shop.build().buildAndFail().output shouldContain "Owner has no property 'phone'."
     }
 
-    @Disabled("spec 0020, spec-0020-lookups: the checker records none of the types it reads")
     @Test
     fun `a nested property whose type changed in another module fails the next incremental build`(
         @TempDir dir: File,

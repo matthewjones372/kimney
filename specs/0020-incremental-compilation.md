@@ -95,3 +95,8 @@ recommended answers:
 - **Two PRs:** the harness first, with the failing cases `@Disabled` naming the
   second.
 - **Typealiases:** the alias's `ClassId` is recorded too.
+- **Found by it** (Kotlin 2.4.10, in-process IC): the class lookups alone make
+  all four `ic-test` cases pass, and the member lookups alone make none pass —
+  IC dirtied these files by class, even for a changed property type. The member
+  lookups stay, as Kotlin's own resolution records both and they cost nothing
+  outside IC; the class ones are what the tests hold.

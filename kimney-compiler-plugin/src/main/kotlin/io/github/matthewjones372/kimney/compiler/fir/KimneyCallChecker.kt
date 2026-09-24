@@ -83,7 +83,7 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         }
         // The compiler has already reported whatever left a type unresolved.
         if (source is ConeErrorType || target is ConeErrorType) return
-        val model = FirTypeModel(context.session)
+        val model = FirTypeModel(context.session, context.lookups(call.source))
         val passed = chain?.transformers.orEmpty()
         val transformers = passed + context.contextTransformers(start = chain?.links ?: 0)
         when (val derived = derive(model, source, target, chain?.overrides.orEmpty(), transformers, partial)) {
@@ -107,7 +107,7 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     private fun notStatic(call: FirFunctionCall, into: ConeKotlinType) {
-        val model = FirTypeModel(context.session)
+        val model = FirTypeModel(context.session, context.lookups(call.source))
         val (source, target) = (into as? ConeClassLikeType)?.typeArguments?.map { it as? ConeKotlinType } ?: return
         if (source == null || target == null) return
         val failure = Failure.OverrideNotStatic(Path(model.render(into)), model.render(target))
