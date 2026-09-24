@@ -18,6 +18,9 @@ draft, not a substitute for it.
 | 0009 | Tests for the internal-error and disagreement paths — built before 0004 |
 | 0010 | `List`/`Set`/`Collection`/`Map`/`Array`, element by element |
 | 0011 | Transformers from context parameters, on 0006's rule |
+| 0012 | Faster builds and docs that quote only real messages |
+| 0013 | Fallible user transformers, on 0008's result type |
+| 0014 | Publishing to Maven Central and the Gradle Plugin Portal |
 
 ## Rule order
 
