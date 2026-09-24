@@ -192,6 +192,6 @@ Be honest with yourself about these:
   kimney is built for 2.4.10, and a build on any other stops at configuration.
 - **You need it published today.** kimney is pre-release and not on Maven
   Central yet; [the README](../README.md#trying-it) shows the composite build.
-- **You need what is not there yet**: recursive types and fallible
-  transformations. The
+- **You need what is not there yet**: fallible transformations, and generic
+  sealed hierarchies. The
   [roadmap](roadmap.md) has them in order.

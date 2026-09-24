@@ -63,6 +63,12 @@ written. The source is evaluated once. For each target type, in order:
    Source properties the target does not ask for are ignored. A generic target
    is built with its type arguments substituted.
 
+A pair that meets itself below its own derivation — a tree, a linked list,
+two types that hold each other — becomes a local function inside the call,
+called again where the pair recurs. Nothing is added to the class or the
+file, and a value graph with a cycle recurses until the stack runs out, as a
+hand-written mapper would.
+
 The generated `when` ends in the throwing `else` an exhaustive hand-written
 `when` compiles to, so a case added to a source compiled elsewhere fails the
 same way it would by hand.
@@ -86,7 +92,6 @@ The other failures:
 | Crossing kinds | `StrictOrder.tags: List<TagDto> — a Set is not turned into a List. Fill it with .withFieldComputed(StrictOrder::tags) { … }.` |
 | A map key that could collide | `StrictOrder.keyed[key]: LineDto — keys are transformed only as themselves or through a value class, since Line into LineDto could turn two keys into one.` |
 | A missing case | `StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.` |
-| A type containing itself | `TreeDto.child: TreeDto — Tree → TreeDto contains itself, and recursive types are not supported yet.` |
 
 ## Overrides
 
@@ -166,9 +171,10 @@ AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).`
 
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
-Not yet: nested field overrides (a transformer covers the pair), nullable to non-null without a transformer, mutable collection targets,
-primitive arrays other than as themselves, generic sealed hierarchies, generic
-value classes and recursive types. `docs/roadmap.md` has the order.
+Not yet: nested field overrides (a transformer covers the pair), nullable to
+non-null without a transformer, mutable collection targets, primitive arrays
+other than as themselves, a sealed case into its target's sealed parent,
+generic sealed hierarchies and generic value classes. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
 says how to apply it.

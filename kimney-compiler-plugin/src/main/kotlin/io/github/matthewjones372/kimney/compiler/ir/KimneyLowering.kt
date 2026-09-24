@@ -15,9 +15,13 @@ import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.ScopeWithIr
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.IrStatementsBuilder
+import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
+import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlock
+import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irBranch
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irCallConstructor
@@ -28,12 +32,14 @@ import org.jetbrains.kotlin.ir.builders.irIfNull
 import org.jetbrains.kotlin.ir.builders.irImplicitCast
 import org.jetbrains.kotlin.ir.builders.irIs
 import org.jetbrains.kotlin.ir.builders.irNull
+import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.builders.irWhen
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.declarations.IrVariable
@@ -50,6 +56,7 @@ import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.name.Name
 
 /** Replaces each `transformInto` call with the constructor calls the engine planned, evaluating the source once. */
 class KimneyLowering(private val context: IrPluginContext) : IrElementTransformerVoidWithContext() {
@@ -82,8 +89,10 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
             is Derived.Planned -> builder(call).irBlock(resultType = call.type) {
                 val source = irTemporary(chain.source)
                 // Evaluated here, in written order, so side effects happen as the chain reads.
-                val given = chain.given.map { it?.let { expression -> irTemporary(given(expression, source)) } } +
-                    inContext.map { it.second }
+                val given = Given(
+                    chain.given.map { it?.let { expression -> irTemporary(given(expression, source)) } } +
+                        inContext.map { it.second },
+                )
                 +lower(derived.plan, irGet(source), given)
             }
 
@@ -117,10 +126,16 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private fun IrStatementsBuilder<*>.lower(
         plan: Plan<IrType>,
         value: IrExpression,
-        given: List<IrValueDeclaration?>,
+        given: Given,
     ): IrExpression =
         when (plan) {
             Plan.Identity -> value
+
+            is Plan.Named -> named(plan, value, given)
+
+            is Plan.Reference -> irCall(planned(given.named[plan.depth], "the plan it refers back to").symbol).apply {
+                arguments[0] = value
+            }
 
             is Plan.Transformed -> {
                 val transform = planned(transformFunction, "Transformer.transform on the classpath")
@@ -183,7 +198,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private fun IrStatementsBuilder<*>.elements(
         plan: Plan.Elements<IrType>,
         value: IrExpression,
-        given: List<IrValueDeclaration?>,
+        given: Given,
     ): IrExpression {
         val from = planned(model.container(value.type), "a source container").element
         val element: IrStatementsBuilder<*>.(IrExpression) -> IrExpression = { item -> lower(plan.plan, item, given) }
@@ -196,11 +211,36 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         }
     }
 
+    /**
+     * A plan its own pair refers back to, as a local function: declared here, called here, and called again by each
+     * reference inside it. It stays inside the call's block, so nothing is added to the class or the file.
+     */
+    private fun IrStatementsBuilder<*>.named(
+        plan: Plan.Named<IrType>,
+        value: IrExpression,
+        given: Given,
+    ): IrExpression {
+        val function = context.irFactory.buildFun {
+            name = Name.identifier("transform\$${plan.depth}")
+            returnType = plan.target
+            visibility = DescriptorVisibilities.LOCAL
+            origin = IrDeclarationOrigin.LOCAL_FUNCTION
+        }
+        function.parent = scope.getLocalDeclarationParent()
+        val source = function.addValueParameter("source", plan.source)
+        val inside = given.copy(named = given.named + (plan.depth to function))
+        function.body = DeclarationIrBuilder(context, function.symbol).irBlockBody {
+            +irReturn(lower(plan.plan, irGet(source), inside))
+        }
+        +function
+        return irCall(function.symbol).apply { arguments[0] = value }
+    }
+
     /** The source held once; the inner plan in a block of its own, so nothing it declares runs for a null. */
     private fun IrStatementsBuilder<*>.nullSafe(
         plan: Plan.NullSafe<IrType>,
         value: IrExpression,
-        given: List<IrValueDeclaration?>,
+        given: Given,
     ): IrExpression {
         val source = irTemporary(value)
         val present = irBlock { +lower(plan.plan, irImplicitCast(irGet(source), source.type.makeNotNull()), given) }
@@ -211,7 +251,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private fun IrStatementsBuilder<*>.sealedByName(
         plan: Plan.SealedByName<IrType>,
         value: IrExpression,
-        given: List<IrValueDeclaration?>,
+        given: Given,
     ): IrExpression {
         val source = irTemporary(value)
         val branches = plan.arms.map { arm ->
@@ -252,3 +292,8 @@ internal fun List<ScopeWithIr>.contextTransformers(start: Int): List<Pair<Suppli
         }
 
 private fun isTransformer(irClass: IrClass): Boolean = irClass.classId == TRANSFORMER
+
+/** What a plan's lowering can reach: the chain's values by index, and the named plans around it by depth. */
+internal data class Given(val values: List<IrValueDeclaration?>, val named: Map<Int, IrSimpleFunction> = emptyMap()) {
+    operator fun get(index: Int): IrValueDeclaration? = values.getOrNull(index)
+}

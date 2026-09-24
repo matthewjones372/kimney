@@ -37,6 +37,7 @@ at configuration and names both.
 - [Value class ids and plain columns](#value-class-ids-and-plain-columns)
 - [Lists, sets and maps](#lists-sets-and-maps)
 - [A `Set` into a `List`](#a-set-into-a-list)
+- [Trees and other types that contain themselves](#trees-and-other-types-that-contain-themselves)
 - [Your own transformer for a nested pair](#your-own-transformer-for-a-nested-pair)
 - [A transformer for everything in scope](#a-transformer-for-everything-in-scope)
 - [Reading the errors](#reading-the-errors)
@@ -305,6 +306,31 @@ fun Article.toDto(): ArticleDto = into<_, ArticleDto>()
     .withFieldComputed(ArticleDto::tags) { it.tags.sorted() }
     .transform()
 ```
+
+## Trees and other types that contain themselves
+
+A comment thread, a category tree, an org chart: a type that holds more of
+itself derives like any other, to whatever depth the value has.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/trees/Trees.kt
+package example.cookbook.trees
+
+import io.github.matthewjones372.kimney.transformInto
+
+data class Comment(val author: String, val text: String, val replies: List<Comment>)
+
+data class CommentView(val author: String, val text: String, val replies: List<CommentView>)
+
+fun Comment.toView(): CommentView = transformInto()
+```
+
+When a pair meets itself below its own derivation, kimney writes that part as
+a local function inside the call and calls it again where the pair recurs —
+the recursive function you would have written. Mutually recursive pairs
+(`Folder` holding `File` holding `Folder`) work the same way. A value graph
+with a cycle recurses until the stack runs out, as a hand-written mapper
+would.
 
 ## Your own transformer for a nested pair
 

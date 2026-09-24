@@ -1,2 +1,2 @@
-/recursive.kt:(229,258): error: Cannot transform Tree → TreeDto:
-    TreeDto.child: TreeDto — Tree → TreeDto contains itself, and recursive types are not supported yet.
+/recursive.kt:(414,449): error: Cannot transform Tree → TaggedTreeDto:
+    TaggedTreeDto.tag: String — Tree has no property 'tag'. Add it to Tree, give TaggedTreeDto.tag a default value, or add .withFieldConst(TaggedTreeDto::tag, …).

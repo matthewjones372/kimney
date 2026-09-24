@@ -13,6 +13,9 @@ import example.cookbook.optionals.toDto
 import example.cookbook.overrides.toDto
 import example.cookbook.sealed.toDto
 import example.cookbook.transformers.toDto
+import example.cookbook.trees.Comment
+import example.cookbook.trees.CommentView
+import example.cookbook.trees.toView
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
@@ -120,6 +123,18 @@ class CookbookTest {
         example.cookbook.context.present(invoice) shouldBe example.cookbook.context.InvoiceDto(
             example.cookbook.context.MoneyDto("GBP 12.50"),
             example.cookbook.context.MoneyDto("GBP 2.50"),
+        )
+    }
+
+    @Test
+    fun `a type that contains itself is derived to any depth`() {
+        val thread =
+            Comment("ada", "first", listOf(Comment("bob", "reply", listOf(Comment("cy", "deep", emptyList())))))
+
+        thread.toView() shouldBe CommentView(
+            "ada",
+            "first",
+            listOf(CommentView("bob", "reply", listOf(CommentView("cy", "deep", emptyList())))),
         )
     }
 }

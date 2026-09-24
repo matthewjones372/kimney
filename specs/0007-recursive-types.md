@@ -48,11 +48,11 @@ per pair.
 
 ## Stack
 
-- [ ] **`spec-0007-engine`** — `Plan.Named` and `Plan.Reference`; the
+- [x] **`spec-0007-engine`** — `Plan.Named` and `Plan.Reference`; the
       recursion rule; `Recursive` removed.
       Done when: engine tests cover a tree, a list of itself, an optional
       self, and two mutually recursive pairs.
-- [ ] **`spec-0007-ir`** — local functions for named plans; goldens move;
+- [x] **`spec-0007-ir`** — local functions for named plans; goldens move;
       box and agreement; docs.
       Done when: box tests pass for a tree, mutual recursion, and a
       recursive pair inside a sealed case.

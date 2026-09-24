@@ -126,8 +126,7 @@ comes before all of these for the field it names, and your own `Transformer`,
 passed with `withTransformer`, before all of them for every nested pair it
 fits ([recipe](docs/cookbook.md#your-own-transformer-for-a-nested-pair)).
 
-Not yet: recursive types, fallible ("partial") transformations, and generic
-sealed hierarchies. The
+Not yet: fallible ("partial") transformations and generic sealed hierarchies. The
 [roadmap](docs/roadmap.md) has the order.
 
 ## Trying it
