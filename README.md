@@ -121,12 +121,16 @@ applies. Each is a recipe in the [cookbook](docs/cookbook.md).
 | Sealed → sealed | case by name, each case by every rule | [Sealed types](docs/cookbook.md#sealed-types) |
 | Class → class | the primary constructor: same-named properties, then defaults | [Nested classes](docs/cookbook.md#nested-classes-and-defaults) |
 
+At the edge, `transformIntoPartial` returns every error with its path instead
+of refusing what might not fit
+([recipe](docs/cookbook.md#validating-at-the-edge)).
+
 An override — `withFieldConst`, `withFieldComputed` or `withFieldRenamed` —
 comes before all of these for the field it names, and your own `Transformer`,
 passed with `withTransformer`, before all of them for every nested pair it
 fits ([recipe](docs/cookbook.md#your-own-transformer-for-a-nested-pair)).
 
-Not yet: fallible ("partial") transformations and generic sealed hierarchies. The
+Not yet: fallible user transformers, and generic sealed hierarchies. The
 [roadmap](docs/roadmap.md) has the order.
 
 ## Trying it

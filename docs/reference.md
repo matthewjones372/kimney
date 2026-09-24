@@ -169,10 +169,34 @@ passed and a context transformer both fit, the error names both:
 The first failure inside a nested class offers one: `… Or map Address →
 AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).`
 
+## Partial transformations
+
+```kotlin
+import io.github.matthewjones372.kimney.Partial
+import io.github.matthewjones372.kimney.transformIntoPartial
+
+val result: Partial<Signup> = form.transformIntoPartial()
+```
+
+`transformIntoPartial<B>()`, and a chain's `.transformPartial()`, derive by
+every rule above with two differences:
+
+- `S? → T` is allowed. A null records `PartialError(path, "is null")`; a value
+  goes on through `S → T`.
+- A constructor or value class that throws `IllegalArgumentException` records
+  its message at the path of what it was building.
+
+Arguments are built before their constructor, and a constructor runs only if
+none of its arguments recorded an error. The result is `Partial.Ok` with the
+value if nothing was recorded, and `Partial.Errors` with every error, in the
+order met, otherwise. Other exceptions propagate. A pair no rule connects is
+still a compile error: partial mode relaxes what may fail at runtime, not what
+can be derived.
+
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
-Not yet: nested field overrides (a transformer covers the pair), nullable to
-non-null without a transformer, mutable collection targets, primitive arrays
+Not yet: nested field overrides (a transformer covers the pair), fallible
+user transformers, mutable collection targets, primitive arrays
 other than as themselves, a sealed case into its target's sealed parent,
 generic sealed hierarchies and generic value classes. `docs/roadmap.md` has the order.
 

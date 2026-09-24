@@ -11,11 +11,14 @@ import example.cookbook.ids.toUser
 import example.cookbook.nested.toDto
 import example.cookbook.optionals.toDto
 import example.cookbook.overrides.toDto
+import example.cookbook.partial.validate
 import example.cookbook.sealed.toDto
 import example.cookbook.transformers.toDto
 import example.cookbook.trees.Comment
 import example.cookbook.trees.CommentView
 import example.cookbook.trees.toView
+import io.github.matthewjones372.kimney.Partial
+import io.github.matthewjones372.kimney.PartialError
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
@@ -136,5 +139,19 @@ class CookbookTest {
             "first",
             listOf(CommentView("bob", "reply", listOf(CommentView("cy", "deep", emptyList())))),
         )
+    }
+
+    @Test
+    fun `a partial transformation reports every error with its path, or the value`() {
+        example.cookbook.partial.SignupForm("nope", null, listOf("a@b.c", null)).validate() shouldBe Partial.Errors(
+            listOf(
+                PartialError("Signup.email", "is not an email address"),
+                PartialError("Signup.name", "is null"),
+                PartialError("Signup.referrals[]", "is null"),
+            ),
+        )
+        val email = example.cookbook.partial.Email("ada@example.com")
+        example.cookbook.partial.SignupForm("ada@example.com", "Ada", emptyList()).validate() shouldBe
+            Partial.Ok(example.cookbook.partial.Signup(email, "Ada", emptyList()))
     }
 }

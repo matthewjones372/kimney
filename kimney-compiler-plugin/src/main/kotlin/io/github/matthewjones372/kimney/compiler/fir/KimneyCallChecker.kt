@@ -3,8 +3,11 @@ package io.github.matthewjones372.kimney.compiler.fir
 import io.github.matthewjones372.kimney.compiler.INTO
 import io.github.matthewjones372.kimney.compiler.KimneyErrors
 import io.github.matthewjones372.kimney.compiler.OVERRIDES
+import io.github.matthewjones372.kimney.compiler.TERMINALS
 import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
+import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO_PARTIAL
+import io.github.matthewjones372.kimney.compiler.TRANSFORM_PARTIAL
 import io.github.matthewjones372.kimney.compiler.guarded
 import io.github.matthewjones372.kimney.derive.Derived
 import io.github.matthewjones372.kimney.derive.Failure
@@ -38,7 +41,13 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
                     derived(expression, it, chain = null)
                 }
 
+                TRANSFORM_INTO_PARTIAL -> expression.extensionReceiver?.resolvedType?.let {
+                    derived(expression, it, chain = null, partial = true)
+                }
+
                 TRANSFORM -> transform(expression)
+
+                TRANSFORM_PARTIAL -> transform(expression, partial = true)
 
                 INTO, in OVERRIDES -> escapes(expression)
             }
@@ -46,12 +55,12 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
     }
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    private fun transform(call: FirFunctionCall) {
+    private fun transform(call: FirFunctionCall, partial: Boolean = false) {
         val chain = readChain(call)
         if (chain == null) {
             call.explicitReceiver?.resolvedType?.let { notStatic(call, it) }
         } else {
-            derived(call, chain.source, chain)
+            derived(call, chain.source, chain, partial)
         }
     }
 
@@ -60,19 +69,24 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
     private fun escapes(call: FirFunctionCall) {
         val parent = context.callsOrAssignments.let { it.getOrNull(it.size - 2) } as? FirFunctionCall
         val linked =
-            parent?.explicitReceiver === call && (parent.callableId == TRANSFORM || parent.callableId in OVERRIDES)
+            parent?.explicitReceiver === call && (parent.callableId in TERMINALS || parent.callableId in OVERRIDES)
         if (!linked) notStatic(call, call.resolvedType)
     }
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    private fun derived(call: FirFunctionCall, source: ConeKotlinType, chain: FirChain?) {
-        val target = call.resolvedType
+    private fun derived(call: FirFunctionCall, source: ConeKotlinType, chain: FirChain?, partial: Boolean = false) {
+        // A partial call returns Partial<B>; B is what is derived.
+        val target = if (partial) {
+            (call.resolvedType as? ConeClassLikeType)?.typeArguments?.singleOrNull() as? ConeKotlinType ?: return
+        } else {
+            call.resolvedType
+        }
         // The compiler has already reported whatever left a type unresolved.
         if (source is ConeErrorType || target is ConeErrorType) return
         val model = FirTypeModel(context.session)
         val passed = chain?.transformers.orEmpty()
         val transformers = passed + context.contextTransformers(start = chain?.links ?: 0)
-        when (val derived = derive(model, source, target, chain?.overrides.orEmpty(), transformers)) {
+        when (val derived = derive(model, source, target, chain?.overrides.orEmpty(), transformers, partial)) {
             is Derived.Failed -> {
                 val message = derived.message(model.render(source), model.render(target))
                 reporter.reportOn(call.source, KimneyErrors.KIMNEY_CANNOT_TRANSFORM, message)

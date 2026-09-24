@@ -4,6 +4,8 @@ import io.github.matthewjones372.kimney.compiler.KimneyErrors
 import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORMER
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
+import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO_PARTIAL
+import io.github.matthewjones372.kimney.compiler.TRANSFORM_PARTIAL
 import io.github.matthewjones372.kimney.compiler.guarded
 import io.github.matthewjones372.kimney.derive.Arg
 import io.github.matthewjones372.kimney.derive.Container
@@ -63,6 +65,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private val model = IrTypeModel(context)
     private val containers = ContainerLowering(context)
     private val enums = EnumLowering(model)
+    private val partials = PartialLowering(context)
     private val transformFunction = context.referenceClass(TRANSFORMER)?.owner?.functions
         ?.single { it.name.asString() == "transform" }
 
@@ -74,7 +77,14 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
                 TRANSFORM_INTO -> call.arguments[0]?.let { lowered(call, IrChain(it, emptyList(), emptyList())) }
                     ?: call
 
+                TRANSFORM_INTO_PARTIAL ->
+                    call.arguments[0]?.let { lowered(call, IrChain(it, emptyList(), emptyList()), partial = true) }
+                        ?: call
+
                 TRANSFORM -> readChain(call)?.let { lowered(call, it) }
+                    ?: disagreed(call, "Its override chain cannot be read back to into().")
+
+                TRANSFORM_PARTIAL -> readChain(call)?.let { lowered(call, it, partial = true) }
                     ?: disagreed(call, "Its override chain cannot be read back to into().")
 
                 else -> call
@@ -82,22 +92,27 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         }
     }
 
-    private fun lowered(call: IrCall, chain: IrChain): IrExpression {
+    private fun lowered(call: IrCall, chain: IrChain, partial: Boolean = false): IrExpression {
         val inContext = allScopes.contextTransformers(start = chain.given.size)
         val transformers = chain.transformers + inContext.map { it.first }
-        return when (val derived = derive(model, chain.source.type, call.type, chain.overrides, transformers)) {
+        // A partial call returns Partial<B>; B is what is derived.
+        val target = if (partial) planned(typeArgument(call.type), "the target inside Partial") else call.type
+        return when (val derived = derive(model, chain.source.type, target, chain.overrides, transformers, partial)) {
             is Derived.Planned -> builder(call).irBlock(resultType = call.type) {
                 val source = irTemporary(chain.source)
+                val errors = if (partial) with(partials) { errorList() } else null
                 // Evaluated here, in written order, so side effects happen as the chain reads.
                 val given = Given(
                     chain.given.map { it?.let { expression -> irTemporary(given(expression, source)) } } +
                         inContext.map { it.second },
+                    errors = errors,
                 )
-                +lower(derived.plan, irGet(source), given)
+                val built = lower(derived.plan, irGet(source), given)
+                +if (errors == null) built else with(partials) { result(call.type, target, errors, built) }
             }
 
             is Derived.Failed ->
-                disagreed(call, derived.message(model.render(chain.source.type), model.render(call.type)))
+                disagreed(call, derived.message(model.render(chain.source.type), model.render(target)))
         }
     }
 
@@ -133,9 +148,11 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.Named -> named(plan, value, given)
 
-            // Neither adapter derives in partial mode yet, so the engine plans no check.
-            is Plan.Required ->
-                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+            is Plan.Required -> with(partials) {
+                required(planned(given.errors, "a partial call's error list"), plan.path, value) {
+                    lower(plan.plan, it, given)
+                }
+            }
 
             is Plan.Reference -> irCall(planned(given.named[plan.depth], "the plan it refers back to").symbol).apply {
                 arguments[0] = value
@@ -158,12 +175,9 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.NullSafe -> nullSafe(plan, value, given)
 
-            is Plan.Wrap -> {
-                val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a value class constructor")
-                irCallConstructor(constructor.symbol, emptyList()).apply {
-                    arguments[0] = lower(plan.plan, value, given)
-                }
-            }
+            is Plan.Wrap -> if (given.errors !=
+                null
+            ) partialWrap(plan, value, given, given.errors) else wrap(plan, value, given)
 
             is Plan.Unwrap -> lower(plan.plan, read(irTemporary(value), plan.property), given)
 
@@ -172,32 +186,113 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
             is Plan.Entries -> {
                 val from = planned(model.container(value.type), "a source map")
                 with(containers) {
-                    entries(plan.target, from, value, { lower(plan.key, it, given) }, { lower(plan.value, it, given) })
+                    entries(
+                        plan.target,
+                        from,
+                        value,
+                        { asElement(lower(plan.key, it, given), plan.target, 0, given) },
+                        { asElement(lower(plan.value, it, given), plan.target, 1, given) },
+                    )
                 }
             }
 
-            is Plan.Construct -> {
-                val source = irTemporary(value)
-                val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a primary constructor")
-                val params = constructor.parameters.filter { it.kind == IrParameterKind.Regular }
-                val typeArguments = (plan.target as IrSimpleType).arguments.map { (it as IrTypeProjection).type }
+            is Plan.Construct -> if (given.errors != null) {
+                partialConstruct(plan, value, given, given.errors)
+            } else {
+                construct(plan, value, given)
+            }
+        }
+
+    private fun IrStatementsBuilder<*>.wrap(plan: Plan.Wrap<IrType>, value: IrExpression, given: Given): IrExpression {
+        val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a value class constructor")
+        return irCallConstructor(constructor.symbol, emptyList()).apply {
+            arguments[0] = lower(plan.plan, value, given)
+        }
+    }
+
+    private fun IrStatementsBuilder<*>.construct(
+        plan: Plan.Construct<IrType>,
+        value: IrExpression,
+        given: Given,
+    ): IrExpression {
+        val source = irTemporary(value)
+        val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a primary constructor")
+        val params = constructor.parameters.filter { it.kind == IrParameterKind.Regular }
+        val typeArguments = (plan.target as IrSimpleType).arguments.map { (it as IrTypeProjection).type }
+        return irCallConstructor(constructor.symbol, typeArguments).apply {
+            plan.args.forEach { arg ->
+                val index = params.single { it.name.asString() == arg.param }.indexInParameters
+                when (arg) {
+                    is Arg.FromProperty -> arguments[index] = lower(arg.plan, read(source, arg.property), given)
+
+                    is Arg.Const -> arguments[index] = irGet(planned(given[arg.index], "a const value"))
+
+                    is Arg.Computed -> arguments[index] = irGet(planned(given[arg.index], "a computed value"))
+
+                    // Left null: the backend's default-argument lowering fills it, as for a written call.
+                    is Arg.Default -> Unit
+                }
+            }
+        }
+    }
+
+    /** A construction in a partial call: arguments first, then the constructor only if none of them failed. */
+    private fun IrStatementsBuilder<*>.partialConstruct(
+        plan: Plan.Construct<IrType>,
+        value: IrExpression,
+        given: Given,
+        errors: IrVariable,
+    ): IrExpression {
+        val source = irTemporary(value)
+        val mark = with(partials) { mark(errors) }
+        val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a primary constructor")
+        val params = constructor.parameters.filter {
+            it.kind == IrParameterKind.Regular
+        }.associateBy { it.name.asString() }
+        val typeArguments = (plan.target as IrSimpleType).arguments.map { (it as IrTypeProjection).type }
+        val built = plan.args.mapNotNull { arg ->
+            val param = planned(params[arg.param], "a parameter '${arg.param}'")
+            when (arg) {
+                is Arg.FromProperty ->
+                    param to irTemporary(lower(arg.plan, read(source, arg.property), given), irType = partials.anything)
+
+                is Arg.Const -> param to planned(given[arg.index], "a const value")
+
+                is Arg.Computed -> param to planned(given[arg.index], "a computed value")
+
+                is Arg.Default -> null
+            }
+        }
+        return with(partials) {
+            guarded(errors, mark, planned(plan.guardedAt, "a partial construction's path")) {
                 irCallConstructor(constructor.symbol, typeArguments).apply {
-                    plan.args.forEach { arg ->
-                        val index = params.single { it.name.asString() == arg.param }.indexInParameters
-                        when (arg) {
-                            is Arg.FromProperty -> arguments[index] = lower(arg.plan, read(source, arg.property), given)
-
-                            is Arg.Const -> arguments[index] = irGet(planned(given[arg.index], "a const value"))
-
-                            is Arg.Computed -> arguments[index] = irGet(planned(given[arg.index], "a computed value"))
-
-                            // Left null: the backend's default-argument lowering fills it, as for a written call.
-                            is Arg.Default -> Unit
-                        }
+                    built.forEach { (param, v) ->
+                        arguments[param.indexInParameters] =
+                            irImplicitCast(irGet(v), param.type)
                     }
                 }
             }
         }
+    }
+
+    private fun IrStatementsBuilder<*>.partialWrap(
+        plan: Plan.Wrap<IrType>,
+        value: IrExpression,
+        given: Given,
+        errors: IrVariable,
+    ): IrExpression {
+        val mark = with(partials) { mark(errors) }
+        val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a value class constructor")
+        val held = constructor.parameters.single { it.kind == IrParameterKind.Regular }
+        val inner = irTemporary(lower(plan.plan, value, given), irType = partials.anything)
+        return with(partials) {
+            guarded(errors, mark, planned(plan.guardedAt, "a partial wrap's path")) {
+                irCallConstructor(constructor.symbol, emptyList()).apply {
+                    arguments[0] = irImplicitCast(irGet(inner), held.type)
+                }
+            }
+        }
+    }
 
     private fun IrStatementsBuilder<*>.elements(
         plan: Plan.Elements<IrType>,
@@ -205,7 +300,9 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         given: Given,
     ): IrExpression {
         val from = planned(model.container(value.type), "a source container").element
-        val element: IrStatementsBuilder<*>.(IrExpression) -> IrExpression = { item -> lower(plan.plan, item, given) }
+        val element: IrStatementsBuilder<*>.(IrExpression) -> IrExpression = { item ->
+            asElement(lower(plan.plan, item, given), plan.target, 0, given)
+        }
         return with(containers) {
             if (plan.kind == Container.Kind.ARRAY) {
                 array(plan.target, from, value, element)
@@ -297,7 +394,28 @@ internal fun List<ScopeWithIr>.contextTransformers(start: Int): List<Pair<Suppli
 
 private fun isTransformer(irClass: IrClass): Boolean = irClass.classId == TRANSFORMER
 
-/** What a plan's lowering can reach: the chain's values by index, and the named plans around it by depth. */
-internal data class Given(val values: List<IrValueDeclaration?>, val named: Map<Int, IrSimpleFunction> = emptyMap()) {
+/**
+ * What a plan's lowering can reach: the chain's values by index, the named plans around it by depth, and in a partial
+ * call the list its errors go to.
+ */
+internal data class Given(
+    val values: List<IrValueDeclaration?>,
+    val named: Map<Int, IrSimpleFunction> = emptyMap(),
+    val errors: IrVariable? = null,
+) {
     operator fun get(index: Int): IrValueDeclaration? = values.getOrNull(index)
+}
+
+private fun typeArgument(type: IrType, index: Int = 0): IrType? =
+    ((type as? IrSimpleType)?.arguments?.getOrNull(index) as? IrTypeProjection)?.type
+
+/** In a partial call a failed element is a null, so it goes into its collection as a nullable of the element. */
+private fun IrStatementsBuilder<*>.asElement(
+    value: IrExpression,
+    container: IrType,
+    index: Int,
+    given: Given,
+): IrExpression {
+    val element = typeArgument(container, index)
+    return if (given.errors == null || element == null) value else irImplicitCast(value, element.makeNullable())
 }

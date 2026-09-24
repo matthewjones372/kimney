@@ -1,0 +1,5 @@
+/partial.kt:(459,487): error: Cannot transform Form → Signup:
+    Signup.email: String — Form.email is String?, and a null has nowhere to go. Make Signup.email nullable, or fill it with .withFieldComputed(Signup::email) { … }.
+
+/partial.kt:(549,584): error: Cannot transform Form → Strict:
+    Strict.phone: String — Form has no property 'phone'. Add it to Form, give Strict.phone a default value, or add .withFieldConst(Strict::phone, …).

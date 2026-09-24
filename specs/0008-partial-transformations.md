@@ -59,14 +59,14 @@ value kimney made up.
 
 ## Stack
 
-- [ ] **`spec-0008-runtime`** — `Partial`, `PartialError`,
+- [x] **`spec-0008-runtime`** — `Partial`, `PartialError`,
       `transformIntoPartial`, `transformPartial`; BCV.
       Done when: the stubs throw `KimneyNotApplied` naming themselves.
-- [ ] **`spec-0008-engine`** — partial mode: `S? → T` allowed, constructors
+- [x] **`spec-0008-engine`** — partial mode: `S? → T` allowed, constructors
       marked with the path they report at.
       Done when: engine tests cover a null, a nested null, and a guarded
       value class, with total mode unchanged.
-- [ ] **`spec-0008-plugin`** — both adapters and the lowering; box, agreement;
+- [x] **`spec-0008-plugin`** — both adapters and the lowering; box, agreement;
       cookbook and reference.
       Done when: box tests pass for every error collected with its path, an
       `Ok`, a list element failing, and a class not built from a failed part.

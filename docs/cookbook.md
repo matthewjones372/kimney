@@ -40,6 +40,7 @@ at configuration and names both.
 - [Trees and other types that contain themselves](#trees-and-other-types-that-contain-themselves)
 - [Your own transformer for a nested pair](#your-own-transformer-for-a-nested-pair)
 - [A transformer for everything in scope](#a-transformer-for-everything-in-scope)
+- [Validating at the edge](#validating-at-the-edge)
 - [Reading the errors](#reading-the-errors)
 - [Compiled without the plugin](#compiled-without-the-plugin)
 
@@ -418,6 +419,49 @@ mean too, and Kotlin asks you to say which. A context transformer is matched
 exactly like one passed with `withTransformer`. One that fits nothing is not a warning, since it is there
 for every call below it, most of which will not need it. Two that fit the same
 pair — one passed, one in context — is an error naming both.
+
+## Validating at the edge
+
+Where data might not fit — a request, a form, a message from outside —
+`transformIntoPartial` returns a `Partial`: every error with its path, or the
+value. A null into a non-null field is an error there instead of a compile
+failure, and a constructor's `require` is an error at what it was building.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/partial/Validation.kt
+package example.cookbook.partial
+
+import io.github.matthewjones372.kimney.Partial
+import io.github.matthewjones372.kimney.transformIntoPartial
+
+@JvmInline
+value class Email(val address: String) {
+    init {
+        require("@" in address) { "is not an email address" }
+    }
+}
+
+// What arrives over the wire: anything may be missing.
+data class SignupForm(val email: String?, val name: String?, val referrals: List<String?>)
+
+// What the domain accepts: nothing is.
+data class Signup(val email: Email, val name: String, val referrals: List<Email>)
+
+fun SignupForm.validate(): Partial<Signup> = transformIntoPartial()
+```
+
+`SignupForm("nope", null, listOf("a@b.c", null)).validate()` gives
+
+```
+Errors([PartialError("Signup.email", "is not an email address"),
+        PartialError("Signup.name", "is null"),
+        PartialError("Signup.referrals[]", "is null")])
+```
+
+Every error is collected, not the first. Nothing is built from a part that
+failed, so no constructor ever runs on a value kimney made up, and only
+`IllegalArgumentException` is caught — anything else is a bug and is
+thrown. A chain ends in `.transformPartial()` to do the same.
 
 ## Reading the errors
 
