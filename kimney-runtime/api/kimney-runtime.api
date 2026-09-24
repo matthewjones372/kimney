@@ -7,6 +7,8 @@ public final class io/github/matthewjones372/kimney/Into {
 	public final fun withFieldConst (Lkotlin/reflect/KProperty1;Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldRenamed (Lkotlin/reflect/KProperty1;Lkotlin/reflect/KProperty1;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withPartialTransformer (Lio/github/matthewjones372/kimney/PartialTransformer;)Lio/github/matthewjones372/kimney/Into;
+	public final fun withSealedCaseRenamed (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)Lio/github/matthewjones372/kimney/Into;
+	public final fun withSealedFallback (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withTransformer (Lio/github/matthewjones372/kimney/Transformer;)Lio/github/matthewjones372/kimney/Into;
 }
 

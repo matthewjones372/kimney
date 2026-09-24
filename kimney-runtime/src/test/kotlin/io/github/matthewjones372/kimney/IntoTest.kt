@@ -33,6 +33,10 @@ class IntoTest {
             .message shouldStartWith "withEnumEntryRenamed reached runtime"
         shouldThrow<KimneyNotApplied> { chain.withEnumFallback(Level.LOW) }
             .message shouldStartWith "withEnumFallback reached runtime"
+        shouldThrow<KimneyNotApplied> { chain.withSealedCaseRenamed(Shape.Hexagon::class, Shape.Polygon::class) }
+            .message shouldStartWith "withSealedCaseRenamed reached runtime"
+        shouldThrow<KimneyNotApplied> { chain.withSealedFallback(Shape.Unknown) }
+            .message shouldStartWith "withSealedFallback reached runtime"
     }
 
     @Test
@@ -61,3 +65,11 @@ class IntoTest {
 }
 
 private enum class Level { LOW, HIGH }
+
+private sealed interface Shape {
+    data object Hexagon : Shape
+
+    data object Polygon : Shape
+
+    data object Unknown : Shape
+}

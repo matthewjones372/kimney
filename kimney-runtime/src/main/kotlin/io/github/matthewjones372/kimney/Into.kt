@@ -1,5 +1,6 @@
 package io.github.matthewjones372.kimney
 
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 /**
@@ -36,6 +37,19 @@ public class Into<A, B> internal constructor() {
      * [to]'s class. It is also what an entry compiled in after this call becomes.
      */
     public fun <T : Enum<T>> withEnumFallback(to: T): Into<A, B> = throw KimneyNotApplied("withEnumFallback")
+
+    /**
+     * Makes the sealed case [from] into the target case [to] wherever their sealed types meet, instead of into the
+     * case of the same name, deriving it by every rule. Both are class literals: `Shape.Hexagon::class`.
+     */
+    public fun <S : Any, T : Any> withSealedCaseRenamed(from: KClass<S>, to: KClass<T>): Into<A, B> =
+        throw KimneyNotApplied("withSealedCaseRenamed")
+
+    /**
+     * Makes every case with no case of the same name, no rename and no transformer into the object [to], wherever a
+     * sealed type becomes [to]'s. It is also what a case compiled in after this call becomes.
+     */
+    public fun <T : Any> withSealedFallback(to: T): Into<A, B> = throw KimneyNotApplied("withSealedFallback")
 
     public fun transform(): B = throw KimneyNotApplied("transform")
 
