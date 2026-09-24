@@ -32,6 +32,9 @@ class ContainerTest {
             "Map<Long, LineDto>" to Container(Kind.MAP, "LineDto", key = "Long"),
             "Map<Line, Tag>" to Container(Kind.MAP, "Tag", key = "Line"),
             "Map<LineDto, TagDto>" to Container(Kind.MAP, "TagDto", key = "LineDto"),
+            "MutableList<Line>" to Container(Kind.MUTABLE_LIST, "Line"),
+            "MutableList<LineDto>" to Container(Kind.MUTABLE_LIST, "LineDto"),
+            "MutableSet<TagDto>" to Container(Kind.MUTABLE_SET, "TagDto"),
         ),
     )
 
@@ -79,5 +82,21 @@ class ContainerTest {
             "Map<LineDto, TagDto>[key]: LineDto — keys are transformed only as themselves or through a value " +
                 "class, since Line into LineDto could turn two keys into one.",
         )
+    }
+
+    @Test
+    fun `a mutable source acts as its read-only kind, and a mutable target takes what its read-only kind does`() {
+        derive(model, "MutableList<Line>", "List<LineDto>") shouldBe
+            Derived.Planned(Plan.Elements(Kind.LIST, "List<LineDto>", line))
+        derive(model, "List<Line>", "MutableList<LineDto>") shouldBe
+            Derived.Planned(Plan.Elements(Kind.LIST, "MutableList<LineDto>", line))
+        lines("MutableList<Line>", "MutableSet<TagDto>") shouldBe
+            listOf("MutableSet<TagDto> — a MutableList is not turned into a MutableSet.")
+    }
+
+    @Test
+    fun `a mutable target of the source's own type is still a new collection`() {
+        derive(model, "MutableList<Line>", "MutableList<Line>") shouldBe
+            Derived.Planned(Plan.Elements(Kind.LIST, "MutableList<Line>", Plan.Identity))
     }
 }

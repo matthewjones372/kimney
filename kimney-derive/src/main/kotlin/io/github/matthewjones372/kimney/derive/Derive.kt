@@ -96,7 +96,7 @@ private class Derivation<T>(
                 model.same(it.second, site.target)
         }
         return when {
-            overrides.isEmpty() && model.isSubtypeOf(site.source, site.target) -> Derived.Planned(Plan.Identity)
+            model.passes(site, overrides) -> Derived.Planned(Plan.Identity)
             above >= 0 -> Derived.Planned(Plan.Reference(above))
             else -> named(site, byShape(site, overrides))
         }
@@ -186,3 +186,11 @@ private fun <T> TypeModel<T>.fitting(site: Site<T>, transformers: List<Supplied<
     } else {
         transformers.filter { isSubtypeOf(site.source, it.source) && isSubtypeOf(it.target, site.target) }
     }
+
+private fun <T> TypeModel<T>.mutableContainer(type: T): Boolean =
+    container(type)?.kind?.let { it != it.readOnly } == true
+
+// A mutable target is always a new collection: handing over the source's own would let one side's edits appear in the
+// other. With overrides, the target is rebuilt even from its own type.
+private fun <T> TypeModel<T>.passes(site: Site<T>, overrides: List<Override<T>>): Boolean =
+    overrides.isEmpty() && isSubtypeOf(site.source, site.target) && !mutableContainer(site.target)

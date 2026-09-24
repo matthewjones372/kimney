@@ -159,7 +159,7 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
         val kind = classType?.takeUnless { it.isMarkedNullable }?.let { CONTAINERS[it.lookupTag.classId] }
             ?: return null
         val arguments = classType.typeArguments.map { (it as? ConeKotlinTypeProjection)?.type ?: return null }
-        return if (kind == Container.Kind.MAP) {
+        return if (kind.readOnly == Container.Kind.MAP) {
             Container(kind, arguments[1], key = arguments[0])
         } else {
             Container(kind, arguments[0])
@@ -202,4 +202,9 @@ private val CONTAINERS = mapOf(
     StandardClassIds.Iterable to Container.Kind.ITERABLE,
     StandardClassIds.Map to Container.Kind.MAP,
     StandardClassIds.Array to Container.Kind.ARRAY,
+    StandardClassIds.MutableList to Container.Kind.MUTABLE_LIST,
+    StandardClassIds.MutableSet to Container.Kind.MUTABLE_SET,
+    StandardClassIds.MutableCollection to Container.Kind.MUTABLE_COLLECTION,
+    StandardClassIds.MutableIterable to Container.Kind.MUTABLE_ITERABLE,
+    StandardClassIds.MutableMap to Container.Kind.MUTABLE_MAP,
 )

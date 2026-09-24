@@ -23,6 +23,7 @@ draft, not a substitute for it.
 | 0014 | Publishing to Maven Central and the Gradle Plugin Portal |
 | 0015 | A sealed case into its target's sealed parent |
 | 0016 | Generic sealed types and value classes |
+| 0017 | Mutable collections as sources and targets |
 
 ## Rule order
 

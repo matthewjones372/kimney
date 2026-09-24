@@ -7,5 +7,5 @@
 /containers.kt:(1079,1114): error: Cannot transform List<String?> → List<String>:
     List<String>[]: String — an element of List<String?> is String?, and a null has nowhere to go. Transform into String? instead.
 
-/containers.kt:(1171,1214): error: Cannot transform List<Line> → MutableList<LineDto>:
-    MutableList<LineDto> — no rule transforms List<Line> into MutableList<LineDto>.
+/containers.kt:(1282,1323): error: Cannot transform MutableSet<Tag> → MutableList<TagDto>:
+    MutableList<TagDto> — a MutableSet is not turned into a MutableList.

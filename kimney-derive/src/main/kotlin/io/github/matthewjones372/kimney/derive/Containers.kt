@@ -16,7 +16,7 @@ private val allowed = mapOf(
 internal fun <T> TypeModel<T>.containers(site: Site<T>, pair: (Site<T>) -> Derived<T>): Derived<T> {
     val to = checkNotNull(container(site.target)) { "containers is tried only for a container target" }
     val from = container(site.source)
-    val crossing = from != null && to.kind !in allowed.getValue(from.kind)
+    val crossing = from != null && to.kind.readOnly !in allowed.getValue(from.kind.readOnly)
     return when {
         from == null -> Derived.Failed(listOf(Failure.NoRuleFor(site.path, render(site.target), render(site.source))))
 
@@ -24,9 +24,10 @@ internal fun <T> TypeModel<T>.containers(site: Site<T>, pair: (Site<T>) -> Deriv
             listOf(Failure.ContainerMismatch(site.path, render(site.target), from.kind, to.kind, site.owner)),
         )
 
-        to.kind == Kind.MAP -> entries(site, from, to, pair)
+        to.kind.readOnly == Kind.MAP -> entries(site, from, to, pair)
 
-        else -> element(site, from, to, pair).map { Plan.Elements(from.kind, site.target, it) }
+        // The kind the lowering builds from: a new ArrayList, LinkedHashSet or array, each of them mutable.
+        else -> element(site, from, to, pair).map { Plan.Elements(from.kind.readOnly, site.target, it) }
     }
 }
 

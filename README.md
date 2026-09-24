@@ -115,7 +115,7 @@ applies. Each is a recipe in the [cookbook](docs/cookbook.md).
 | A subtype of the target | itself | — |
 | `S → T?`, `S? → T?` | `S → T`, null kept as null | [Optional values](docs/cookbook.md#optional-values) |
 | Value class ↔ what it holds | unwrap and wrap, whatever the property is called | [Value class ids](docs/cookbook.md#value-class-ids-and-plain-columns) |
-| `List`, `Set`, `Collection`, `Iterable`, `Map`, `Array` | element by element, order kept | [Lists, sets and maps](docs/cookbook.md#lists-sets-and-maps) |
+| `List`, `Set`, `Collection`, `Iterable`, `Map`, `Array`, and their mutable kinds | element by element, order kept, always a new mutable collection for a mutable target | [Lists, sets and maps](docs/cookbook.md#lists-sets-and-maps) |
 | `object` → `object` | the target instance | — |
 | Enum → enum | entry by name | [Enums](docs/cookbook.md#enums-across-layers) |
 | Sealed → sealed | case by name, each case by every rule | [Sealed types](docs/cookbook.md#sealed-types) |
@@ -130,7 +130,7 @@ comes before all of these for the field it names, and your own `Transformer`,
 passed with `withTransformer`, before all of them for every nested pair it
 fits ([recipe](docs/cookbook.md#your-own-transformer-for-a-nested-pair)).
 
-Not yet: overrides on nested fields (a transformer covers the pair), and mutable collection targets. The
+Not yet: overrides on nested fields (a transformer covers the pair). The
 [roadmap](docs/roadmap.md) has the order.
 
 ## Trying it

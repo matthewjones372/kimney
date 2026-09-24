@@ -33,4 +33,6 @@ fun strict(order: LooseOrder): StrictOrder = <!KIMNEY_CANNOT_TRANSFORM!>order.tr
 
 fun nullElements(notes: List<String?>): List<String> = <!KIMNEY_CANNOT_TRANSFORM!>notes.transformInto<List<String>>()<!>
 
-fun mutable(lines: List<Line>): MutableList<LineDto> = <!KIMNEY_CANNOT_TRANSFORM!>lines.transformInto<MutableList<LineDto>>()<!>
+fun mutable(lines: List<Line>): MutableList<LineDto> = lines.transformInto<MutableList<LineDto>>()
+
+fun mutableCrossing(tags: MutableSet<Tag>): MutableList<TagDto> = <!KIMNEY_CANNOT_TRANSFORM!>tags.transformInto<MutableList<TagDto>>()<!>

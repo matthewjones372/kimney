@@ -139,7 +139,7 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
         val simple = rigid(type).takeUnless { it.isMarkedNullable() } as? IrSimpleType ?: return null
         val kind = containers[simple.classifier] ?: return null
         val arguments = simple.arguments.map { (it as? IrTypeProjection)?.type ?: return null }
-        return if (kind == Container.Kind.MAP) {
+        return if (kind.readOnly == Container.Kind.MAP) {
             Container(kind, arguments[1], key = arguments[0])
         } else {
             Container(kind, arguments[0])
@@ -153,6 +153,11 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
         builtIns.iterableClass to Container.Kind.ITERABLE,
         builtIns.mapClass to Container.Kind.MAP,
         builtIns.arrayClass to Container.Kind.ARRAY,
+        builtIns.mutableListClass to Container.Kind.MUTABLE_LIST,
+        builtIns.mutableSetClass to Container.Kind.MUTABLE_SET,
+        builtIns.mutableCollectionClass to Container.Kind.MUTABLE_COLLECTION,
+        builtIns.mutableIterableClass to Container.Kind.MUTABLE_ITERABLE,
+        builtIns.mutableMapClass to Container.Kind.MUTABLE_MAP,
     )
 
     override fun property(owner: IrType, name: String): IrType? {

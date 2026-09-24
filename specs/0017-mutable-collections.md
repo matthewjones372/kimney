@@ -32,7 +32,7 @@ cart.transformInto<CartDto>()   // a new ArrayList, never the source's own list
 
 ## Stack
 
-- [ ] **`spec-0017-mutable`** — the kinds in the engine and both adapters; box,
+- [x] **`spec-0017-mutable`** — the kinds in the engine and both adapters; box,
       agreement and a golden; the reference.
       Done when: box tests pass for a mutable source, a mutable target, and a
       target list that is not the source's list; a golden pins a crossing.

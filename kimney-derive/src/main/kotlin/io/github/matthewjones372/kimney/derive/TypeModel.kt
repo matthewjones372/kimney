@@ -35,13 +35,22 @@ interface TypeModel<T> {
 
 /** For a [Kind.MAP], [element] is the value type and [key] the key type. */
 data class Container<T>(val kind: Kind, val element: T, val key: T? = null) {
-    enum class Kind(val display: String) {
+    /** A mutable kind is its [readOnly] kind to every rule; only the target's interface differs. */
+    enum class Kind(val display: String, readOnly: Kind? = null) {
         LIST("a List"),
         SET("a Set"),
         COLLECTION("a Collection"),
         ITERABLE("an Iterable"),
         MAP("a Map"),
         ARRAY("an Array"),
+        MUTABLE_LIST("a MutableList", LIST),
+        MUTABLE_SET("a MutableSet", SET),
+        MUTABLE_COLLECTION("a MutableCollection", COLLECTION),
+        MUTABLE_ITERABLE("a MutableIterable", ITERABLE),
+        MUTABLE_MAP("a MutableMap", MAP),
+        ;
+
+        val readOnly: Kind = readOnly ?: this
     }
 }
 

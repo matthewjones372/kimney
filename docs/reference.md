@@ -45,6 +45,11 @@ written. The source is evaluated once. For each target type, in order:
    since it would drop duplicates or pick an order. A map's values take every
    rule; its keys only identity or a value class, since anything else could
    turn two keys into one. The loop is written out, so no lambda is created.
+   `MutableList`, `MutableSet`, `MutableCollection`, `MutableIterable` and
+   `MutableMap` are containers too: a mutable source acts as its read-only
+   kind, and a mutable target takes what its read-only kind would. A mutable
+   target is always a new collection, even from a source of its own type, so
+   neither side's edits reach the other.
 5. **Object.** An `object` target is its instance, from an `object` source
    only, so no case can drop the fields of the one it came from.
 6. **Enum.** Each source entry becomes the target entry of the same name. A
@@ -208,8 +213,9 @@ partial transformer that fits is a compile error:
 
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
-Not yet: nested field overrides (a transformer covers the pair), mutable
-collection targets, and primitive arrays other than as themselves. `docs/roadmap.md` has the order.
+Not yet: nested field overrides (a transformer covers the pair), concrete
+collection targets (`ArrayList`, `HashMap`), and primitive arrays other than
+as themselves. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
 says how to apply it.
