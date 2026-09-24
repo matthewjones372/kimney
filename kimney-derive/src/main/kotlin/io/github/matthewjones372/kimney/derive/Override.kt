@@ -17,3 +17,24 @@ sealed interface Override<out T> {
         override val method get() = "withFieldRenamed"
     }
 }
+
+/**
+ * A link naming enum entries. Unlike an [Override] it names no field: it serves every pair of its enums wherever the
+ * pair occurs, the root included. [index] is its place in the chain.
+ */
+sealed interface EnumOverride<out T> {
+    val target: T
+    val index: Int
+
+    /** The [source] entry [from] becomes the [target] entry [to], whatever the names. */
+    data class Renamed<T>(
+        val source: T,
+        val from: String,
+        override val target: T,
+        val to: String,
+        override val index: Int,
+    ) : EnumOverride<T>
+
+    /** Every entry with nothing else to become, from any enum, becomes the [target] entry [to]. */
+    data class Fallback<T>(override val target: T, val to: String, override val index: Int) : EnumOverride<T>
+}

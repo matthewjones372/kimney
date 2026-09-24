@@ -1,12 +1,12 @@
 /cases.kt:(760,793): error: Cannot transform Status → StatusDto:
-    StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.
+    StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto. Map it with .withEnumEntryRenamed(Status.ARCHIVED, StatusDto.…), or send every unmatched entry to one with .withEnumFallback(StatusDto.…).
 
 /cases.kt:(831,862): error: Cannot transform Shape → ShapeDto:
     ShapeDto.Circle.radius: Double — no rule transforms Int into Double. Or map Shape.Circle → ShapeDto.Circle with .withTransformer(Transformer<Shape.Circle, ShapeDto.Circle> { … }).
     ShapeDto — Shape.Hexagon has no subclass of the same name in ShapeDto.
 
 /cases.kt:(908,943): error: Cannot transform Account → AccountDto:
-    AccountDto.status: StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.
+    AccountDto.status: StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto. Map it with .withEnumEntryRenamed(Status.ARCHIVED, StatusDto.…), or send every unmatched entry to one with .withEnumFallback(StatusDto.…).
 
 /cases.kt:(998,1033): error: Cannot transform Something → Nothing1:
     Nothing1 — no rule transforms Something into Nothing1.

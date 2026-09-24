@@ -145,7 +145,29 @@ sealed interface Failure {
         val case: String,
         val kind: String,
     ) : Failure {
-        override val reason get() = "$case has no $kind of the same name in $type."
+        override val reason
+            get() = "$case has no $kind of the same name in $type." + if (kind == "entry") {
+                " Map it with .withEnumEntryRenamed($case, $type.…), or send every unmatched entry to one " +
+                    "with .withEnumFallback($type.…)."
+            } else {
+                ""
+            }
+    }
+
+    /** Two enum links that would each decide one entry, or two fallbacks for one enum. */
+    data class DuplicateEnumLink(
+        override val path: Path,
+        override val type: String,
+        val what: String,
+        val links: List<EnumOverride<*>>,
+    ) : Failure {
+        override val reason: String
+            get() {
+                val method = if (links.first() is EnumOverride.Fallback) "withEnumFallback" else "withEnumEntryRenamed"
+                val times = if (links.size == 2) "twice" else "${links.size} times"
+                val at = links.map { "#${it.index + 1}" }
+                return "$what $times, by $method ${at.dropLast(1).joinToString(", ")} and ${at.last()}. Keep one."
+            }
     }
 
     data class NotAParameter(override val path: Path, val method: String, val owner: String) : Failure {
@@ -197,3 +219,12 @@ sealed interface Failure {
 fun unusedTransformer(source: String, target: String, method: String = "withTransformer"): String =
     "$method($source → $target) is not used: no pair below the root fits it. " +
         "A type it names may have changed."
+
+/** An enum link the derivation never met: [from] and [to] are rendered entries, `Status.ARCHIVED`. */
+fun unusedEnumRename(from: String, to: String, source: String, target: String): String =
+    "withEnumEntryRenamed($from → $to) is not used: no $source → $target pair occurs. " +
+        "A type it names may have changed."
+
+/** A fallback whose enum nothing became: [to] is the rendered entry, `StatusDto.UNKNOWN`. */
+fun unusedEnumFallback(to: String, target: String): String =
+    "withEnumFallback($to) is not used: nothing becomes $target. A type it names may have changed."

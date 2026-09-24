@@ -4,6 +4,7 @@ package io.github.matthewjones372.kimney.derive
  * The whole of kimney's decision about one call: a plan to build [target] from [source], or every reason not.
  * [overrides] name top-level fields of [target] only; [transformers] serve every pair below the root they fit.
  * [partial] plans a transformation that may fail at runtime, collecting errors instead of refusing to compile.
+ * [enums] serve every pair of their enums, the root included.
  */
 fun <T> derive(
     model: TypeModel<T>,
@@ -12,10 +13,11 @@ fun <T> derive(
     overrides: List<Override<T>> = emptyList(),
     transformers: List<Supplied<T>> = emptyList(),
     partial: Boolean = false,
+    enums: List<EnumOverride<T>> = emptyList(),
 ): Derived<T> {
     // A root with overrides is not a pair recursion may return to: its overrides name its own fields only.
     val root = Site(source, target, Path(model.render(target)), emptyList(), shareable = overrides.isEmpty())
-    return Derivation(model, transformers, partial).pair(root, overrides)
+    return Derivation(model, transformers, partial, enums).pair(root, overrides)
 }
 
 /**
@@ -55,6 +57,7 @@ private class Derivation<T>(
     val model: TypeModel<T>,
     private val transformers: List<Supplied<T>>,
     private val partial: Boolean,
+    private val enums: List<EnumOverride<T>>,
 ) {
     private val constructors = ConstructorRule(model, partial) { pair(it) }
 
@@ -96,8 +99,12 @@ private class Derivation<T>(
                 model.same(it.second, site.target)
         }
         return when {
-            model.passes(site, overrides) -> Derived.Planned(Plan.Identity)
+            // An enum link on the pair changes what its entries become, so even an enum into itself is mapped.
+            model.passes(site, overrides) && enums.none { model.same(it.target, site.target) } ->
+                Derived.Planned(Plan.Identity)
+
             above >= 0 -> Derived.Planned(Plan.Reference(above))
+
             else -> named(site, byShape(site, overrides))
         }
     }
@@ -147,7 +154,7 @@ private class Derivation<T>(
             }
 
             enumEntries != null -> { ->
-                model.enumEntries(site.source)?.let { model.enumByName(site, it, enumEntries) }
+                model.enumEntries(site.source)?.let { model.enumByName(site, it, enumEntries, enums) }
                     ?: model.noRule(site)
             }
 
@@ -166,7 +173,7 @@ internal fun failed(failure: Failure): Derived<Nothing> = Derived.Failed(listOf(
 internal fun <T> TypeModel<T>.noRule(site: Site<T>): Derived<T> =
     failed(Failure.NoRuleFor(site.path, render(site.target), render(site.source)))
 
-private fun <T> TypeModel<T>.same(a: T, b: T): Boolean = isSubtypeOf(a, b) && isSubtypeOf(b, a)
+internal fun <T> TypeModel<T>.same(a: T, b: T): Boolean = isSubtypeOf(a, b) && isSubtypeOf(b, a)
 
 /** The first failure inside a nested pair offers a transformer for that pair, unless one inside it already did. */
 internal fun <T> TypeModel<T>.offerTransformer(site: Site<T>, failed: Derived.Failed): Derived.Failed {

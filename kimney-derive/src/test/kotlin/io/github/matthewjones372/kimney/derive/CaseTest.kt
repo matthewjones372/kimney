@@ -37,7 +37,13 @@ class CaseTest {
     @Test
     fun `an enum maps entry to entry by name, and extra target entries are fine`() {
         derive(statuses, "Status", "StatusDto") shouldBe
-            Derived.Planned(Plan.EnumByName("Status", "StatusDto", listOf("ACTIVE", "SUSPENDED")))
+            Derived.Planned(
+                Plan.EnumByName(
+                    "Status",
+                    "StatusDto",
+                    listOf(EnumArm("ACTIVE", "ACTIVE"), EnumArm("SUSPENDED", "SUSPENDED")),
+                ),
+            )
     }
 
     @Test
@@ -45,7 +51,9 @@ class CaseTest {
         val failed = derive(statuses, "Status", "Narrow").shouldBeInstanceOf<Derived.Failed>()
 
         failed.failures.map { it.line } shouldBe listOf(
-            "Narrow — Status.SUSPENDED has no entry of the same name in Narrow.",
+            "Narrow — Status.SUSPENDED has no entry of the same name in Narrow. Map it with " +
+                ".withEnumEntryRenamed(Status.SUSPENDED, Narrow.…), or send every unmatched entry to one with " +
+                ".withEnumFallback(Narrow.…).",
         )
     }
 

@@ -39,7 +39,19 @@ sealed interface Plan<out T> {
     data class ObjectInstance<T>(val target: T) : Plan<T>
 
     /** Each source entry to the target entry of the same name. */
-    data class EnumByName<T>(val source: T, val target: T, val entries: List<String>) : Plan<T>
+
+    /**
+     * A `when` over [source]'s entries by identity, each [arms] entry naming the [target] entry it becomes; an entry
+     * compiled in after this call becomes [otherwise], or fails if there is none. [uses] are the chain links that
+     * chose an arm, so an unused one can be named.
+     */
+    data class EnumByName<T>(
+        val source: T,
+        val target: T,
+        val arms: List<EnumArm>,
+        val otherwise: String? = null,
+        val uses: Set<Int> = emptySet(),
+    ) : Plan<T>
 
     /** [plan] on the non-null source; null stays null. */
     data class NullSafe<T>(val plan: Plan<T>) : Plan<T>
@@ -62,6 +74,9 @@ sealed interface Plan<out T> {
 
 data class Arm<T>(val source: T, val target: T, val plan: Plan<T>)
 
+/** The source entry [from] becomes the target entry [to]. */
+data class EnumArm(val from: String, val to: String)
+
 sealed interface Arg<out T> {
     val param: String
 
@@ -78,19 +93,20 @@ sealed interface Arg<out T> {
     data class Default(override val param: String) : Arg<Nothing>
 }
 
-/** The chain indices of every transformer this plan calls, so an unused one can be named. */
-fun <T> Plan<T>.transformersUsed(): Set<Int> = when (this) {
+/** The chain indices of every transformer this plan calls and enum link it follows, so an unused one can be named. */
+fun <T> Plan<T>.linksUsed(): Set<Int> = when (this) {
     is Plan.Transformed -> setOf(index)
-    Plan.Identity, is Plan.ObjectInstance, is Plan.EnumByName, is Plan.Reference -> emptySet()
-    is Plan.Named -> plan.transformersUsed()
-    is Plan.Construct -> args.flatMap { (it as? Arg.FromProperty)?.plan?.transformersUsed().orEmpty() }.toSet()
-    is Plan.NullSafe -> plan.transformersUsed()
-    is Plan.Required -> plan.transformersUsed()
-    is Plan.Wrap -> plan.transformersUsed()
-    is Plan.Unwrap -> plan.transformersUsed()
-    is Plan.Elements -> plan.transformersUsed()
-    is Plan.Entries -> key.transformersUsed() + value.transformersUsed()
-    is Plan.SealedByName -> arms.flatMap { it.plan.transformersUsed() }.toSet()
+    is Plan.EnumByName -> uses
+    Plan.Identity, is Plan.ObjectInstance, is Plan.Reference -> emptySet()
+    is Plan.Named -> plan.linksUsed()
+    is Plan.Construct -> args.flatMap { (it as? Arg.FromProperty)?.plan?.linksUsed().orEmpty() }.toSet()
+    is Plan.NullSafe -> plan.linksUsed()
+    is Plan.Required -> plan.linksUsed()
+    is Plan.Wrap -> plan.linksUsed()
+    is Plan.Unwrap -> plan.linksUsed()
+    is Plan.Elements -> plan.linksUsed()
+    is Plan.Entries -> key.linksUsed() + value.linksUsed()
+    is Plan.SealedByName -> arms.flatMap { it.plan.linksUsed() }.toSet()
 }
 
 /** Whether a [Plan.Reference] to [depth] occurs outside any [Plan.Named] that already binds it. */

@@ -13,7 +13,7 @@ import io.github.matthewjones372.kimney.derive.Derived
 import io.github.matthewjones372.kimney.derive.Failure
 import io.github.matthewjones372.kimney.derive.Path
 import io.github.matthewjones372.kimney.derive.derive
-import io.github.matthewjones372.kimney.derive.transformersUsed
+import io.github.matthewjones372.kimney.derive.linksUsed
 import io.github.matthewjones372.kimney.derive.unusedTransformer
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
@@ -93,7 +93,7 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
             }
 
             is Derived.Planned -> {
-                val used = derived.plan.transformersUsed()
+                val used = derived.plan.linksUsed()
                 // Only one passed to this chain is expected to be used by it; one in context serves many calls.
                 passed.filterNot { it.index in used }.forEach { unused ->
                     val method = if (unused.canFail) "withPartialTransformer" else "withTransformer"

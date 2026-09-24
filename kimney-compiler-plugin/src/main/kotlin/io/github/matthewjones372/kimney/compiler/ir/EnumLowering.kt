@@ -17,13 +17,19 @@ import org.jetbrains.kotlin.ir.types.IrType
 
 internal class EnumLowering(private val model: IrTypeModel) {
 
-    /** Entries compared by identity, not by ordinal: an enum compiled elsewhere may be reordered after this build. */
+    /**
+     * Entries compared by identity, not by ordinal: an enum compiled elsewhere may be reordered after this build. An
+     * entry added to it after this build is the fallback, if there is one, and a `NoWhenBranchMatchedException` if not.
+     */
     fun IrStatementsBuilder<*>.enumByName(plan: Plan.EnumByName<IrType>, value: IrExpression): IrExpression {
         val source = irTemporary(value)
-        val branches = plan.entries.map { name ->
-            irBranch(irEqeqeq(irGet(source), entry(plan.source, name)), entry(plan.target, name))
+        val branches = plan.arms.map { arm ->
+            irBranch(irEqeqeq(irGet(source), entry(plan.source, arm.from)), entry(plan.target, arm.to))
         }
-        val otherwise = irElseBranch(irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol))
+        val otherwise = irElseBranch(
+            plan.otherwise?.let { entry(plan.target, it) }
+                ?: irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol),
+        )
         return irWhen(plan.target, branches + otherwise)
     }
 

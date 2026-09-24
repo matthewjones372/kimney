@@ -69,7 +69,7 @@ class TransformerTest {
     fun `a transformer fits as a function would, taking a supertype and giving a subtype`() {
         val derived = derive(model, "Team", "TeamDto", transformers = listOf(Supplied("Person", "UserDto", 2)))
 
-        derived.shouldBeInstanceOf<Derived.Planned<String>>().plan.transformersUsed() shouldBe setOf(2)
+        derived.shouldBeInstanceOf<Derived.Planned<String>>().plan.linksUsed() shouldBe setOf(2)
     }
 
     @Test
@@ -105,7 +105,7 @@ class TransformerTest {
         val money = Supplied("User", "UserDto", index = 1, context = "money")
 
         derive(model, "Team", "TeamDto", transformers = listOf(money)).shouldBeInstanceOf<Derived.Planned<String>>()
-            .plan.transformersUsed() shouldBe setOf(1)
+            .plan.linksUsed() shouldBe setOf(1)
 
         val failed = derive(model, "Team", "TeamDto", transformers = listOf(userToDto, money))
             .shouldBeInstanceOf<Derived.Failed>()
@@ -118,7 +118,7 @@ class TransformerTest {
         val parse = Supplied("User", "UserDto", index = 0, canFail = true)
 
         derive(model, "Team", "TeamDto", transformers = listOf(parse), partial = true)
-            .shouldBeInstanceOf<Derived.Planned<String>>().plan.transformersUsed() shouldBe setOf(0)
+            .shouldBeInstanceOf<Derived.Planned<String>>().plan.linksUsed() shouldBe setOf(0)
         val lead = (
             derive(model, "Team", "TeamDto", transformers = listOf(parse), partial = true) as Derived.Planned
             ).plan.let { (it as Plan.Construct).args.first() as Arg.FromProperty }
