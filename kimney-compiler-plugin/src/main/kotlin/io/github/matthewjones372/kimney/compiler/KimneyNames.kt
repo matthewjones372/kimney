@@ -27,6 +27,8 @@ val WITH_TRANSFORMER = CallableId(INTO_CLASS, Name.identifier("withTransformer")
 val WITH_PARTIAL_TRANSFORMER = CallableId(INTO_CLASS, Name.identifier("withPartialTransformer"))
 val WITH_ENUM_ENTRY_RENAMED = CallableId(INTO_CLASS, Name.identifier("withEnumEntryRenamed"))
 val WITH_ENUM_FALLBACK = CallableId(INTO_CLASS, Name.identifier("withEnumFallback"))
+val WITH_SEALED_CASE_RENAMED = CallableId(INTO_CLASS, Name.identifier("withSealedCaseRenamed"))
+val WITH_SEALED_FALLBACK = CallableId(INTO_CLASS, Name.identifier("withSealedFallback"))
 val PARTIAL_TRANSFORMER = ClassId(KIMNEY, Name.identifier("PartialTransformer"))
 val RELOCATED_TO = CallableId(KIMNEY, Name.identifier("relocatedTo"))
 
@@ -39,7 +41,12 @@ val OVERRIDES = setOf(
     WITH_PARTIAL_TRANSFORMER,
     WITH_ENUM_ENTRY_RENAMED,
     WITH_ENUM_FALLBACK,
+    WITH_SEALED_CASE_RENAMED,
+    WITH_SEALED_FALLBACK,
 )
 
 /** The links that name enum entries rather than a field: each is read as an `EnumOverride`. */
 val ENUM_LINKS = setOf(WITH_ENUM_ENTRY_RENAMED, WITH_ENUM_FALLBACK)
+
+/** The links that name sealed cases: each is read as a `SealedOverride`. */
+val SEALED_LINKS = setOf(WITH_SEALED_CASE_RENAMED, WITH_SEALED_FALLBACK)

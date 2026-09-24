@@ -1,0 +1,12 @@
+/sealedCases.kt:(618,721): error: Cannot transform Shape → ShapeDto:
+    Into<Shape, ShapeDto> — withSealedCaseRenamed takes class literals, like Shape.Hexagon::class, not a value that holds one.
+
+/sealedCases.kt:(765,844): error: Cannot transform Shape → ShapeDto:
+    Into<Shape, ShapeDto> — withSealedFallback takes the object itself, like ShapeDto.Unsupported, not a value that holds one.
+
+/sealedCases.kt:(882,1071): error: Cannot transform Shape → ShapeDto:
+    ShapeDto — Shape.Hexagon is renamed twice, by withSealedCaseRenamed #1 and #2. Keep one.
+
+/sealedCases.kt:(1116,1259): warning: withSealedCaseRenamed(ShapeDto.Circle → Shape.Circle) is not used: no sealed type with ShapeDto.Circle becomes one with Shape.Circle. A type it names may have changed.
+
+/sealedCases.kt:(1323,1387): warning: withSealedFallback(Other.Unknown) is not used: no sealed type becomes one with Other.Unknown. A type it names may have changed.

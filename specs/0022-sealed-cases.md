@@ -70,8 +70,9 @@ shape.into<_, ShapeDto>().withTransformer(hexagon).transform()
   ShapeDto — Shape.Hexagon has no subclass of the same name in ShapeDto. Map it with .withSealedCaseRenamed(Shape.Hexagon::class, ShapeDto.….class), build it with .withTransformer(Transformer<Shape.Hexagon, ShapeDto> { … }), or send every unmatched case to one object with .withSealedFallback(ShapeDto.…).
   ```
 
-No `else` branch is added to the lowered `when`, so a case added to the source
-later is a compile error unless a fallback covers it.
+The fallback is also the `else` of the lowered `when`, as 0021's is: a case
+compiled in after the call becomes it rather than throwing. Without one, a
+case added to the source is a compile error at the next build.
 
 ## Why this shape
 
@@ -84,14 +85,14 @@ the match it should always have had.
 
 ## Stack
 
-- [ ] **`spec-0022-runtime`** — `withSealedCaseRenamed`, `withSealedFallback`;
+- [x] **`spec-0022-runtime`** — `withSealedCaseRenamed`, `withSealedFallback`;
       BCV.
       Done when: the stubs throw `KimneyNotApplied` naming themselves.
-- [ ] **`spec-0022-engine`** — renames, the transformer into the parent and the
+- [x] **`spec-0022-engine`** — renames, the transformer into the parent and the
       fallback in the sealed rule, in that order; the failures and the hint.
       Done when: engine tests cover each, the precedence between them, a
       nested pair, duplicates and unused ones.
-- [ ] **`spec-0022-plugin`** — both chain readers; the lowering; goldens, box,
+- [x] **`spec-0022-plugin`** — both chain readers; the lowering; goldens, box,
       agreement; cookbook and reference.
       Done when: box tests pass for a renamed case with fields, a fallback,
       a case transformer, and all three in one hierarchy.
@@ -113,3 +114,13 @@ answers:
   transformer.
 - **A case transformer into the parent is tried only when no same-named case
   exists**, so no existing derivation changes.
+- **The fallback is also the `else`**, as in 0021 (decided while building,
+  for the same reason).
+- **Whether a fallback is an object is the engine's check.** The checker only
+  requires it written as a qualifier; one that is not an object case of the
+  target fits nothing and is the unused warning. Reading the class kind in FIR
+  meant `FirResolvedQualifier.symbol`, whose return type changed in Kotlin
+  2.4.20 (`NoSuchMethodError` there, found by the Kotlin matrix).
+- **Its own warning**, `KIMNEY_UNUSED_SEALED_MAPPING`, beside 0021's.
+- **A case into its sealed parent (0015) keeps its message** without the
+  three offers: the mappings serve sealed-to-sealed pairs.

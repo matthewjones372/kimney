@@ -59,7 +59,8 @@ written. The source is evaluated once. For each target type, in order:
    Entries are compared by identity, never by ordinal, so an enum compiled
    elsewhere can be reordered safely.
 7. **Sealed.** Each direct subclass of the source becomes the target's direct
-   subclass of the same simple name, and each pair is derived by every rule
+   subclass of the same simple name, unless a [sealed mapping](#sealed-mappings)
+   places it, and each pair is derived by every rule
    here, so a case gets its defaults and a failure inside it has a path
    through it (`ShapeDto.Circle.radius`). A single case into a sealed target —
    `Expr.Add` into `ExprDto` — takes the target's case of the same name the
@@ -189,6 +190,48 @@ withEnumFallback(OtherDto.B) is not used: nothing becomes OtherDto. A type it na
 
 A fallback that has nothing to catch today is not a warning: written ahead
 of need is what it is for.
+
+## Sealed mappings
+
+```kotlin
+val message = event.into<_, Message>()
+    .withSealedCaseRenamed(Event.Escalated::class, Message.Raised::class)
+    .withTransformer(Transformer<Event.Merged, Message> { Message.Closed(it.ticket, "merged") })
+    .withSealedFallback(Message.Ignored)
+    .transform()
+```
+
+The same two calls as enums have, for sealed types, wherever the two
+hierarchies meet:
+
+| Mapping | Does |
+|---|---|
+| `withSealedCaseRenamed(From::class, To::class)` | the case `From` becomes the case `To`, derived by every rule, even when the target has a case named like `From` |
+| `withSealedFallback(Object)` | every case with nothing else to become is the object case `Object` |
+
+For each source case: a rename, then the case of the same name, then a
+[transformer](#transformers) from the case into the target's sealed parent,
+then the fallback. The transformer is tried only for a case with no
+same-named target, so none that already derives changes. The fallback is
+also what a case compiled in after the call becomes.
+
+A rename takes class literals and a fallback the object itself:
+
+| Failure | Says |
+|---|---|
+| Not a class literal | `Into<Shape, ShapeDto> — withSealedCaseRenamed takes class literals, like Shape.Hexagon::class, not a value that holds one.` |
+| Not an object | `Into<Shape, ShapeDto> — withSealedFallback takes the object itself, like ShapeDto.Unsupported, not a value that holds one.` |
+| One case renamed twice | `ShapeDto — Shape.Hexagon is renamed twice, by withSealedCaseRenamed #1 and #2. Keep one.` |
+
+A mapping whose types never meet is a warning, `KIMNEY_UNUSED_SEALED_MAPPING`:
+
+```
+withSealedCaseRenamed(ShapeDto.Circle → Shape.Circle) is not used: no sealed type with ShapeDto.Circle becomes one with Shape.Circle. A type it names may have changed.
+withSealedFallback(Other.Unknown) is not used: no sealed type becomes one with Other.Unknown. A type it names may have changed.
+```
+
+A fallback that is not one of the target's object cases fits nothing, so it
+is that warning too.
 
 ## Transformers
 

@@ -34,6 +34,7 @@ and names the range ([Kotlin versions](../README.md#kotlin-versions)).
 - [Enums across layers](#enums-across-layers)
 - [An entry the other side does not have](#an-entry-the-other-side-does-not-have)
 - [Sealed types](#sealed-types)
+- [A case the other side does not have](#a-case-the-other-side-does-not-have)
 - [Generic sealed types](#generic-sealed-types)
 - [Optional values](#optional-values)
 - [Value class ids and plain columns](#value-class-ids-and-plain-columns)
@@ -236,6 +237,55 @@ fun Payment.toDto(): PaymentDto = transformInto()
 A case added to `Payment` without one in `PaymentDto` stops the build at every
 call that meets it: the exhaustiveness a hand-written `when` loses the day
 someone adds an `else`.
+
+## A case the other side does not have
+
+Three ways to place a case with no case of the same name, tried in this
+order: a rename derives it into another case by every rule, a transformer
+from it into the target's sealed parent builds it by hand, and a fallback
+object takes whatever is left, including cases added later.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/cases/SealedCases.kt
+package example.cookbook.cases
+
+import io.github.matthewjones372.kimney.Transformer
+import io.github.matthewjones372.kimney.into
+
+sealed interface Event {
+    data class Opened(val ticket: Long) : Event
+
+    data class Escalated(val ticket: Long, val level: Int) : Event
+
+    data class Merged(val ticket: Long, val into: Long) : Event
+
+    data class Reacted(val ticket: Long, val emoji: String) : Event
+}
+
+sealed interface Message {
+    data class Opened(val ticket: Long) : Message
+
+    data class Raised(val ticket: Long, val level: Int) : Message
+
+    data class Closed(val ticket: Long, val reason: String) : Message
+
+    data object Ignored : Message
+}
+
+// Escalated is called Raised downstream; a merge closes the ticket; nothing else is sent on.
+val merged = Transformer<Event.Merged, Message> { Message.Closed(it.ticket, "merged into ${it.into}") }
+
+fun Event.toMessage(): Message = into<_, Message>()
+    .withSealedCaseRenamed(Event.Escalated::class, Message.Raised::class)
+    .withTransformer(merged)
+    .withSealedFallback(Message.Ignored)
+    .transform()
+```
+
+The rename and the fallback name classes and objects as written, so a typo
+fails the build at the call. As with enums, prefer the rename to the
+fallback for a hierarchy you own: the fallback also absorbs the case you
+forget to map.
 
 ## Generic sealed types
 

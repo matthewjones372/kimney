@@ -10,14 +10,10 @@ import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO_PARTIAL
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_PARTIAL
 import io.github.matthewjones372.kimney.compiler.guarded
 import io.github.matthewjones372.kimney.derive.Derived
-import io.github.matthewjones372.kimney.derive.EnumOverride
 import io.github.matthewjones372.kimney.derive.Failure
 import io.github.matthewjones372.kimney.derive.Path
 import io.github.matthewjones372.kimney.derive.derive
 import io.github.matthewjones372.kimney.derive.linksUsed
-import io.github.matthewjones372.kimney.derive.unusedEnumFallback
-import io.github.matthewjones372.kimney.derive.unusedEnumRename
-import io.github.matthewjones372.kimney.derive.unusedTransformer
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
@@ -93,34 +89,16 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         val passed = chain?.transformers.orEmpty()
         val transformers = passed + context.contextTransformers(start = chain?.links ?: 0)
         val enums = chain?.enums.orEmpty()
-        when (val derived = derive(model, source, target, chain?.overrides.orEmpty(), transformers, partial, enums)) {
+        val sealed = chain?.sealed.orEmpty()
+        val overrides = chain?.overrides.orEmpty()
+        when (val derived = derive(model, source, target, overrides, transformers, partial, enums, sealed)) {
             is Derived.Failed -> {
                 val message = derived.message(model.render(source), model.render(target))
                 reporter.reportOn(call.source, KimneyErrors.KIMNEY_CANNOT_TRANSFORM, message)
             }
 
-            is Derived.Planned -> {
-                val used = derived.plan.linksUsed()
-                // Only one passed to this chain is expected to be used by it; one in context serves many calls.
-                passed.filterNot { it.index in used }.forEach { unused ->
-                    val method = if (unused.canFail) "withPartialTransformer" else "withTransformer"
-                    val message = unusedTransformer(model.render(unused.source), model.render(unused.target), method)
-                    val at = chain?.calls?.get(unused.index)?.source
-                    reporter.reportOn(at, KimneyErrors.KIMNEY_UNUSED_TRANSFORMER, message)
-                }
-                enums.filterNot { it.index in used }.forEach { unused ->
-                    val target = model.render(unused.target)
-                    val message = when (unused) {
-                        is EnumOverride.Renamed -> {
-                            val enum = model.render(unused.source)
-                            unusedEnumRename("$enum.${unused.from}", "$target.${unused.to}", enum, target)
-                        }
-
-                        is EnumOverride.Fallback -> unusedEnumFallback("$target.${unused.to}", target)
-                    }
-                    val at = chain?.calls?.get(unused.index)?.source
-                    reporter.reportOn(at, KimneyErrors.KIMNEY_UNUSED_ENUM_MAPPING, message)
-                }
+            is Derived.Planned -> model.unusedLinks(chain, derived.plan.linksUsed()).forEach { unused ->
+                reporter.reportOn(chain?.calls?.get(unused.index)?.source, unused.factory, unused.message)
             }
         }
     }
@@ -130,9 +108,8 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         val model = FirTypeModel(context.session, context.lookups(call.source))
         val (source, target) = (into as? ConeClassLikeType)?.typeArguments?.map { it as? ConeKotlinType } ?: return
         if (source == null || target == null) return
-        val enum = model.render(given.type)
-        val example = model.enumEntries(given.type)?.firstOrNull()?.let { "$enum.$it" } ?: "$enum.ENTRY"
-        val failure = Failure.NotWrittenOut(Path(model.render(into)), given.method, "the entries themselves", example)
+        val (what, example) = model.writtenOut(given)
+        val failure = Failure.NotWrittenOut(Path(model.render(into)), given.method, what, example)
         val message = Derived.Failed(listOf(failure)).message(model.render(source), model.render(target))
         reporter.reportOn(call.source, KimneyErrors.KIMNEY_CANNOT_TRANSFORM, message)
     }

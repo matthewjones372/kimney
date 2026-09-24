@@ -98,7 +98,8 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         val transformers = chain.transformers + inContext.map { it.first }
         // A partial call returns Partial<B>; B is what is derived.
         val target = if (partial) planned(typeArgument(call.type), "the target inside Partial") else call.type
-        val derived = derive(model, chain.source.type, target, chain.overrides, transformers, partial, chain.enums)
+        val derived =
+            derive(model, chain.source.type, target, chain.overrides, transformers, partial, chain.enums, chain.sealed)
         return when (derived) {
             is Derived.Planned -> builder(call).irBlock(resultType = call.type) {
                 val source = irTemporary(chain.source)

@@ -1,5 +1,6 @@
 package example.cookbook
 
+import example.cookbook.cases.toMessage
 import example.cookbook.collections.toDto
 import example.cookbook.copy.suspend
 import example.cookbook.crossing.toDto
@@ -75,6 +76,21 @@ class CookbookTest {
             example.cookbook.entries.TicketStatus.CLOSED,
             example.cookbook.entries.TicketStatus.UNKNOWN,
             example.cookbook.entries.TicketStatus.UNKNOWN,
+        )
+    }
+
+    @Test
+    fun `a case is renamed, built by its transformer, or falls back`() {
+        listOf(
+            example.cookbook.cases.Event.Opened(1),
+            example.cookbook.cases.Event.Escalated(2, 3),
+            example.cookbook.cases.Event.Merged(4, 1),
+            example.cookbook.cases.Event.Reacted(5, "+1"),
+        ).map { it.toMessage() } shouldBe listOf(
+            example.cookbook.cases.Message.Opened(1),
+            example.cookbook.cases.Message.Raised(2, 3),
+            example.cookbook.cases.Message.Closed(4, "merged into 1"),
+            example.cookbook.cases.Message.Ignored,
         )
     }
 
