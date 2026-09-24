@@ -8,9 +8,10 @@ import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
 import io.github.matthewjones372.kimney.compiler.guarded
 import io.github.matthewjones372.kimney.derive.Derived
 import io.github.matthewjones372.kimney.derive.Failure
-import io.github.matthewjones372.kimney.derive.Override
 import io.github.matthewjones372.kimney.derive.Path
 import io.github.matthewjones372.kimney.derive.derive
+import io.github.matthewjones372.kimney.derive.transformersUsed
+import io.github.matthewjones372.kimney.derive.unusedTransformer
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
@@ -34,7 +35,7 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         guarded(fallback = {}, report = report) {
             when (id) {
                 TRANSFORM_INTO -> expression.extensionReceiver?.resolvedType?.let {
-                    derived(expression, it, emptyList())
+                    derived(expression, it, chain = null)
                 }
 
                 TRANSFORM -> transform(expression)
@@ -50,7 +51,7 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         if (chain == null) {
             call.explicitReceiver?.resolvedType?.let { notStatic(call, it) }
         } else {
-            derived(call, chain.source, chain.overrides)
+            derived(call, chain.source, chain)
         }
     }
 
@@ -64,15 +65,26 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
     }
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
-    private fun derived(call: FirFunctionCall, source: ConeKotlinType, overrides: List<Override<ConeKotlinType>>) {
+    private fun derived(call: FirFunctionCall, source: ConeKotlinType, chain: FirChain?) {
         val target = call.resolvedType
         // The compiler has already reported whatever left a type unresolved.
         if (source is ConeErrorType || target is ConeErrorType) return
         val model = FirTypeModel(context.session)
-        val derived = derive(model, source, target, overrides)
-        if (derived is Derived.Failed) {
-            val message = derived.message(model.render(source), model.render(target))
-            reporter.reportOn(call.source, KimneyErrors.KIMNEY_CANNOT_TRANSFORM, message)
+        val transformers = chain?.transformers.orEmpty()
+        when (val derived = derive(model, source, target, chain?.overrides.orEmpty(), transformers)) {
+            is Derived.Failed -> {
+                val message = derived.message(model.render(source), model.render(target))
+                reporter.reportOn(call.source, KimneyErrors.KIMNEY_CANNOT_TRANSFORM, message)
+            }
+
+            is Derived.Planned -> {
+                val used = derived.plan.transformersUsed()
+                transformers.filterNot { it.index in used }.forEach { unused ->
+                    val message = unusedTransformer(model.render(unused.source), model.render(unused.target))
+                    val at = chain?.transformerCalls?.get(unused.index)?.source
+                    reporter.reportOn(at, KimneyErrors.KIMNEY_UNUSED_TRANSFORMER, message)
+                }
+            }
         }
     }
 

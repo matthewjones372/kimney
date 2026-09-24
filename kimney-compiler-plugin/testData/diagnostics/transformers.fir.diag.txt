@@ -1,0 +1,5 @@
+/transformers.kt:(1092,1228): error: Cannot transform Team → TeamDto:
+    TeamDto.lead: UserDto — two transformers fit User → UserDto: withTransformer #1 and #3. Pass one.
+    TeamDto.members[]: UserDto — two transformers fit User → UserDto: withTransformer #1 and #3. Pass one.
+
+/transformers.kt:(1264,1381): warning: withTransformer(Int → Long) is not used: no pair below the root fits it. A type it names may have changed.

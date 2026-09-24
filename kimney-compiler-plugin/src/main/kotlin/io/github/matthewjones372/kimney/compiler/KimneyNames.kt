@@ -14,4 +14,7 @@ val TRANSFORM = CallableId(INTO_CLASS, Name.identifier("transform"))
 val WITH_FIELD_CONST = CallableId(INTO_CLASS, Name.identifier("withFieldConst"))
 val WITH_FIELD_COMPUTED = CallableId(INTO_CLASS, Name.identifier("withFieldComputed"))
 val WITH_FIELD_RENAMED = CallableId(INTO_CLASS, Name.identifier("withFieldRenamed"))
-val OVERRIDES = setOf(WITH_FIELD_CONST, WITH_FIELD_COMPUTED, WITH_FIELD_RENAMED)
+val WITH_TRANSFORMER = CallableId(INTO_CLASS, Name.identifier("withTransformer"))
+
+/** Every link a chain may have between `into()` and `transform()`. */
+val OVERRIDES = setOf(WITH_FIELD_CONST, WITH_FIELD_COMPUTED, WITH_FIELD_RENAMED, WITH_TRANSFORMER)
