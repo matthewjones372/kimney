@@ -32,6 +32,7 @@ at configuration and names both.
 - [Value class ids and plain columns](#value-class-ids-and-plain-columns)
 - [Lists, sets and maps](#lists-sets-and-maps)
 - [A `Set` into a `List`](#a-set-into-a-list)
+- [Your own transformer for a nested pair](#your-own-transformer-for-a-nested-pair)
 - [Reading the errors](#reading-the-errors)
 - [Compiled without the plugin](#compiled-without-the-plugin)
 
@@ -299,6 +300,52 @@ fun toDto(article: Article): ArticleDto = article.into<_, ArticleDto>()
     .transform()
 ```
 
+## Your own transformer for a nested pair
+
+Overrides reach top-level fields only. When a nested pair needs one — every
+`User` inside a `Team` renames `fullName` — write how that pair maps once, as a
+`Transformer`, and pass it to the chain. It serves every pair it fits below the
+root: fields, list elements, map values and sealed cases.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/transformers/Transformers.kt
+package example.cookbook.transformers
+
+import io.github.matthewjones372.kimney.Transformer
+import io.github.matthewjones372.kimney.into
+
+data class User(val fullName: String, val email: String)
+
+data class UserDto(val name: String, val email: String)
+
+data class Team(val lead: User, val members: List<User>, val motto: String?)
+
+data class TeamDto(val lead: UserDto, val members: List<UserDto>, val motto: String)
+
+/** How a User becomes a UserDto, written once, with kimney itself. */
+val userToDto = Transformer<User, UserDto> {
+    it.into<_, UserDto>().withFieldRenamed(User::fullName, UserDto::name).transform()
+}
+
+/** A null gets a value only where someone says which. */
+val noMotto = Transformer<String?, String> { it ?: "(none)" }
+
+fun toDto(team: Team): TeamDto = team.into<_, TeamDto>()
+    .withTransformer(userToDto)
+    .withTransformer(noMotto)
+    .transform()
+```
+
+A transformer is tried before any other rule, so it also does what no rule
+will: `noMotto` is how a `String?` becomes a `String`, with the choice written
+down. It fits as a function would, so a `Transformer<Person, UserDto>` serves a
+`User` that extends `Person`. Two that fit the same pair are an error naming
+both, and one that fits nothing is a warning — usually a type that changed
+underneath it.
+
+The chain evaluates each transformer once, in the order written, and calls
+`transform` where its pair appears.
+
 ## Reading the errors
 
 When a transformation cannot be derived, the call does not compile. The error
@@ -308,7 +355,7 @@ from the target and what would fix it:
 ```
 e: Main.kt:12:5 Cannot transform User → UserDto:
     UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default value, or add .withFieldConst(UserDto::email, …).
-    UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip a default value.
+    UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip a default value. Or map Address → AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).
 ```
 
 The ones you will meet, each quoted from the plugin's tests:
@@ -318,7 +365,7 @@ The ones you will meet, each quoted from the plugin's tests:
 | A field nothing fills | `UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default value, or add .withFieldConst(UserDto::email, …).` |
 | `String?` into `String` | `StrictDto.name: String — User.name is String?, and a null has nowhere to go. Make StrictDto.name nullable, or fill it with .withFieldComputed(StrictDto::name) { … }.` |
 | An enum entry the target lacks | `StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.` |
-| Two types no rule connects | `ShapeDto.Circle.radius: Double — no rule transforms Int into Double.` |
+| Two types no rule connects | `ShapeDto.Circle.radius: Double — no rule transforms Int into Double. Or map Shape.Circle → ShapeDto.Circle with .withTransformer(Transformer<Shape.Circle, ShapeDto.Circle> { … }).` |
 | A `Set` into a `List` | `StrictOrder.tags: List<TagDto> — a Set is not turned into a List. Fill it with .withFieldComputed(StrictOrder::tags) { … }.` |
 | A map key that could collide | `StrictOrder.keyed[key]: LineDto — keys are transformed only as themselves or through a value class, since Line into LineDto could turn two keys into one.` |
 | A private constructor | `Hidden — Hidden has no public primary constructor: it is private.` |

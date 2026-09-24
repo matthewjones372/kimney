@@ -88,4 +88,16 @@ class CookbookTest {
         example.cookbook.crossing.toDto(example.cookbook.crossing.Article("t", linkedSetOf("b", "a"))) shouldBe
             example.cookbook.crossing.ArticleDto("t", listOf("a", "b"))
     }
+
+    @Test
+    fun `a transformer serves every nested pair it fits, in fields and elements`() {
+        val ada = example.cookbook.transformers.User("Ada Lovelace", "ada@example.com")
+        val team = example.cookbook.transformers.Team(ada, listOf(ada), motto = null)
+
+        example.cookbook.transformers.toDto(team) shouldBe example.cookbook.transformers.TeamDto(
+            example.cookbook.transformers.UserDto("Ada Lovelace", "ada@example.com"),
+            listOf(example.cookbook.transformers.UserDto("Ada Lovelace", "ada@example.com")),
+            motto = "(none)",
+        )
+    }
 }

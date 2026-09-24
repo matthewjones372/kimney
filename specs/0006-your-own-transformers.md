@@ -61,16 +61,16 @@ type moved is a mapping that no longer does what its author thinks.
 
 ## Stack
 
-- [ ] **`spec-0006-runtime`** — `Transformer`, `withTransformer`; BCV.
+- [x] **`spec-0006-runtime`** — `Transformer`, `withTransformer`; BCV.
       Done when: the stubs throw `KimneyNotApplied` naming themselves.
-- [ ] **`spec-0006-engine`** — the transformer rule, `AmbiguousTransformer`,
+- [x] **`spec-0006-engine`** — the transformer rule, `AmbiguousTransformer`,
       and the set of transformers a plan uses.
       Done when: engine tests cover a nested field, an element, a sealed case,
       a null handled by a transformer, variance, and ambiguity.
-- [ ] **`spec-0006-fir`** — the chain reader takes `withTransformer`; goldens
+- [x] **`spec-0006-fir`** — the chain reader takes `withTransformer`; goldens
       for ambiguity and the unused warning.
       Done when: goldens pass for both.
-- [ ] **`spec-0006-ir`** — lowering; box and agreement; example and reference.
+- [x] **`spec-0006-ir`** — lowering; box and agreement; example and reference.
       Done when: box tests pass, including evaluation order and a transformer
       compiled in another module.
 

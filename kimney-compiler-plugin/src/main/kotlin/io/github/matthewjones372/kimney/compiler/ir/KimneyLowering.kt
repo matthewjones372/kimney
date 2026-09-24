@@ -2,6 +2,7 @@ package io.github.matthewjones372.kimney.compiler.ir
 
 import io.github.matthewjones372.kimney.compiler.KimneyErrors
 import io.github.matthewjones372.kimney.compiler.TRANSFORM
+import io.github.matthewjones372.kimney.compiler.TRANSFORMER
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
 import io.github.matthewjones372.kimney.compiler.guarded
 import io.github.matthewjones372.kimney.derive.Arg
@@ -40,6 +41,7 @@ import org.jetbrains.kotlin.ir.types.classOrFail
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.callableId
+import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 
 /** Replaces each `transformInto` call with the constructor calls the engine planned, evaluating the source once. */
@@ -47,6 +49,8 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private val model = IrTypeModel(context)
     private val containers = ContainerLowering(context)
     private val enums = EnumLowering(model)
+    private val transformFunction = context.referenceClass(TRANSFORMER)?.owner?.functions
+        ?.single { it.name.asString() == "transform" }
 
     override fun visitCall(expression: IrCall): IrExpression {
         val call = super.visitCall(expression) as? IrCall ?: return expression
@@ -65,7 +69,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     }
 
     private fun lowered(call: IrCall, chain: IrChain): IrExpression =
-        when (val derived = derive(model, chain.source.type, call.type, chain.overrides)) {
+        when (val derived = derive(model, chain.source.type, call.type, chain.overrides, chain.transformers)) {
             is Derived.Planned -> builder(call).irBlock(resultType = call.type) {
                 val source = irTemporary(chain.source)
                 // Evaluated here, in written order, so side effects happen as the chain reads.
@@ -107,9 +111,14 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         when (plan) {
             Plan.Identity -> value
 
-            // The chain reader passes no transformer yet, so the engine plans none.
-            is Plan.Transformed ->
-                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+            is Plan.Transformed -> {
+                val transform = planned(transformFunction, "Transformer.transform on the classpath")
+                val call = irCall(transform.symbol, context.irBuiltIns.anyNType).apply {
+                    arguments[0] = irGet(planned(given[plan.index], "a transformer value"))
+                    arguments[1] = value
+                }
+                irImplicitCast(call, plan.target)
+            }
 
             is Plan.ObjectInstance -> irGetObjectValue(plan.target, plan.target.classOrFail)
 

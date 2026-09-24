@@ -130,9 +130,37 @@ The wrong-value-type check is kimney's, not the compiler's: `KProperty1` is
 covariant in its value, so `withFieldConst(UserDto::age, "forty")` type-checks
 with `T` widened to `Any`.
 
+## Transformers
+
+```kotlin
+import io.github.matthewjones372.kimney.Transformer
+import io.github.matthewjones372.kimney.into
+
+val userToDto = Transformer<User, UserDto> { UserDto(it.fullName) }
+
+val dto = team.into<_, TeamDto>().withTransformer(userToDto).transform()
+```
+
+A `Transformer<A, B>` passed with `withTransformer` is tried first on every
+pair below the root, before identity and every other rule — in fields, list
+elements, map values and sealed cases. It fits a pair `S → T` when `S` is a
+subtype of `A` and `B` a subtype of `T`. It is how a pair no rule covers gets
+through, `String? → String` included.
+
+Each transformer is evaluated once, in chain order with the other overrides.
+The root pair is the chain's own and never goes to a transformer.
+
+| Failure | Says |
+|---|---|
+| Two transformers fit one pair | `TeamDto.lead: UserDto — two transformers fit User → UserDto: withTransformer #1 and #3. Pass one.` |
+| A transformer fits nothing (warning) | `withTransformer(Int → Long) is not used: no pair below the root fits it. A type it names may have changed.` |
+
+The first failure inside a nested class offers one: `… Or map Address →
+AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).`
+
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
-Not yet: nested overrides, nullable to non-null, mutable collection targets,
+Not yet: nested field overrides (a transformer covers the pair), nullable to non-null without a transformer, mutable collection targets,
 primitive arrays other than as themselves, generic sealed hierarchies, generic
 value classes and recursive types. `docs/roadmap.md` has the order.
 

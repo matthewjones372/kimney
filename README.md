@@ -90,7 +90,7 @@ generation. It lists every problem at once, not the first:
 ```
 e: Main.kt:12:5 Cannot transform User → UserDto:
     UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default value, or add .withFieldConst(UserDto::email, …).
-    UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip a default value.
+    UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip a default value. Or map Address → AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).
 ```
 
 It refuses what would silently lose information, and says what to write
@@ -119,10 +119,12 @@ applies. Each is a recipe in the [cookbook](docs/cookbook.md).
 | Class → class | the primary constructor: same-named properties, then defaults | [Nested classes](docs/cookbook.md#nested-classes-and-defaults) |
 
 An override — `withFieldConst`, `withFieldComputed` or `withFieldRenamed` —
-comes before all of these for the field it names.
+comes before all of these for the field it names, and your own `Transformer`,
+passed with `withTransformer`, before all of them for every nested pair it
+fits ([recipe](docs/cookbook.md#your-own-transformer-for-a-nested-pair)).
 
-Not yet: your own transformers for nested pairs, recursive types, fallible
-("partial") transformations, and generic sealed hierarchies. The
+Not yet: recursive types, fallible ("partial") transformations, and generic
+sealed hierarchies. The
 [roadmap](docs/roadmap.md) has the order.
 
 ## Trying it

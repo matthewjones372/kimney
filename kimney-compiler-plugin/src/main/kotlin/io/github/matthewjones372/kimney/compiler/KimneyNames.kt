@@ -9,6 +9,7 @@ private val KIMNEY = FqName("io.github.matthewjones372.kimney")
 private val INTO_CLASS = ClassId(KIMNEY, Name.identifier("Into"))
 
 val TRANSFORM_INTO = CallableId(KIMNEY, Name.identifier("transformInto"))
+val TRANSFORMER = ClassId(KIMNEY, Name.identifier("Transformer"))
 val INTO = CallableId(KIMNEY, Name.identifier("into"))
 val TRANSFORM = CallableId(INTO_CLASS, Name.identifier("transform"))
 val WITH_FIELD_CONST = CallableId(INTO_CLASS, Name.identifier("withFieldConst"))
