@@ -4,3 +4,4 @@ build/
 *.log
 .idea/
 .claude/worktrees/
+.DS_Store
