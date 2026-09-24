@@ -14,11 +14,15 @@ internal fun <T> TypeModel<T>.nullToNonNull(site: Site<T>): Derived<T> = Derived
     listOf(Failure.NullableToNonNull(site.path, render(site.target), render(site.source), site.owner, site.origin)),
 )
 
-internal fun <T> TypeModel<T>.wrap(site: Site<T>, pair: (Site<T>) -> Derived<T>): Derived<T> {
+/** In a partial transformation a null records an error at its path; a value goes on through the non-null pair. */
+internal fun <T> TypeModel<T>.required(site: Site<T>, pair: (Site<T>) -> Derived<T>): Derived<T> =
+    pair(site.copy(source = nonNull(site.source))).map { Plan.Required(site.path.toString(), it) }
+
+internal fun <T> TypeModel<T>.wrap(site: Site<T>, partial: Boolean, pair: (Site<T>) -> Derived<T>): Derived<T> {
     val inner = checkNotNull(valueClass(site.target)) { "wrap is tried only for a value class target" }
     // The held property is a segment of the path, so a failure inside reads `Label.text`, not the bare inner type.
     val below = site.below(inner.name, site.source, inner.type, owner = render(site.target), origin = site.origin)
-    return pair(below).map { Plan.Wrap(site.target, it) }
+    return pair(below).map { Plan.Wrap(site.target, it, guardedAt = site.path.toString().takeIf { partial }) }
 }
 
 internal fun <T> TypeModel<T>.unwrap(site: Site<T>, pair: (Site<T>) -> Derived<T>): Derived<T> {

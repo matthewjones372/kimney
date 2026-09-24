@@ -17,7 +17,11 @@ sealed interface Plan<out T> {
     /** The source value already is a target value. */
     data object Identity : Plan<Nothing>
 
-    data class Construct<T>(val target: T, val args: List<Arg<T>>) : Plan<T>
+    /** [guardedAt] is set in a partial transformation: an `IllegalArgumentException` it throws is an error there. */
+    data class Construct<T>(val target: T, val args: List<Arg<T>>, val guardedAt: String? = null) : Plan<T>
+
+    /** In a partial transformation: a null source is an error at [path]; a value goes on through [plan]. */
+    data class Required<T>(val path: String, val plan: Plan<T>) : Plan<T>
 
     /** [plan], given a name by the [depth] of its pair on the path, so a [Reference] below can call it again. */
     data class Named<T>(val depth: Int, val source: T, val target: T, val plan: Plan<T>) : Plan<T>
@@ -38,7 +42,7 @@ sealed interface Plan<out T> {
     data class NullSafe<T>(val plan: Plan<T>) : Plan<T>
 
     /** [plan]'s result, wrapped in the value class [target]. */
-    data class Wrap<T>(val target: T, val plan: Plan<T>) : Plan<T>
+    data class Wrap<T>(val target: T, val plan: Plan<T>, val guardedAt: String? = null) : Plan<T>
 
     /** The value class [source]'s [property], transformed by [plan]. */
     data class Unwrap<T>(val source: T, val property: String, val plan: Plan<T>) : Plan<T>
@@ -78,6 +82,7 @@ fun <T> Plan<T>.transformersUsed(): Set<Int> = when (this) {
     is Plan.Named -> plan.transformersUsed()
     is Plan.Construct -> args.flatMap { (it as? Arg.FromProperty)?.plan?.transformersUsed().orEmpty() }.toSet()
     is Plan.NullSafe -> plan.transformersUsed()
+    is Plan.Required -> plan.transformersUsed()
     is Plan.Wrap -> plan.transformersUsed()
     is Plan.Unwrap -> plan.transformersUsed()
     is Plan.Elements -> plan.transformersUsed()
@@ -92,6 +97,7 @@ internal fun <T> Plan<T>.refersTo(depth: Int): Boolean = when (this) {
     Plan.Identity, is Plan.ObjectInstance, is Plan.EnumByName, is Plan.Transformed -> false
     is Plan.Construct -> args.any { (it as? Arg.FromProperty)?.plan?.refersTo(depth) == true }
     is Plan.NullSafe -> plan.refersTo(depth)
+    is Plan.Required -> plan.refersTo(depth)
     is Plan.Wrap -> plan.refersTo(depth)
     is Plan.Unwrap -> plan.refersTo(depth)
     is Plan.Elements -> plan.refersTo(depth)

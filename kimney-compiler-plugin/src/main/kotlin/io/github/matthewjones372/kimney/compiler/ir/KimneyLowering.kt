@@ -133,6 +133,10 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
             is Plan.Named -> named(plan, value, given)
 
+            // Neither adapter derives in partial mode yet, so the engine plans no check.
+            is Plan.Required ->
+                error("kimney planned ${plan::class.simpleName}, which this lowering does not build yet")
+
             is Plan.Reference -> irCall(planned(given.named[plan.depth], "the plan it refers back to").symbol).apply {
                 arguments[0] = value
             }

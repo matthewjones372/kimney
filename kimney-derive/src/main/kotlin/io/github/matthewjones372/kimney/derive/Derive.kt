@@ -3,6 +3,7 @@ package io.github.matthewjones372.kimney.derive
 /**
  * The whole of kimney's decision about one call: a plan to build [target] from [source], or every reason not.
  * [overrides] name top-level fields of [target] only; [transformers] serve every pair below the root they fit.
+ * [partial] plans a transformation that may fail at runtime, collecting errors instead of refusing to compile.
  */
 fun <T> derive(
     model: TypeModel<T>,
@@ -10,10 +11,11 @@ fun <T> derive(
     target: T,
     overrides: List<Override<T>> = emptyList(),
     transformers: List<Supplied<T>> = emptyList(),
+    partial: Boolean = false,
 ): Derived<T> {
     // A root with overrides is not a pair recursion may return to: its overrides name its own fields only.
     val root = Site(source, target, Path(model.render(target)), emptyList(), shareable = overrides.isEmpty())
-    return Derivation(model, transformers).pair(root, overrides)
+    return Derivation(model, transformers, partial).pair(root, overrides)
 }
 
 /**
@@ -42,8 +44,12 @@ internal data class Site<T>(
         Site(source, target, path / field, seen + (this.source to this.target).takeIf { shareable }, owner, origin)
 }
 
-private class Derivation<T>(val model: TypeModel<T>, private val transformers: List<Supplied<T>>) {
-    private val constructors = ConstructorRule(model) { pair(it) }
+private class Derivation<T>(
+    val model: TypeModel<T>,
+    private val transformers: List<Supplied<T>>,
+    private val partial: Boolean,
+) {
+    private val constructors = ConstructorRule(model, partial) { pair(it) }
 
     // With overrides the target is built, even from its own type: `into<_, User>()` is a copy with changes.
     fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> {
@@ -103,9 +109,11 @@ private class Derivation<T>(val model: TypeModel<T>, private val transformers: L
         return when {
             model.isNullable(site.target) -> { -> model.nullable(site, ::pair) }
 
-            model.isNullable(site.source) -> { -> model.nullToNonNull(site) }
+            model.isNullable(site.source) -> { ->
+                if (partial) model.required(site, ::pair) else model.nullToNonNull(site)
+            }
 
-            model.valueClass(site.target) != null -> { -> model.wrap(site, ::pair) }
+            model.valueClass(site.target) != null -> { -> model.wrap(site, partial, ::pair) }
 
             model.valueClass(site.source) != null -> { -> model.unwrap(site, ::pair) }
 

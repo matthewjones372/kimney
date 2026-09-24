@@ -7,7 +7,11 @@ private typealias Step<T> = Pair<Arg<T>?, List<Failure>>
  * The constructor rule: each parameter from an override, a same-named source property, or its default. [pair]
  * derives what a property holds, so every other rule applies inside a constructed class.
  */
-internal class ConstructorRule<T>(private val model: TypeModel<T>, private val pair: (Site<T>) -> Derived<T>) {
+internal class ConstructorRule<T>(
+    private val model: TypeModel<T>,
+    private val partial: Boolean,
+    private val pair: (Site<T>) -> Derived<T>,
+) {
 
     fun construct(site: Site<T>, overrides: List<Override<T>>): Derived<T> {
         val target = model.render(site.target)
@@ -46,7 +50,15 @@ internal class ConstructorRule<T>(private val model: TypeModel<T>, private val p
         }
         val failures = stray + duplicates + steps.flatMap { it.second }
         return if (failures.isEmpty()) {
-            Derived.Planned(Plan.Construct(site.target, steps.mapNotNull { it.first }))
+            Derived.Planned(
+                Plan.Construct(
+                    site.target,
+                    steps.mapNotNull {
+                        it.first
+                    },
+                    guardedAt = site.path.toString().takeIf { partial },
+                ),
+            )
         } else {
             Derived.Failed(failures)
         }
