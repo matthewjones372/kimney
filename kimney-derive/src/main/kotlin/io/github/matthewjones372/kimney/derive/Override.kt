@@ -38,3 +38,17 @@ sealed interface EnumOverride<out T> {
     /** Every entry with nothing else to become, from any enum, becomes the [target] entry [to]. */
     data class Fallback<T>(override val target: T, val to: String, override val index: Int) : EnumOverride<T>
 }
+
+/**
+ * A link naming sealed cases by class. As an [EnumOverride] does, it serves every pair of its sealed types, the root
+ * included.
+ */
+sealed interface SealedOverride<out T> {
+    val index: Int
+
+    /** The case [source] becomes the target case [target], derived by every rule, whatever the names. */
+    data class Renamed<T>(val source: T, val target: T, override val index: Int) : SealedOverride<T>
+
+    /** Every case with nothing else to become, from any sealed type, becomes the object case [target]. */
+    data class Fallback<T>(val target: T, override val index: Int) : SealedOverride<T>
+}

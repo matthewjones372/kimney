@@ -4,7 +4,7 @@ package io.github.matthewjones372.kimney.derive
  * The whole of kimney's decision about one call: a plan to build [target] from [source], or every reason not.
  * [overrides] name top-level fields of [target] only; [transformers] serve every pair below the root they fit.
  * [partial] plans a transformation that may fail at runtime, collecting errors instead of refusing to compile.
- * [enums] serve every pair of their enums, the root included.
+ * [enums] and [sealed] serve every pair of their enums and sealed types, the root included.
  */
 fun <T> derive(
     model: TypeModel<T>,
@@ -14,10 +14,11 @@ fun <T> derive(
     transformers: List<Supplied<T>> = emptyList(),
     partial: Boolean = false,
     enums: List<EnumOverride<T>> = emptyList(),
+    sealed: List<SealedOverride<T>> = emptyList(),
 ): Derived<T> {
     // A root with overrides is not a pair recursion may return to: its overrides name its own fields only.
     val root = Site(source, target, Path(model.render(target)), emptyList(), shareable = overrides.isEmpty())
-    return Derivation(model, transformers, partial, enums).pair(root, overrides)
+    return Derivation(model, transformers, partial, enums, sealed).pair(root, overrides)
 }
 
 /**
@@ -58,11 +59,16 @@ private class Derivation<T>(
     private val transformers: List<Supplied<T>>,
     private val partial: Boolean,
     private val enums: List<EnumOverride<T>>,
+    private val sealed: List<SealedOverride<T>>,
 ) {
     private val constructors = ConstructorRule(model, partial) { pair(it) }
 
     // With overrides the target is built, even from its own type: `into<_, User>()` is a copy with changes.
-    fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> {
+    fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> =
+        supplied(site) ?: unsupplied(site, overrides)
+
+    /** The transformer that fits [site], or why none can be used; null when none fits. */
+    private fun supplied(site: Site<T>): Derived<T>? {
         val fits = model.fitting(site, transformers)
         // A transformer that can fail serves a partial transformation only; in a total one it is named, not used.
         val fitting = if (partial) fits else fits.filterNot { it.canFail }
@@ -89,7 +95,7 @@ private class Derivation<T>(
                 ),
             )
 
-            else -> unsupplied(site, overrides)
+            else -> null
         }
     }
 
@@ -99,14 +105,23 @@ private class Derivation<T>(
                 model.same(it.second, site.target)
         }
         return when {
-            // An enum link on the pair changes what its entries become, so even an enum into itself is mapped.
-            model.passes(site, overrides) && enums.none { model.same(it.target, site.target) } ->
-                Derived.Planned(Plan.Identity)
-
+            model.passes(site, overrides) && !mapped(site) -> Derived.Planned(Plan.Identity)
             above >= 0 -> Derived.Planned(Plan.Reference(above))
-
             else -> named(site, byShape(site, overrides))
         }
+    }
+
+    // An enum or sealed link on the pair changes what its entries or cases become: even a type into itself is mapped.
+    private fun mapped(site: Site<T>): Boolean {
+        val cases = model.sealedCases(site.target).orEmpty()
+        val caseTargets = sealed.map {
+            when (it) {
+                is SealedOverride.Renamed -> it.target
+                is SealedOverride.Fallback -> it.target
+            }
+        }
+        return enums.any { model.same(it.target, site.target) } ||
+            caseTargets.any { target -> cases.any { model.same(it.type, target) } }
     }
 
     /** A plan that refers back to its own pair becomes named, so the lowering can give it a function to call. */
@@ -159,7 +174,7 @@ private class Derivation<T>(
             }
 
             cases != null -> { ->
-                model.sealedCases(site.source)?.let { model.sealedByName(site, it, cases, ::pair) }
+                model.sealedCases(site.source)?.let { model.sealedByName(site, it, sealed, ::supplied, ::pair) }
                     ?: model.caseIntoSealed(site, cases, ::pair)
             }
 

@@ -69,7 +69,17 @@ sealed interface Plan<out T> {
     data class Entries<T>(val target: T, val key: Plan<T>, val value: Plan<T>) : Plan<T>
 
     /** Each source case to the target case of the same name, in source order. */
-    data class SealedByName<T>(val target: T, val arms: List<Arm<T>>) : Plan<T>
+
+    /**
+     * A `when` over the source's cases, each [arms] entry building its target; a case compiled in after this call
+     * becomes the object [otherwise], or fails if there is none. [uses] are the chain links that chose an arm.
+     */
+    data class SealedByName<T>(
+        val target: T,
+        val arms: List<Arm<T>>,
+        val otherwise: T? = null,
+        val uses: Set<Int> = emptySet(),
+    ) : Plan<T>
 }
 
 data class Arm<T>(val source: T, val target: T, val plan: Plan<T>)
@@ -106,7 +116,7 @@ fun <T> Plan<T>.linksUsed(): Set<Int> = when (this) {
     is Plan.Unwrap -> plan.linksUsed()
     is Plan.Elements -> plan.linksUsed()
     is Plan.Entries -> key.linksUsed() + value.linksUsed()
-    is Plan.SealedByName -> arms.flatMap { it.plan.linksUsed() }.toSet()
+    is Plan.SealedByName -> uses + arms.flatMap { it.plan.linksUsed() }
 }
 
 /** Whether a [Plan.Reference] to [depth] occurs outside any [Plan.Named] that already binds it. */

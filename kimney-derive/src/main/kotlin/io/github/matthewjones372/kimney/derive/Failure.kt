@@ -139,34 +139,43 @@ sealed interface Failure {
             get() = "the transformer that fits $source → $type can fail. End the chain with .transformPartial()."
     }
 
+    /** [offers] the chain calls that would place it; a case into its sealed parent (0015) has none to offer. */
     data class MissingCase(
         override val path: Path,
         override val type: String,
         val case: String,
         val kind: String,
+        val offers: Boolean = true,
     ) : Failure {
         override val reason
-            get() = "$case has no $kind of the same name in $type." + if (kind == "entry") {
-                " Map it with .withEnumEntryRenamed($case, $type.…), or send every unmatched entry to one " +
-                    "with .withEnumFallback($type.…)."
-            } else {
-                ""
+            get() = "$case has no $kind of the same name in $type." + when {
+                !offers -> ""
+
+                kind == "entry" ->
+                    " Map it with .withEnumEntryRenamed($case, $type.…), or send every unmatched entry to one " +
+                        "with .withEnumFallback($type.…)."
+
+                else ->
+                    " Map it with .withSealedCaseRenamed($case::class, $type.….class), build it with " +
+                        ".withTransformer(Transformer<$case, $type> { … }), or send every unmatched case to one " +
+                        "object with .withSealedFallback($type.…)."
             }
     }
 
-    /** Two enum links that would each decide one entry, or two fallbacks for one enum. */
-    data class DuplicateEnumLink(
+    /** Two links that would each decide one entry or case, or two fallbacks for one type; [at] are chain indices. */
+    data class DuplicateLink(
         override val path: Path,
         override val type: String,
         val what: String,
-        val links: List<EnumOverride<*>>,
+        val method: String,
+        val at: List<Int>,
     ) : Failure {
         override val reason: String
             get() {
-                val method = if (links.first() is EnumOverride.Fallback) "withEnumFallback" else "withEnumEntryRenamed"
-                val times = if (links.size == 2) "twice" else "${links.size} times"
-                val at = links.map { "#${it.index + 1}" }
-                return "$what $times, by $method ${at.dropLast(1).joinToString(", ")} and ${at.last()}. Keep one."
+                val times = if (at.size == 2) "twice" else "${at.size} times"
+                val places = at.map { "#${it + 1}" }
+                return "$what $times, by $method ${places.dropLast(1).joinToString(", ")} and ${places.last()}. " +
+                    "Keep one."
             }
     }
 
@@ -206,11 +215,14 @@ sealed interface Failure {
                 "it is inherited, an extension or not public."
     }
 
-    /** Found by an adapter reading the call: an enum link's argument must be the entry itself, [example]. */
-    data class NotAnEntry(override val path: Path, val method: String, val example: String) : Failure {
+    /**
+     * Found by an adapter reading the call: an enum or sealed link's argument must be written out, as [what] like
+     * [example], for the plugin to read it.
+     */
+    data class NotWrittenOut(override val path: Path, val method: String, val what: String, val example: String) :
+        Failure {
         override val type: String? get() = null
-        override val reason
-            get() = "$method takes the entries themselves, like $example, not a value that holds one."
+        override val reason get() = "$method takes $what, like $example, not a value that holds one."
     }
 
     /** Found by an adapter reading the call, not by the engine: the chain is syntax. */
@@ -235,3 +247,12 @@ fun unusedEnumRename(from: String, to: String, source: String, target: String): 
 /** A fallback whose enum nothing became: [to] is the rendered entry, `StatusDto.UNKNOWN`. */
 fun unusedEnumFallback(to: String, target: String): String =
     "withEnumFallback($to) is not used: nothing becomes $target. A type it names may have changed."
+
+/** A sealed link the derivation never met: [from] and [to] are rendered case types. */
+fun unusedSealedRename(from: String, to: String): String =
+    "withSealedCaseRenamed($from → $to) is not used: no sealed type with $from becomes one with $to. " +
+        "A type it names may have changed."
+
+/** A sealed fallback nothing became: [to] is the rendered object case. */
+fun unusedSealedFallback(to: String): String =
+    "withSealedFallback($to) is not used: no sealed type becomes one with $to. A type it names may have changed."

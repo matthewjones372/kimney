@@ -371,7 +371,11 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
             }
             irBranch(irIs(irGet(source), arm.source), body)
         }
-        val otherwise = irElseBranch(irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol))
+        // A case compiled in after this call is the fallback, if there is one.
+        val otherwise = irElseBranch(
+            plan.otherwise?.let { irGetObjectValue(it, it.classOrFail) }
+                ?: irCall(context.irBuiltIns.noWhenBranchMatchedExceptionSymbol),
+        )
         return irWhen(plan.target, branches + otherwise)
     }
 

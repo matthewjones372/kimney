@@ -132,7 +132,7 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         if (source == null || target == null) return
         val enum = model.render(given.type)
         val example = model.enumEntries(given.type)?.firstOrNull()?.let { "$enum.$it" } ?: "$enum.ENTRY"
-        val failure = Failure.NotAnEntry(Path(model.render(into)), given.method, example)
+        val failure = Failure.NotWrittenOut(Path(model.render(into)), given.method, "the entries themselves", example)
         val message = Derived.Failed(listOf(failure)).message(model.render(source), model.render(target))
         reporter.reportOn(call.source, KimneyErrors.KIMNEY_CANNOT_TRANSFORM, message)
     }

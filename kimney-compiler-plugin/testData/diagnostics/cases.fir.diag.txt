@@ -3,7 +3,7 @@
 
 /cases.kt:(831,862): error: Cannot transform Shape → ShapeDto:
     ShapeDto.Circle.radius: Double — no rule transforms Int into Double. Or map Shape.Circle → ShapeDto.Circle with .withTransformer(Transformer<Shape.Circle, ShapeDto.Circle> { … }).
-    ShapeDto — Shape.Hexagon has no subclass of the same name in ShapeDto.
+    ShapeDto — Shape.Hexagon has no subclass of the same name in ShapeDto. Map it with .withSealedCaseRenamed(Shape.Hexagon::class, ShapeDto.….class), build it with .withTransformer(Transformer<Shape.Hexagon, ShapeDto> { … }), or send every unmatched case to one object with .withSealedFallback(ShapeDto.…).
 
 /cases.kt:(908,943): error: Cannot transform Account → AccountDto:
     AccountDto.status: StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto. Map it with .withEnumEntryRenamed(Status.ARCHIVED, StatusDto.…), or send every unmatched entry to one with .withEnumFallback(StatusDto.…).

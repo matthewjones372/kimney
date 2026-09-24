@@ -89,7 +89,10 @@ class CaseTest {
         failed.failures.map { it.line } shouldBe listOf(
             "ShapeDto.Circle.radius: Double — no rule transforms Int into Double. Or map Bad.Circle → " +
                 "ShapeDto.Circle with .withTransformer(Transformer<Bad.Circle, ShapeDto.Circle> { … }).",
-            "ShapeDto — Bad.Oval has no subclass of the same name in ShapeDto.",
+            "ShapeDto — Bad.Oval has no subclass of the same name in ShapeDto. Map it with " +
+                ".withSealedCaseRenamed(Bad.Oval::class, ShapeDto.….class), build it with " +
+                ".withTransformer(Transformer<Bad.Oval, ShapeDto> { … }), or send every unmatched case to one " +
+                "object with .withSealedFallback(ShapeDto.…).",
         )
     }
 
