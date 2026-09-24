@@ -56,7 +56,11 @@ written. The source is evaluated once. For each target type, in order:
    here, so a case gets its defaults and a failure inside it has a path
    through it (`ShapeDto.Circle.radius`). A single case into a sealed target —
    `Expr.Add` into `ExprDto` — takes the target's case of the same name the
-   same way. Generic sealed hierarchies are not supported yet.
+   same way. A generic hierarchy's cases get their type arguments from where
+   their sealed supertype names them directly: `Ok<T> : Result<T>` meeting
+   `Result<User>` is `Ok<User>`. A case whose parameter appears only inside
+   another type (`Many<T> : Box<List<T>>`) is not solved, and the hierarchy is
+   then not modelled.
 8. **Constructor.** A final or open Kotlin class outside the standard library
    is built with its public primary constructor. Each parameter takes, in
    order: the source's public property of the same name, transformed by these
@@ -205,8 +209,7 @@ partial transformer that fits is a compile error:
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
 Not yet: nested field overrides (a transformer covers the pair), mutable
-collection targets, primitive arrays other than as themselves, generic sealed
-hierarchies and generic value classes. `docs/roadmap.md` has the order.
+collection targets, and primitive arrays other than as themselves. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
 says how to apply it.

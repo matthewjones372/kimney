@@ -13,6 +13,7 @@ import example.cookbook.optionals.toDto
 import example.cookbook.overrides.toDto
 import example.cookbook.parsing.toStay
 import example.cookbook.partial.validate
+import example.cookbook.results.toView
 import example.cookbook.sealed.toDto
 import example.cookbook.transformers.toDto
 import example.cookbook.trees.Comment
@@ -163,5 +164,17 @@ class CookbookTest {
         example.cookbook.parsing.StayForm("2026-09-24", "2026-09-26").toStay() shouldBe Partial.Ok(
             example.cookbook.parsing.Stay(java.time.LocalDate.of(2026, 9, 24), java.time.LocalDate.of(2026, 9, 26)),
         )
+    }
+
+    @Test
+    fun `a generic sealed type maps each case with its type arguments worked out`() {
+        val found: example.cookbook.results.Lookup<example.cookbook.results.Product> =
+            example.cookbook.results.Lookup.Found(example.cookbook.results.Product("A-1", 250))
+        val missing: example.cookbook.results.Lookup<example.cookbook.results.Product> =
+            example.cookbook.results.Lookup.Missing("B-2")
+
+        found.toView() shouldBe
+            example.cookbook.results.LookupView.Found(example.cookbook.results.ProductView("A-1", 250))
+        missing.toView() shouldBe example.cookbook.results.LookupView.Missing("B-2")
     }
 }

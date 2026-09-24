@@ -37,7 +37,7 @@ The engine needs no change: both adapters hand it concrete case types.
 
 ## Stack
 
-- [ ] **`spec-0016-generics`** — both adapters solve case type arguments and
+- [x] **`spec-0016-generics`** — both adapters solve case type arguments and
       substitute a value class's held type; box, agreement and goldens; docs.
       Done when: box tests pass for `Result<User> → ResultDto<UserDto>`, a
       generic value class, and a hierarchy from another module, and a golden

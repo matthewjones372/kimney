@@ -1,0 +1,2 @@
+/genericSealed.kt:(519,551): error: Cannot transform Box<Int> → BoxDto<Int>:
+    BoxDto<Int> — no rule transforms Box<Int> into BoxDto<Int>.

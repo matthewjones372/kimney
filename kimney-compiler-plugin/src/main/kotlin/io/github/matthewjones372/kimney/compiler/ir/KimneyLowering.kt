@@ -215,7 +215,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
     private fun IrStatementsBuilder<*>.wrap(plan: Plan.Wrap<IrType>, value: IrExpression, given: Given): IrExpression {
         val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a value class constructor")
-        return irCallConstructor(constructor.symbol, emptyList()).apply {
+        return irCallConstructor(constructor.symbol, typeArgumentsOf(plan.target)).apply {
             arguments[0] = lower(plan.plan, value, given)
         }
     }
@@ -297,7 +297,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         val inner = irTemporary(lower(plan.plan, value, given), irType = partials.anything)
         return with(partials) {
             guarded(errors, mark, planned(plan.guardedAt, "a partial wrap's path")) {
-                irCallConstructor(constructor.symbol, emptyList()).apply {
+                irCallConstructor(constructor.symbol, typeArgumentsOf(plan.target)).apply {
                     arguments[0] = irImplicitCast(irGet(inner), held.type)
                 }
             }
@@ -428,3 +428,7 @@ private fun IrStatementsBuilder<*>.asElement(
     val element = typeArgument(container, index)
     return if (given.errors == null || element == null) value else irImplicitCast(value, element.makeNullable())
 }
+
+/** A generic class's constructor call needs the target's own type arguments; a plain one has none. */
+private fun typeArgumentsOf(type: IrType): List<IrType> =
+    (type as? IrSimpleType)?.arguments?.mapNotNull { (it as? IrTypeProjection)?.type }.orEmpty()

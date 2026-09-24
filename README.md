@@ -130,7 +130,7 @@ comes before all of these for the field it names, and your own `Transformer`,
 passed with `withTransformer`, before all of them for every nested pair it
 fits ([recipe](docs/cookbook.md#your-own-transformer-for-a-nested-pair)).
 
-Not yet: generic sealed hierarchies. The
+Not yet: overrides on nested fields (a transformer covers the pair), and mutable collection targets. The
 [roadmap](docs/roadmap.md) has the order.
 
 ## Trying it

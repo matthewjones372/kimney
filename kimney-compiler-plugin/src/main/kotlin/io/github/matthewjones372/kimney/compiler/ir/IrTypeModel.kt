@@ -22,9 +22,11 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.isMarkedNullable
 import org.jetbrains.kotlin.ir.types.isSubtypeOf
 import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.packageFqName
@@ -80,14 +82,31 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
             ?.filterIsInstance<IrEnumEntry>()
             ?.map { it.name.asString() }
 
-    /** Direct subclasses, each a case only if it is itself non-generic, as `FirTypeModel` has it. */
+    /** Direct subclasses as concrete types, solved as `FirTypeModel` solves them. */
     override fun sealedCases(type: IrType): List<Case<IrType>>? {
-        val irClass = classOf(type)?.takeIf { it.modality == Modality.SEALED && it.typeParameters.isEmpty() }
-            ?: return null
+        val irClass = classOf(type)?.takeIf { it.modality == Modality.SEALED } ?: return null
+        val arguments =
+            (rigid(type) as? IrSimpleType)?.arguments?.map { (it as? IrTypeProjection)?.type ?: return null }
+                ?: return null
         val cases = irClass.sealedSubclasses.map { it.owner }.map { case ->
-            case.takeIf { it.typeParameters.isEmpty() }?.let { Case(it.name.asString(), it.defaultType as IrType) }
+            caseType(case, irClass, arguments)?.let { Case(case.name.asString(), it) }
         }
         return cases.filterNotNull().takeIf { it.size == cases.size }
+    }
+
+    private fun caseType(case: IrClass, sealed: IrClass, arguments: List<IrType>): IrType? {
+        if (case.typeParameters.isEmpty()) return case.defaultType
+        val supertype =
+            case.superTypes.firstOrNull { (it as? IrSimpleType)?.classifier == sealed.symbol } as? IrSimpleType
+                ?: return null
+        val solved = case.typeParameters.map { parameter ->
+            val at = supertype.arguments.indexOfFirst {
+                (it as? IrTypeProjection)?.type?.classifierOrNull ==
+                    parameter.symbol
+            }
+            arguments.getOrNull(at) ?: return null
+        }
+        return case.symbol.typeWith(solved)
     }
 
     override fun caseName(type: IrType): String? = classOf(type)
@@ -108,9 +127,11 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
     private fun rigid(type: IrType): IrType = if (type.hasAnnotation(FLEXIBLE_NULLABILITY)) type.makeNotNull() else type
 
     override fun valueClass(type: IrType): Param<IrType>? {
-        val irClass = classOf(type)?.takeIf { it.isValue && it.typeParameters.isEmpty() } ?: return null
+        val irClass = classOf(type)?.takeIf { it.isValue } ?: return null
         val inner = irClass.primaryConstructor?.parameters?.singleOrNull { it.kind == IrParameterKind.Regular }
-        return inner?.let { Param(it.name.asString(), it.type, hasDefault = false) }
+        // A generic value class holds its property's type with the class's own arguments put in.
+        val substitution = substitution(irClass, type) ?: return null
+        return inner?.let { Param(it.name.asString(), it.type.substitute(substitution), hasDefault = false) }
     }
 
     /** The read-only interfaces and `Array` only, as `FirTypeModel` has them. */

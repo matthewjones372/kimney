@@ -22,6 +22,7 @@ draft, not a substitute for it.
 | 0013 | Fallible user transformers, on 0008's result type |
 | 0014 | Publishing to Maven Central and the Gradle Plugin Portal |
 | 0015 | A sealed case into its target's sealed parent |
+| 0016 | Generic sealed types and value classes |
 
 ## Rule order
 

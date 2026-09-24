@@ -33,6 +33,7 @@ at configuration and names both.
 - [A copy with changes](#a-copy-with-changes)
 - [Enums across layers](#enums-across-layers)
 - [Sealed types](#sealed-types)
+- [Generic sealed types](#generic-sealed-types)
 - [Optional values](#optional-values)
 - [Value class ids and plain columns](#value-class-ids-and-plain-columns)
 - [Lists, sets and maps](#lists-sets-and-maps)
@@ -197,6 +198,42 @@ fun Payment.toDto(): PaymentDto = transformInto()
 A case added to `Payment` without one in `PaymentDto` stops the build at every
 call that meets it: the exhaustiveness a hand-written `when` loses the day
 someone adds an `else`.
+
+## Generic sealed types
+
+A result type — `Lookup<T>` with a `Found<T>` and a `Missing` — maps like any
+sealed type, each case's type arguments worked out from the sealed type's:
+`Found<T> : Lookup<T>` meeting `Lookup<Product>` is `Found<Product>`, and
+`Missing : Lookup<Nothing>` has none.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/results/Results.kt
+package example.cookbook.results
+
+import io.github.matthewjones372.kimney.transformInto
+
+sealed interface Lookup<out T> {
+    data class Found<T>(val value: T) : Lookup<T>
+
+    data class Missing(val key: String) : Lookup<Nothing>
+}
+
+sealed interface LookupView<out T> {
+    data class Found<T>(val value: T) : LookupView<T>
+
+    data class Missing(val key: String) : LookupView<Nothing>
+}
+
+data class Product(val sku: String, val pence: Long)
+
+data class ProductView(val sku: String, val pence: Long)
+
+fun Lookup<Product>.toView(): LookupView<ProductView> = transformInto()
+```
+
+A case whose type parameter appears only inside another type —
+`Many<T> : Box<List<T>>` — is not worked out, and a pair that needs it is
+`no rule`.
 
 ## Optional values
 

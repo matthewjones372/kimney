@@ -27,11 +27,14 @@ import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.ConeKotlinTypeProjection
 import org.jetbrains.kotlin.fir.types.ConeTypeParameterType
+import org.jetbrains.kotlin.fir.types.ConeTypeProjection
+import org.jetbrains.kotlin.fir.types.constructType
 import org.jetbrains.kotlin.fir.types.isMarkedNullable
 import org.jetbrains.kotlin.fir.types.isSubtypeOf
 import org.jetbrains.kotlin.fir.types.lowerBoundIfFlexible
 import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.fir.types.withNullability
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
 
 class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> {
@@ -81,15 +84,40 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
     /** Direct inheritors, each a case only if it is itself non-generic: generic hierarchies are not modelled. */
     @OptIn(SymbolInternals::class)
     override fun sealedCases(type: ConeKotlinType): List<Case<ConeKotlinType>>? {
-        val symbol = classOf(type)
-            ?.takeIf { it.resolvedStatus.modality == Modality.SEALED && it.typeParameterSymbols.isEmpty() }
+        val classType = type.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType
+        val symbol = classOf(type)?.takeIf { it.resolvedStatus.modality == Modality.SEALED } ?: return null
+        val arguments = classType?.typeArguments?.map { (it as? ConeKotlinTypeProjection)?.type ?: return null }
             ?: return null
         val cases = symbol.fir.getSealedClassInheritors(session).map { id ->
             (session.symbolProvider.getClassLikeSymbolByClassId(id) as? FirRegularClassSymbol)
-                ?.takeIf { it.typeParameterSymbols.isEmpty() }
-                ?.let { Case(id.shortClassName.asString(), it.defaultType() as ConeKotlinType) }
+                ?.let { caseType(it, symbol.classId, arguments) }
+                ?.let { Case(id.shortClassName.asString(), it) }
         }
         return cases.filterNotNull().takeIf { it.size == cases.size }
+    }
+
+    /**
+     * A case as a concrete type: its parameters solved from where its sealed supertype's arguments name them
+     * directly, `Ok<T> : Result<T>` meeting `Result<User>` being `Ok<User>`. Null when one appears only inside
+     * another type, `Many<T> : Box<List<T>>`, which is not solved.
+     */
+    private fun caseType(
+        case: FirRegularClassSymbol,
+        sealed: ClassId,
+        arguments: List<ConeKotlinType>,
+    ): ConeKotlinType? {
+        if (case.typeParameterSymbols.isEmpty()) return case.defaultType()
+        val supertype = case.resolvedSuperTypes
+            .firstOrNull { (it as? ConeClassLikeType)?.lookupTag?.classId == sealed } as? ConeClassLikeType
+            ?: return null
+        val solved = case.typeParameterSymbols.map { parameter ->
+            val at = supertype.typeArguments.indexOfFirst {
+                ((it as? ConeKotlinTypeProjection)?.type as? ConeTypeParameterType)?.lookupTag?.typeParameterSymbol ==
+                    parameter
+            }
+            arguments.getOrNull(at) ?: return null
+        }
+        return case.constructType(solved.toTypedArray<ConeTypeProjection>(), isMarkedNullable = false)
     }
 
     override fun caseName(type: ConeKotlinType): String? = classOf(type)
@@ -115,11 +143,14 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
         type.fullyExpandedType(session).lowerBoundIfFlexible().withNullability(false, session.typeContext)
 
     override fun valueClass(type: ConeKotlinType): Param<ConeKotlinType>? {
-        val symbol = classOf(type)
-            ?.takeIf { (it.resolvedStatus.isInline || it.resolvedStatus.isValue) && it.typeParameterSymbols.isEmpty() }
-            ?: return null
+        val classType = type.fullyExpandedType(session).lowerBoundIfFlexible() as? ConeClassLikeType ?: return null
+        val symbol = classOf(type)?.takeIf { it.resolvedStatus.isInline || it.resolvedStatus.isValue } ?: return null
         val inner = symbol.constructors(session).firstOrNull { it.isPrimary }?.valueParameterSymbols?.singleOrNull()
-        return inner?.let { Param(it.name.asString(), it.resolvedReturnType, hasDefault = false) }
+        // A generic value class holds its property's type with the class's own arguments put in.
+        val substitutor = substitutor(symbol, classType) ?: return null
+        return inner?.let {
+            Param(it.name.asString(), substitutor.substituteOrSelf(it.resolvedReturnType), hasDefault = false)
+        }
     }
 
     /** The read-only interfaces and `Array` only: a mutable or concrete collection is not a container here. */
