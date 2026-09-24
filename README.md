@@ -175,7 +175,8 @@ includeBuild("../kimney")
 
 Either way the Gradle plugin adds `kimney-runtime` to every JVM compilation and
 loads the compiler plugin into it. Both setups were checked from a separate
-project.
+project. From 0.4.0 the plugin supports Gradle's configuration cache: a
+consumer build is stored, reused and still derives on every tested Kotlin.
 
 Inside this repository, [`example/`](example) applies the plugin the same way
 a consumer does, and runs every cookbook recipe on each build.

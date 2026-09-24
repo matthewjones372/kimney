@@ -74,7 +74,7 @@ class IncrementalCompilationTest {
 }
 
 /** The consumer, written out as a user's build is, resolving kimney by its coordinates from the build's repos. */
-private class Petshop(private val dir: File) {
+internal class Petshop(private val dir: File) {
     init {
         val kotlin = System.getProperty("kimney.kotlin")
         val version = System.getProperty("kimney.version")
@@ -174,8 +174,8 @@ private class Petshop(private val dir: File) {
         )
     }
 
-    fun build(): GradleRunner =
-        GradleRunner.create().withProjectDir(dir).withArguments(":api:classes", "--stacktrace")
+    fun build(vararg flags: String): GradleRunner =
+        GradleRunner.create().withProjectDir(dir).withArguments(":api:classes", "--stacktrace", *flags)
 
     fun edit(path: String, from: String, to: String) {
         val file = dir.resolve(path)

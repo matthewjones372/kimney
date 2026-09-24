@@ -1,3 +1,4 @@
+import org.gradle.plugin.compatibility.compatibility
 import java.util.Properties
 
 plugins {
@@ -85,6 +86,8 @@ gradlePlugin {
             description = "Compile-time, type-safe transformations for Kotlin, inspired by Scala Chimney: a K2 " +
                 "compiler plugin, and a transformation that cannot be derived fails the build naming every reason."
             tags = listOf("kotlin", "compiler-plugin", "mapping", "dto", "transformation")
+            // Held by ic-test's ConfigurationCacheTest, on every tested Kotlin (spec 0023).
+            compatibility { features { configurationCache = true } }
         }
     }
 }
