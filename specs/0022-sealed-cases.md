@@ -103,14 +103,13 @@ the match it should always have had.
 ./gradlew :kimney-compiler-plugin:test -Pkimney.kotlinUnderTest=2.4.20
 ```
 
-## Open questions
+## Decisions
 
-1. **Build after 0021, or together?** Recommended: after. 0021's plan change
-   and chain reading are what this reuses, and enums are the more common case.
-2. **A fallback that is not an object.** Should a `data class` case with every
-   parameter defaulted be allowed? Recommended: no, not in this spec. It is
-   rare, and a transformer covers it in one line.
-3. **The transformer change.** A case transformer into the parent is tried
-   only when no case of the same name exists, or always, before matching by
-   name? Recommended: only when none exists. Always would silently change
-   existing derivations where a broader transformer happens to fit.
+Drafted and committed on the maintainer's go-ahead with the recommended
+answers:
+
+- **Built after 0021**, on its plan change and chain reading.
+- **A fallback is an object only**; a defaulted `data class` is left to a
+  transformer.
+- **A case transformer into the parent is tried only when no same-named case
+  exists**, so no existing derivation changes.

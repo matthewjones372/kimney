@@ -81,9 +81,12 @@ too: they name entries, not the pair's whole mapping.
   ```
 
 The lowering is unchanged in kind: the same `when` over the source's entries,
-with renamed and fallen-back arms pointing at their chosen target entry. No
-`else` branch is added, so an entry added to the source later is still a
-compile error unless a fallback covers it.
+compared by identity, with renamed and fallen-back arms pointing at their
+chosen target entry. Its `else`, which today throws for an entry compiled in
+after this call was, returns the fallback when there is one: an enum from a
+library that gains an entry without this code being recompiled still lands in
+the catch-all it was given. Without a fallback, an entry added to the source
+is a compile error at the next build, as now.
 
 ## Why this shape
 
@@ -119,18 +122,17 @@ places.
 ./gradlew :kimney-compiler-plugin:test -Pkimney.kotlinUnderTest=2.4.20
 ```
 
-## Open questions
+## Decisions
 
-1. **Names.** `withEnumEntryRenamed` and `withEnumFallback`, or Chimney's
-   vocabulary (`withEnumCaseRenamed`, `withEnumCaseHandled`)? Recommended: the
-   names above. Kotlin calls them entries, and `enumEntries` is its API.
-2. **A fallback with nothing to catch.** When every source entry already
-   matches, is `withEnumFallback` a warning? Recommended: no. Written ahead of
-   need, it is future-proofing, which is its point; only a fallback whose
-   target enum never appears is unused.
-3. **A rename over a name match.** Allowed and wins, or an error? Recommended:
-   allowed. Sending `PENDING` to `ACTIVE` on purpose is a real mapping, and the
-   call says so in words.
-4. **Fallback scope.** Every source enum that meets the target enum, or only
-   one named source? Recommended: every one. A catch-all belongs to the enum
-   that has it; a second signature naming the source can come later if asked.
+Drafted and committed on the maintainer's go-ahead with the recommended
+answers:
+
+- **Names:** `withEnumEntryRenamed` and `withEnumFallback`, Kotlin's word
+  rather than Chimney's.
+- **A fallback with nothing to catch is not a warning**; only one whose target
+  enum never appears is unused.
+- **A rename over a name match is allowed** and wins.
+- **A fallback covers its target enum from every source enum.**
+- **The fallback is also the `else`** of the lowered `when`, so an entry
+  compiled in later falls back at runtime rather than throwing (decided while
+  committing, from reading the lowering).
