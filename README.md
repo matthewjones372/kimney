@@ -2,7 +2,7 @@
 
 # kimney
 
-**Type-safe transformations between Kotlin types, derived at compile time.**
+**Compile-time, type-safe transformations for Kotlin, inspired by Scala [Chimney](https://github.com/scalalandio/chimney).**
 Say what you want to turn into what; the compiler writes the mapping, or tells
 you exactly why it cannot.
 
