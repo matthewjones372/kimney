@@ -33,3 +33,12 @@ fun account(account: Account): AccountDto = <!KIMNEY_CANNOT_TRANSFORM!>account.t
 fun objectFromData(something: Something): Nothing1 = <!KIMNEY_CANNOT_TRANSFORM!>something.transformInto<Nothing1>()<!>
 
 fun crossing(status: Status): ShapeDto = <!KIMNEY_CANNOT_TRANSFORM!>status.transformInto<ShapeDto>()<!>
+
+sealed interface Figure {
+    data class Circle(val radius: Double) : Figure
+    data class Oval(val width: Double) : Figure
+}
+
+fun circle(c: Figure.Circle): ShapeDto = c.transformInto<ShapeDto>()
+
+fun oval(o: Figure.Oval): ShapeDto = <!KIMNEY_CANNOT_TRANSFORM!>o.transformInto<ShapeDto>()<!>

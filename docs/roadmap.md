@@ -21,6 +21,7 @@ draft, not a substitute for it.
 | 0012 | Faster builds and docs that quote only real messages |
 | 0013 | Fallible user transformers, on 0008's result type |
 | 0014 | Publishing to Maven Central and the Gradle Plugin Portal |
+| 0015 | A sealed case into its target's sealed parent |
 
 ## Rule order
 

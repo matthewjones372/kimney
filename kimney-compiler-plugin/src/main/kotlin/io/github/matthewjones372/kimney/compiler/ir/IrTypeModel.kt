@@ -90,6 +90,10 @@ class IrTypeModel(context: IrPluginContext) : TypeModel<IrType> {
         return cases.filterNotNull().takeIf { it.size == cases.size }
     }
 
+    override fun caseName(type: IrType): String? = classOf(type)
+        ?.takeIf { case -> case.superTypes.any { it.classOrNull?.owner?.modality == Modality.SEALED } }
+        ?.name?.asString()
+
     override fun isObject(type: IrType): Boolean = classOf(type)?.kind == ClassKind.OBJECT
 
     fun classOf(type: IrType): IrClass? = type.takeUnless { isNullable(it) }?.classOrNull?.owner

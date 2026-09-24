@@ -54,8 +54,9 @@ written. The source is evaluated once. For each target type, in order:
 7. **Sealed.** Each direct subclass of the source becomes the target's direct
    subclass of the same simple name, and each pair is derived by every rule
    here, so a case gets its defaults and a failure inside it has a path
-   through it (`ShapeDto.Circle.radius`). Generic sealed hierarchies are not
-   supported yet.
+   through it (`ShapeDto.Circle.radius`). A single case into a sealed target —
+   `Expr.Add` into `ExprDto` — takes the target's case of the same name the
+   same way. Generic sealed hierarchies are not supported yet.
 8. **Constructor.** A final or open Kotlin class outside the standard library
    is built with its public primary constructor. Each parameter takes, in
    order: the source's public property of the same name, transformed by these

@@ -92,6 +92,14 @@ class FirTypeModel(private val session: FirSession) : TypeModel<ConeKotlinType> 
         return cases.filterNotNull().takeIf { it.size == cases.size }
     }
 
+    override fun caseName(type: ConeKotlinType): String? = classOf(type)
+        ?.takeIf { case ->
+            case.resolvedSuperTypes.any {
+                it.toRegularClassSymbol(session)?.resolvedStatus?.modality == Modality.SEALED
+            }
+        }
+        ?.classId?.shortClassName?.asString()
+
     override fun isObject(type: ConeKotlinType): Boolean = classOf(type)?.classKind == ClassKind.OBJECT
 
     private fun classOf(type: ConeKotlinType): FirRegularClassSymbol? =

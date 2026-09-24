@@ -16,6 +16,9 @@ complexity:
     # The IR lowering is one `when` over the plan, with a helper per plan kind:
     # its size follows the engine's plan types, not a class doing too much.
     allowedFunctionsPerClass: 15
+    # TypeModel is the engine's whole view of a type system, one query per rule;
+    # splitting it would only move the same questions behind a second name.
+    allowedFunctionsPerInterface: 15
   LongParameterList:
     # Parameters with defaults are named at the call site, so they read as a
     # list of settings rather than a positional list to get wrong.

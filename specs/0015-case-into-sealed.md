@@ -25,7 +25,7 @@ ExprDto — Expr.Mul has no subclass of the same name in ExprDto.
 
 ## Stack
 
-- [ ] **`spec-0015-case`** — `TypeModel.caseName`; the rule; both adapters;
+- [x] **`spec-0015-case`** — `TypeModel.caseName`; the rule; both adapters;
       box, agreement and a golden; the reference.
       Done when: a box test maps a case into its target's sealed parent, and a
       golden pins the missing name.

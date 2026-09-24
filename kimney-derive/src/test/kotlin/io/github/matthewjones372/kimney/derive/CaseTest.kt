@@ -125,4 +125,13 @@ class CaseTest {
             Plan.Construct("User", listOf(Arg.Const("name", 0), Arg.FromProperty("age", "age", Plan.Identity))),
         )
     }
+
+    @Test
+    fun `a case into its target's sealed parent takes the target case of its name`() {
+        derive(shapes, "Shape.Circle", "ShapeDto") shouldBe Derived.Planned(
+            Plan.Construct("ShapeDto.Circle", listOf(Arg.FromProperty("radius", "radius", Plan.Identity))),
+        )
+        derive(shapes, "Bad.Oval", "ShapeDto").shouldBeInstanceOf<Derived.Failed>().failures.single().line shouldBe
+            "ShapeDto — Bad.Oval has no subclass of the same name in ShapeDto."
+    }
 }

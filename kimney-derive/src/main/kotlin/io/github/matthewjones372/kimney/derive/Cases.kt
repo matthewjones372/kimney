@@ -37,3 +37,17 @@ internal fun <T> TypeModel<T>.sealedByName(
         Derived.Failed(failures)
     }
 }
+
+/** A case, not its sealed parent, into a sealed target: the target's case of the same name, as one arm would be. */
+internal fun <T> TypeModel<T>.caseIntoSealed(
+    site: Site<T>,
+    to: List<Case<T>>,
+    pair: (Site<T>) -> Derived<T>,
+): Derived<T> {
+    val name = caseName(site.source) ?: return noRule(site)
+    val match = to.firstOrNull { it.name == name }
+        ?: return Derived.Failed(
+            listOf(Failure.MissingCase(site.path, render(site.target), render(site.source), "subclass")),
+        )
+    return pair(site.copy(target = match.type))
+}

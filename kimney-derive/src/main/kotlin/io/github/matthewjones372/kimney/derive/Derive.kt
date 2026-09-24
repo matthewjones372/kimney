@@ -153,7 +153,7 @@ private class Derivation<T>(
 
             cases != null -> { ->
                 model.sealedCases(site.source)?.let { model.sealedByName(site, it, cases, ::pair) }
-                    ?: model.noRule(site)
+                    ?: model.caseIntoSealed(site, cases, ::pair)
             }
 
             else -> null

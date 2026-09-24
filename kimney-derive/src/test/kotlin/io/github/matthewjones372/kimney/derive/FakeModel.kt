@@ -38,6 +38,9 @@ class FakeModel(
     override fun valueClass(type: String): Param<String>? = valueClasses[type]
 
     override fun container(type: String): Container<String>? = containers[type]
+
+    /** A case is written `Parent.Case`; anything else is not one. */
+    override fun caseName(type: String): String? = type.takeIf { '.' in it }?.substringAfterLast('.')
 }
 
 fun param(name: String, type: String, hasDefault: Boolean = false): Param<String> = Param(name, type, hasDefault)

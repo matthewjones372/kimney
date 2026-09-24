@@ -13,3 +13,6 @@
 
 /cases.kt:(1076,1108): error: Cannot transform Status → ShapeDto:
     ShapeDto — no rule transforms Status into ShapeDto.
+
+/cases.kt:(1345,1372): error: Cannot transform Figure.Oval → ShapeDto:
+    ShapeDto — Figure.Oval has no subclass of the same name in ShapeDto.

@@ -26,6 +26,9 @@ interface TypeModel<T> {
     /** The one property a value class holds, or null if [type] is not a non-generic value class. */
     fun valueClass(type: T): Param<T>?
 
+    /** The simple name of a direct subclass of a sealed type, which is what a case is matched by; else null. */
+    fun caseName(type: T): String?
+
     /** A read-only collection, map or reference array, with its element type; null for anything else. */
     fun container(type: T): Container<T>?
 }
