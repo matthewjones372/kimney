@@ -20,7 +20,7 @@ configurations.configureEach {
 // The pages DocsMatchTheirFilesTest holds to the recipes they quote, declared as inputs so an edit to either side
 // reruns it rather than hitting the cache.
 tasks.named<Test>("test") {
-    inputs.files(rootProject.file("README.md"), rootProject.file("docs/cookbook.md"))
+    inputs.files(rootProject.file("README.md"), rootProject.file("docs/cookbook.md"), rootProject.file("docs/why.md"))
         .withPropertyName("quotingPages")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     val repoRoot = rootDir.path

@@ -34,6 +34,16 @@ class DocsMatchTheirFilesTest {
     }
 
     @Test
+    fun `every file the why page quotes is quoted exactly`() {
+        val blocks = blocks("docs/why.md")
+
+        blocks shouldHaveAtLeastSize 1
+        blocks.forEach { (path, body) ->
+            withClue("docs/why.md quotes $path") { body shouldBe root.resolve(path).readText().trimEnd('\n') }
+        }
+    }
+
+    @Test
     fun `every file the README quotes is quoted exactly`() {
         val blocks = blocks("README.md")
 

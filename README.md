@@ -12,7 +12,7 @@ you exactly why it cannot.
 [![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
 [A first look](#a-first-look) · [When it cannot](#when-it-cannot) ·
-[What it covers](#what-it-covers) · [Trying it](#trying-it) ·
+[What it covers](#what-it-covers) · [Trying it](#trying-it) · [Why](docs/why.md) ·
 [Cookbook](docs/cookbook.md) · [Reference](docs/reference.md) ·
 [Roadmap](docs/roadmap.md)
 
@@ -32,6 +32,15 @@ by hand, because it is.
 
 When it cannot derive a mapping, the call does not compile, and the error
 names every field it could not fill, the path to it, and what would fix it.
+
+## Why not by hand?
+
+A mapper is easy to write and only right on the day it is written. Add a field
+with a default to both classes and the hand-written mapper keeps compiling —
+using the default, silently. Add an enum entry and it falls into the `else`.
+kimney derives the mapping again on every build, so it picks up the field,
+and a new entry with nowhere to go is a compile error. Both bugs, and the
+test that runs them, are in [Why not write it by hand?](docs/why.md).
 
 ## A first look
 
