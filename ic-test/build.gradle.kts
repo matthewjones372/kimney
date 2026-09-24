@@ -19,6 +19,11 @@ tasks.named<Test>("test") {
     val pluginRepo = rootProject.file("kimney-gradle-plugin/build/functional-repo").absolutePath
     val kimneyVersion = version.toString()
     inputs.property("kotlinUnderTest", kotlinUnderTest)
+    // The jars, not the repositories: a snapshot publish renames its files every time, and would rerun this always.
+    listOf("kimney-runtime", "kimney-derive", "kimney-compiler-plugin", "kimney-gradle-plugin").forEach {
+        inputs.files(rootProject.fileTree("$it/build/libs") { include("$it-$kimneyVersion.jar") })
+            .withPropertyName("$it-jar")
+    }
     jvmArgumentProviders.add(
         CommandLineArgumentProvider {
             listOf(
