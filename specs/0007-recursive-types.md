@@ -29,8 +29,8 @@ When a pair meets itself below its own derivation, the inner occurrence
 becomes a reference to the outer one, and the outer one becomes a named plan.
 The lowering emits a named plan once, as a local function inside the call's
 block, and each reference as a call to it. Mutually recursive pairs
-(`Folder → FolderDto` containing `File → FileDto` containing `Folder`) get one
-function each, calling each other.
+(`Folder → FolderDto` containing `File → FileDto` containing `Folder`) get a
+function for each pair that recurs, with the pairs between inlined into it.
 
 A self-reference that could never terminate — a non-null field of the pair's
 own type, with no list, map or `?` between — still derives, as the class
@@ -68,3 +68,7 @@ per pair.
 - Drafted and committed on the maintainer's instruction to do the remaining
   work with the recommended answers: local functions, named only where
   recursion occurs, no runtime cycle detection.
+- A reference names its enclosing derivation by depth, not by type name: two
+  classes may share a simple name in different packages.
+- Overrides on a recursive root apply at the root only, as overrides always
+  name top-level fields; the recursion below derives the pair without them.
