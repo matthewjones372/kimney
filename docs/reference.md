@@ -193,10 +193,17 @@ order met, otherwise. Other exceptions propagate. A pair no rule connects is
 still a compile error: partial mode relaxes what may fail at runtime, not what
 can be derived.
 
+A `PartialTransformer<A, B>`, passed with `withPartialTransformer` or in a
+context parameter, fits pairs as a `Transformer` does, in partial calls only.
+Its errors are re-rooted where its value sits, with
+`Partial.Errors.relocatedTo`: an empty path becomes the pair's path, and a
+path written from its own root has that root replaced. In a total call a
+partial transformer that fits is a compile error:
+`Booking.checkIn: Int — the transformer that fits String → Int can fail. End the chain with .transformPartial().`
+
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
-Not yet: nested field overrides (a transformer covers the pair), fallible
-user transformers, mutable collection targets, primitive arrays
+Not yet: nested field overrides (a transformer covers the pair), mutable collection targets, primitive arrays
 other than as themselves, a sealed case into its target's sealed parent,
 generic sealed hierarchies and generic value classes. `docs/roadmap.md` has the order.
 

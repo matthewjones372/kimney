@@ -54,13 +54,13 @@ however many transformers built it.
 
 ## Stack
 
-- [ ] **`spec-0013-runtime`** — `PartialTransformer`, `withPartialTransformer`,
+- [x] **`spec-0013-runtime`** — `PartialTransformer`, `withPartialTransformer`,
       `relocatedTo`; BCV.
       Done when: `relocatedTo` has tests for an empty, a rooted and a bare path.
-- [ ] **`spec-0013-engine`** — partial transformers in the rule; the failure in
+- [x] **`spec-0013-engine`** — partial transformers in the rule; the failure in
       total mode.
       Done when: engine tests cover both modes and a mix of both kinds.
-- [ ] **`spec-0013-plugin`** — both adapters, context parameters included;
+- [x] **`spec-0013-plugin`** — both adapters, context parameters included;
       box, agreement; cookbook and reference.
       Done when: box tests pass for a parse failure's path, a nested kimney
       call's paths, and an `Ok`.

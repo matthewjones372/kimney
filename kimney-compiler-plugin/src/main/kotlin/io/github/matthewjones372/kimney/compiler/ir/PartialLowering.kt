@@ -3,6 +3,7 @@ package io.github.matthewjones372.kimney.compiler.ir
 import io.github.matthewjones372.kimney.compiler.PARTIAL_ERROR
 import io.github.matthewjones372.kimney.compiler.PARTIAL_ERRORS
 import io.github.matthewjones372.kimney.compiler.PARTIAL_OK
+import io.github.matthewjones372.kimney.compiler.RELOCATED_TO
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.builders.IrStatementsBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.buildVariable
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irIfNull
 import org.jetbrains.kotlin.ir.builders.irIfThenElse
 import org.jetbrains.kotlin.ir.builders.irImplicitCast
+import org.jetbrains.kotlin.ir.builders.irIs
 import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.builders.irTemporary
@@ -28,6 +30,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.constructors
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.ClassId
@@ -45,6 +48,7 @@ internal class PartialLowering(context: IrPluginContext) {
     private val partialError = context.referenceClass(PARTIAL_ERROR)
     private val ok = context.referenceClass(PARTIAL_OK)
     private val errorsClass = context.referenceClass(PARTIAL_ERRORS)
+    private val relocatedTo = context.referenceFunctions(RELOCATED_TO).singleOrNull()
 
     val anything: IrType get() = builtIns.anyNType
 
@@ -103,6 +107,29 @@ internal class PartialLowering(context: IrPluginContext) {
         val handler = IrCatchImpl(startOffset, endOffset, caught, recovered)
         val attempt = irTry(anything, build(), listOf(handler), null)
         return irIfThenElse(anything, irEquals(size(errors), irGet(mark)), attempt, irNull())
+    }
+
+    /** A partial transformer's result: its value, or its errors re-rooted at [path] and no value. */
+    fun IrStatementsBuilder<*>.unwrapped(errors: IrVariable, path: String, result: IrExpression): IrExpression {
+        val outcome = irTemporary(result, irType = anything)
+        val okClass = planned(ok, "kimney-runtime's Partial.Ok")
+        val value = okClass.owner.properties.single { it.name.asString() == "value" }.getter
+        val relocate = planned(relocatedTo, "Partial.Errors.relocatedTo")
+        val addAll = builtIns.mutableCollectionClass.owner.functions.first { it.name.asString() == "addAll" }
+        val failed = irBlock(resultType = anything) {
+            +irCall(addAll.symbol).apply {
+                arguments[0] = irGet(errors)
+                arguments[1] = irCall(relocate).apply {
+                    arguments[0] = irImplicitCast(irGet(outcome), type(errorsClass))
+                    arguments[1] = irString(path)
+                }
+            }
+            +irNull()
+        }
+        val succeeded = irCall(checkNotNull(value).symbol).apply {
+            arguments[0] = irImplicitCast(irGet(outcome), okClass.owner.defaultType)
+        }
+        return irIfThenElse(anything, irIs(irGet(outcome), okClass.owner.defaultType), succeeded, failed)
     }
 
     /** `Ok` with the value if nothing was recorded, `Errors` with everything that was otherwise. */

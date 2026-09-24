@@ -4,6 +4,7 @@ import io.github.matthewjones372.kimney.compiler.INTO
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_COMPUTED
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_CONST
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_RENAMED
+import io.github.matthewjones372.kimney.compiler.WITH_PARTIAL_TRANSFORMER
 import io.github.matthewjones372.kimney.compiler.WITH_TRANSFORMER
 import io.github.matthewjones372.kimney.derive.Override
 import io.github.matthewjones372.kimney.derive.Supplied
@@ -67,14 +68,15 @@ fun readChain(transform: IrCall): IrChain? {
 
 private fun link(call: IrCall, index: Int): Link? {
     val args = call.symbol.owner.parameters.associate { it.name.asString() to call.arguments[it.indexInParameters] }
-    if (call.kimneyId == WITH_TRANSFORMER) {
+    if (call.kimneyId == WITH_TRANSFORMER || call.kimneyId == WITH_PARTIAL_TRANSFORMER) {
         // The transformer's types are the call's own type arguments, as the checker read them.
         val (from, to) = call.typeArguments
         val transformer = args["transformer"]
         return if (from == null || to == null || transformer == null) {
             null
         } else {
-            Link.Transforming(Supplied(from, to, index), transformer)
+            val canFail = call.kimneyId == WITH_PARTIAL_TRANSFORMER
+            Link.Transforming(Supplied(from, to, index, canFail = canFail), transformer)
         }
     }
     val field = field(args[if (call.kimneyId == WITH_FIELD_RENAMED) "to" else "field"]) ?: return null

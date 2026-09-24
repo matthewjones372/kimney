@@ -130,7 +130,7 @@ comes before all of these for the field it names, and your own `Transformer`,
 passed with `withTransformer`, before all of them for every nested pair it
 fits ([recipe](docs/cookbook.md#your-own-transformer-for-a-nested-pair)).
 
-Not yet: fallible user transformers, and generic sealed hierarchies. The
+Not yet: generic sealed hierarchies, and a sealed case into its target's sealed parent. The
 [roadmap](docs/roadmap.md) has the order.
 
 ## Trying it

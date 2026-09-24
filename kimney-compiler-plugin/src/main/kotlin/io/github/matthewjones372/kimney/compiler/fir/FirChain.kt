@@ -4,6 +4,7 @@ import io.github.matthewjones372.kimney.compiler.INTO
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_COMPUTED
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_CONST
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_RENAMED
+import io.github.matthewjones372.kimney.compiler.WITH_PARTIAL_TRANSFORMER
 import io.github.matthewjones372.kimney.compiler.WITH_TRANSFORMER
 import io.github.matthewjones372.kimney.derive.Override
 import io.github.matthewjones372.kimney.derive.Supplied
@@ -67,9 +68,12 @@ fun readChain(transform: FirFunctionCall): FirChain? {
 }
 
 /** A transformer's types are the call's own type arguments, so a class implementing `Transformer` serves as well. */
-private fun link(call: FirFunctionCall, index: Int): Link? = if (call.callableId == WITH_TRANSFORMER) {
+private fun link(call: FirFunctionCall, index: Int): Link? = if (call.callableId in TRANSFORMER_LINKS) {
     val (source, target) = call.typeArguments.map { (it as? FirTypeProjectionWithVariance)?.typeRef?.coneType }
-    if (source == null || target == null) null else Link.Transforming(Supplied(source, target, index), call)
+    val canFail = call.callableId == WITH_PARTIAL_TRANSFORMER
+    if (source == null ||
+        target == null
+    ) null else Link.Transforming(Supplied(source, target, index, canFail = canFail), call)
 } else {
     override(call, index)?.let { Link.Overriding(it) }
 }
@@ -91,3 +95,5 @@ private fun override(call: FirFunctionCall, index: Int): Override<ConeKotlinType
 
 private fun field(reference: FirExpression?): String? =
     ((reference as? FirCallableReferenceAccess)?.calleeReference?.symbol as? FirPropertySymbol)?.name?.asString()
+
+private val TRANSFORMER_LINKS = setOf(WITH_TRANSFORMER, WITH_PARTIAL_TRANSFORMER)

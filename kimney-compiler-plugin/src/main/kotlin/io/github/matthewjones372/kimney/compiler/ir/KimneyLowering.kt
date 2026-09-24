@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kimney.compiler.ir
 
 import io.github.matthewjones372.kimney.compiler.KimneyErrors
+import io.github.matthewjones372.kimney.compiler.PARTIAL_TRANSFORMER
 import io.github.matthewjones372.kimney.compiler.TRANSFORM
 import io.github.matthewjones372.kimney.compiler.TRANSFORMER
 import io.github.matthewjones372.kimney.compiler.TRANSFORM_INTO
@@ -37,7 +38,6 @@ import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.builders.irWhen
-import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrParameterKind
@@ -66,6 +66,8 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
     private val containers = ContainerLowering(context)
     private val enums = EnumLowering(model)
     private val partials = PartialLowering(context)
+    private val partialTransformFunction = context.referenceClass(PARTIAL_TRANSFORMER)?.owner?.functions
+        ?.single { it.name.asString() == "transform" }
     private val transformFunction = context.referenceClass(TRANSFORMER)?.owner?.functions
         ?.single { it.name.asString() == "transform" }
 
@@ -158,7 +160,15 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
                 arguments[0] = value
             }
 
-            is Plan.Transformed -> {
+            is Plan.Transformed -> if (plan.relocateAt != null) {
+                val errors = planned(given.errors, "a partial call's error list")
+                val transform = planned(partialTransformFunction, "PartialTransformer.transform on the classpath")
+                val result = irCall(transform.symbol, context.irBuiltIns.anyNType).apply {
+                    arguments[0] = irGet(planned(given[plan.index], "a partial transformer value"))
+                    arguments[1] = value
+                }
+                with(partials) { unwrapped(errors, planned(plan.relocateAt, "a relocation path"), result) }
+            } else {
                 val transform = planned(transformFunction, "Transformer.transform on the classpath")
                 val call = irCall(transform.symbol, context.irBuiltIns.anyNType).apply {
                     arguments[0] = irGet(planned(given[plan.index], "a transformer value"))
@@ -383,16 +393,15 @@ internal fun List<ScopeWithIr>.contextTransformers(start: Int): List<Pair<Suppli
         .flatMap { function -> function.parameters.filter { it.kind == IrParameterKind.Context } }
         .mapNotNull { parameter ->
             val type = parameter.type as? IrSimpleType
-            val arguments = type?.takeIf { it.classOrNull?.owner?.let(::isTransformer) == true }?.arguments
-                ?.map { (it as? IrTypeProjection)?.type }
+            val kind = type?.classOrNull?.owner?.classId?.takeIf { it == TRANSFORMER || it == PARTIAL_TRANSFORMER }
+            val arguments = type?.takeIf { kind != null }?.arguments?.map { (it as? IrTypeProjection)?.type }
             val (from, to) = arguments ?: return@mapNotNull null
-            if (from == null || to == null) null else Triple(from, to, parameter)
+            if (from == null || to == null) null else Triple(from, to, parameter) to (kind == PARTIAL_TRANSFORMER)
         }
-        .mapIndexed { i, (from, to, parameter) ->
-            Supplied(from, to, start + i, context = parameter.name.asString()) to parameter
+        .mapIndexed { i, (found, canFail) ->
+            val (from, to, parameter) = found
+            Supplied(from, to, start + i, context = parameter.name.asString(), canFail = canFail) to parameter
         }
-
-private fun isTransformer(irClass: IrClass): Boolean = irClass.classId == TRANSFORMER
 
 /**
  * What a plan's lowering can reach: the chain's values by index, the named plans around it by depth, and in a partial

@@ -96,7 +96,8 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
                 val used = derived.plan.transformersUsed()
                 // Only one passed to this chain is expected to be used by it; one in context serves many calls.
                 passed.filterNot { it.index in used }.forEach { unused ->
-                    val message = unusedTransformer(model.render(unused.source), model.render(unused.target))
+                    val method = if (unused.canFail) "withPartialTransformer" else "withTransformer"
+                    val message = unusedTransformer(model.render(unused.source), model.render(unused.target), method)
                     val at = chain?.transformerCalls?.get(unused.index)?.source
                     reporter.reportOn(at, KimneyErrors.KIMNEY_UNUSED_TRANSFORMER, message)
                 }

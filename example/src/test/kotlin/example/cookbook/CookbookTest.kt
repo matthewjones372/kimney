@@ -11,6 +11,7 @@ import example.cookbook.ids.toUser
 import example.cookbook.nested.toDto
 import example.cookbook.optionals.toDto
 import example.cookbook.overrides.toDto
+import example.cookbook.parsing.toStay
 import example.cookbook.partial.validate
 import example.cookbook.sealed.toDto
 import example.cookbook.transformers.toDto
@@ -153,5 +154,14 @@ class CookbookTest {
         val email = example.cookbook.partial.Email("ada@example.com")
         example.cookbook.partial.SignupForm("ada@example.com", "Ada", emptyList()).validate() shouldBe
             Partial.Ok(example.cookbook.partial.Signup(email, "Ada", emptyList()))
+    }
+
+    @Test
+    fun `a transformer that can fail reports at the path of what it was building`() {
+        example.cookbook.parsing.StayForm("2026-09-24", "soon").toStay() shouldBe
+            Partial.Errors(listOf(PartialError("Stay.checkOut", "is not a date: soon")))
+        example.cookbook.parsing.StayForm("2026-09-24", "2026-09-26").toStay() shouldBe Partial.Ok(
+            example.cookbook.parsing.Stay(java.time.LocalDate.of(2026, 9, 24), java.time.LocalDate.of(2026, 9, 26)),
+        )
     }
 }

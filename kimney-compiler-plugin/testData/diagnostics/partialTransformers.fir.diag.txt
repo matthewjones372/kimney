@@ -1,0 +1,4 @@
+/partialTransformers.kt:(575,640): error: Cannot transform Form → Booking:
+    Booking.checkIn: Int — the transformer that fits String → Int can fail. End the chain with .transformPartial().
+
+/partialTransformers.kt:(689,776): warning: withPartialTransformer(Long → Int) is not used: no pair below the root fits it. A type it names may have changed.

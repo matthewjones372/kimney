@@ -41,6 +41,7 @@ at configuration and names both.
 - [Your own transformer for a nested pair](#your-own-transformer-for-a-nested-pair)
 - [A transformer for everything in scope](#a-transformer-for-everything-in-scope)
 - [Validating at the edge](#validating-at-the-edge)
+- [Parsing at the edge](#parsing-at-the-edge)
 - [Reading the errors](#reading-the-errors)
 - [Compiled without the plugin](#compiled-without-the-plugin)
 
@@ -462,6 +463,47 @@ Every error is collected, not the first. Nothing is built from a part that
 failed, so no constructor ever runs on a value kimney made up, and only
 `IllegalArgumentException` is caught — anything else is a bug and is
 thrown. A chain ends in `.transformPartial()` to do the same.
+
+## Parsing at the edge
+
+What kimney cannot check itself — a date, a currency code, an enum by a label
+— is a `PartialTransformer`: a function to a `Partial`, written once and
+passed with `withPartialTransformer`, or put in a context parameter.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/parsing/Parsing.kt
+package example.cookbook.parsing
+
+import io.github.matthewjones372.kimney.Partial
+import io.github.matthewjones372.kimney.PartialError
+import io.github.matthewjones372.kimney.PartialTransformer
+import io.github.matthewjones372.kimney.into
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
+
+/** A parse that can fail, written once: its error has no path, so it lands wherever the date sits. */
+val isoDate = PartialTransformer<String, LocalDate> { text ->
+    try {
+        Partial.Ok(LocalDate.parse(text))
+    } catch (e: DateTimeParseException) {
+        Partial.Errors(listOf(PartialError("", "is not a date: ${e.parsedString}")))
+    }
+}
+
+data class StayForm(val checkIn: String, val checkOut: String)
+
+data class Stay(val checkIn: LocalDate, val checkOut: LocalDate)
+
+fun StayForm.toStay(): Partial<Stay> = into<_, Stay>().withPartialTransformer(isoDate).transformPartial()
+```
+
+`StayForm("2026-09-24", "soon").toStay()` gives
+`Errors([PartialError("Stay.checkOut", "is not a date: soon")])`. A
+transformer's errors are re-rooted where its value sits: one with no path
+lands at the field, and one from a nested `transformIntoPartial` keeps its
+own path below it. A partial transformer is used only by a partial call; in a
+total one that it would fit, kimney refuses to compile and says to end the
+chain with `.transformPartial()`.
 
 ## Reading the errors
 

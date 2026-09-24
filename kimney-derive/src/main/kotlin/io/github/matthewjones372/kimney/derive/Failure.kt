@@ -194,6 +194,6 @@ sealed interface Failure {
 }
 
 /** A warning rather than a [Failure]: the transformation still derives, just not the way its author wrote it. */
-fun unusedTransformer(source: String, target: String): String =
-    "withTransformer($source → $target) is not used: no pair below the root fits it. " +
+fun unusedTransformer(source: String, target: String, method: String = "withTransformer"): String =
+    "$method($source → $target) is not used: no pair below the root fits it. " +
         "A type it names may have changed."
