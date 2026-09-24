@@ -189,11 +189,12 @@ Be honest with yourself about these:
   others, a function says that better than a chain of `withFieldComputed`.
 - **You have three small mappers.** The drift above is a cost that grows with
   the number of pairs and fields. For a handful, write them by hand.
-- **You cannot pin Kotlin.** A compiler plugin is built for one compiler;
-  kimney is built for 2.4.10, and a build on any other stops at configuration.
+- **You cannot stay on a supported Kotlin.** A compiler plugin runs inside the
+  compiler; kimney supports Kotlin 2.4, and a build on another minor stops at
+  configuration until a kimney release supports it.
 - **You need a 1.0.** kimney is 0.x: on Maven Central, but its surface may
   still change between releases, and editor support is unchecked
-  ([known limitations](../README.md#known-limitations-in-010)).
+  ([known limitations](../README.md#known-limitations)).
 - **You need what is not there yet**: overrides on nested fields, which a
   transformer for the pair covers instead. The
   [roadmap](roadmap.md) has them in order.

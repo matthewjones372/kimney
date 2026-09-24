@@ -24,8 +24,8 @@ plugins {
 }
 ```
 
-kimney is built for exactly one Kotlin version. On any other, the build stops
-at configuration and names both.
+kimney supports Kotlin 2.4. On another minor the build stops at configuration
+and names the range ([Kotlin versions](../README.md#kotlin-versions)).
 
 - [A first transformation](#a-first-transformation)
 - [Nested classes and defaults](#nested-classes-and-defaults)

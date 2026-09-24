@@ -27,6 +27,10 @@ tasks.named<Test>("test") {
     inputs.files(rootProject.fileTree("kimney-compiler-plugin/testData") { include("**/*.diag.txt") })
         .withPropertyName("goldens")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    // BuildWorkflowTest reads the tested Kotlins and the CI matrix they must match.
+    inputs.files(rootProject.file("gradle.properties"), rootProject.file(".github/workflows/build.yml"))
+        .withPropertyName("kotlinMatrix")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     val repoRoot = rootDir.path
     jvmArgumentProviders.add(CommandLineArgumentProvider { listOf("-Dkimney.repoRoot=$repoRoot") })
 }

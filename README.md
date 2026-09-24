@@ -6,7 +6,7 @@
 Say what you want to turn into what; the compiler writes the mapping, or tells
 you exactly why it cannot.
 
-[![Kotlin 2.4.10](https://img.shields.io/badge/Kotlin-2.4.10-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Kotlin 2.4](https://img.shields.io/badge/Kotlin-2.4.0–2.4.20-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![K2 compiler plugin](https://img.shields.io/badge/K2-compiler%20plugin-7F52FF)](docs/reference.md)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/kimney-runtime)](https://central.sonatype.com/artifact/io.github.matthewjones372/kimney-runtime)
 [![status: 0.x](https://img.shields.io/badge/status-0.x-orange)](docs/roadmap.md)
@@ -175,17 +175,22 @@ includeBuild("../kimney")
 ```
 
 Either way the Gradle plugin adds `kimney-runtime` to every JVM compilation and
-loads the compiler plugin into it. kimney is built for exactly one Kotlin
-version, 2.4.10; on any other, the build stops at configuration and names
-both. Both setups were checked from a separate project.
+loads the compiler plugin into it. Both setups were checked from a separate
+project.
 
 Inside this repository, [`example/`](example) applies the plugin the same way
 a consumer does, and runs every cookbook recipe on each build.
 
-### Known limitations in 0.1.0
+### Kotlin versions
 
-- **One Kotlin version.** 0.1.0 is built for Kotlin 2.4.10; each kimney
-  release names the one it is built for.
+A compiler plugin runs inside the compiler, whose plugin API promises nothing
+from one minor to the next, so each kimney release names the Kotlins it
+supports. From 0.2.0 that is any Kotlin 2.4: every compiler test runs on
+2.4.0, 2.4.10 and 2.4.20 in CI, and a newer 2.4 patch is applied with a
+warning that it is untested. Another minor stops the build at configuration,
+naming the range. 0.1.0 supports 2.4.10 alone.
+
+### Known limitations
 - **Errors appear on build, not in the editor.** IntelliJ's K2 mode loads only
   bundled compiler plugins by default, so kimney's diagnostics show when Gradle
   compiles. The IDE has not been checked with the plugin enabled.

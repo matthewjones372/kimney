@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.ir.builders.irBlock
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irBranch
 import org.jetbrains.kotlin.ir.builders.irCall
-import org.jetbrains.kotlin.ir.builders.irCallConstructor
 import org.jetbrains.kotlin.ir.builders.irElseBranch
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetObjectValue
@@ -215,7 +214,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
 
     private fun IrStatementsBuilder<*>.wrap(plan: Plan.Wrap<IrType>, value: IrExpression, given: Given): IrExpression {
         val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a value class constructor")
-        return irCallConstructor(constructor.symbol, typeArgumentsOf(plan.target)).apply {
+        return construct(constructor.symbol, typeArgumentsOf(plan.target)).apply {
             arguments[0] = lower(plan.plan, value, given)
         }
     }
@@ -229,7 +228,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         val constructor = planned(plan.target.classOrFail.owner.primaryConstructor, "a primary constructor")
         val params = constructor.parameters.filter { it.kind == IrParameterKind.Regular }
         val typeArguments = (plan.target as IrSimpleType).arguments.map { (it as IrTypeProjection).type }
-        return irCallConstructor(constructor.symbol, typeArguments).apply {
+        return construct(constructor.symbol, typeArguments).apply {
             plan.args.forEach { arg ->
                 val index = params.single { it.name.asString() == arg.param }.indexInParameters
                 when (arg) {
@@ -275,7 +274,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         }
         return with(partials) {
             guarded(errors, mark, planned(plan.guardedAt, "a partial construction's path")) {
-                irCallConstructor(constructor.symbol, typeArguments).apply {
+                construct(constructor.symbol, typeArguments).apply {
                     built.forEach { (param, v) ->
                         arguments[param.indexInParameters] =
                             irImplicitCast(irGet(v), param.type)
@@ -297,7 +296,7 @@ class KimneyLowering(private val context: IrPluginContext) : IrElementTransforme
         val inner = irTemporary(lower(plan.plan, value, given), irType = partials.anything)
         return with(partials) {
             guarded(errors, mark, planned(plan.guardedAt, "a partial wrap's path")) {
-                irCallConstructor(constructor.symbol, typeArgumentsOf(plan.target)).apply {
+                construct(constructor.symbol, typeArgumentsOf(plan.target)).apply {
                     arguments[0] = irImplicitCast(irGet(inner), held.type)
                 }
             }

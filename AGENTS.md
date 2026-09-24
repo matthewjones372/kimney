@@ -191,10 +191,14 @@ Kover is aggregated across modules with a floor of 90% on `check`.
 
 ## Kotlin version
 
-The compiler plugin API is not stable. The whole project pins one Kotlin
-version (`gradle.properties`, `kotlinVersion`) until 1.0, and the Gradle plugin
-refuses to apply to a build on a different Kotlin version with a message
-naming both. Bumping Kotlin is its own spec.
+The compiler plugin API is not stable. The project builds against one Kotlin
+(`gradle/libs.versions.toml`, `kotlin`) and tests that jar on every Kotlin in
+`kimney.kotlinTested` (`gradle.properties`): run
+`./gradlew :kimney-compiler-plugin:test -Pkimney.kotlinUnderTest=<version>`
+for one, and CI runs them all. The Gradle plugin accepts the tested minor,
+warns past its newest tested patch, and refuses any other minor (spec 0019).
+Adding a patch to the list is a change with its CI run; moving to a new minor
+is its own spec.
 
 ## Verifying
 

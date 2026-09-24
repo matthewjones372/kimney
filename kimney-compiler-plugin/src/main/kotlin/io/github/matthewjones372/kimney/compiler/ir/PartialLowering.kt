@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.ir.builders.IrStatementsBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.buildVariable
 import org.jetbrains.kotlin.ir.builders.irBlock
 import org.jetbrains.kotlin.ir.builders.irCall
-import org.jetbrains.kotlin.ir.builders.irCallConstructor
 import org.jetbrains.kotlin.ir.builders.irEquals
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irIfNull
@@ -29,8 +28,8 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.name.ClassId
@@ -57,7 +56,7 @@ internal class PartialLowering(context: IrPluginContext) {
         val constructor = list.owner.constructors.single { c ->
             c.parameters.none { it.kind == IrParameterKind.Regular }
         }
-        return irTemporary(irCallConstructor(constructor.symbol, listOf(type(partialError))))
+        return irTemporary(construct(constructor.symbol, listOf(type(partialError))))
     }
 
     /** A null records `is null` at [path]; a value goes on through [present]. */
@@ -126,10 +125,12 @@ internal class PartialLowering(context: IrPluginContext) {
             }
             +irNull()
         }
-        val succeeded = irCall(checkNotNull(value).symbol).apply {
-            arguments[0] = irImplicitCast(irGet(outcome), okClass.owner.defaultType)
+        // `Ok<Any?>`, not `Ok<T>`: this code is outside `Ok`, where its `T` means nothing.
+        val ok = okClass.typeWith(anything)
+        val succeeded = irCall(checkNotNull(value).symbol, anything).apply {
+            arguments[0] = irImplicitCast(irGet(outcome), ok)
         }
-        return irIfThenElse(anything, irIs(irGet(outcome), okClass.owner.defaultType), succeeded, failed)
+        return irIfThenElse(anything, irIs(irGet(outcome), ok), succeeded, failed)
     }
 
     /** `Ok` with the value if nothing was recorded, `Errors` with everything that was otherwise. */
@@ -142,10 +143,10 @@ internal class PartialLowering(context: IrPluginContext) {
         val built = irTemporary(value, irType = anything)
         val isEmpty = builtIns.collectionClass.owner.functions.single { it.name.asString() == "isEmpty" }
         val clean = irCall(isEmpty.symbol).apply { arguments[0] = irGet(errors) }
-        val success = irCallConstructor(constructorOf(ok), listOf(target)).apply {
+        val success = construct(constructorOf(ok), listOf(target)).apply {
             arguments[0] = irImplicitCast(irGet(built), target)
         }
-        val failure = irCallConstructor(constructorOf(errorsClass), emptyList()).apply { arguments[0] = irGet(errors) }
+        val failure = construct(constructorOf(errorsClass), emptyList()).apply { arguments[0] = irGet(errors) }
         return irIfThenElse(resultType, clean, success, failure)
     }
 
@@ -153,7 +154,7 @@ internal class PartialLowering(context: IrPluginContext) {
         val add = builtIns.mutableCollectionClass.owner.functions.first { it.name.asString() == "add" }
         return irCall(add.symbol).apply {
             arguments[0] = irGet(errors)
-            arguments[1] = irCallConstructor(constructorOf(partialError), emptyList()).apply {
+            arguments[1] = construct(constructorOf(partialError), emptyList()).apply {
                 arguments[0] = irString(path)
                 arguments[1] = message
             }

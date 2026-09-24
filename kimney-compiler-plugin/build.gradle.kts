@@ -17,10 +17,65 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-val testDataDir = layout.projectDirectory.dir("testData")
+val sourceTestData = layout.projectDirectory.dir("testData")
 val testGenDir = layout.buildDirectory.dir("test-gen")
 
+// The Kotlin whose compiler the tests run on: the catalog's, or `-Pkimney.kotlinUnderTest` (below).
+val kotlinUnderTest: String = providers.gradleProperty("kimney.kotlinUnderTest").getOrElse(libs.versions.kotlin.get())
+
+/** The compiler test framework renamed its builders in 2.4.20; each side of that has a shim of its own. */
+fun frameworkShim(kotlin: String): String {
+    val (major, minor, patch) = kotlin.substringBefore('-').split('.').map(String::toInt)
+    return if (KotlinVersion(major, minor, patch) >= KotlinVersion(2, 4, 20)) "Stage" else "Phase"
+}
+
+val builtFor: String = libs.versions.kotlin.get()
+
+/**
+ * The testData the tests read: this directory on the catalog's Kotlin, and a converted copy on any other.
+ *
+ * From 2.4.20 the framework names a golden `x.diag.txt`, not `x.fir.diag.txt`, and gives a position as `line:col`
+ * rather than as an offset range in the file with its markers taken out. The messages are the same, so the goldens
+ * are kept once, in the catalog Kotlin's form, and converted here: nothing checked in can drift from its twin.
+ */
+val testDataDir: Directory = if (kotlinUnderTest == builtFor) {
+    sourceTestData
+} else {
+    layout.buildDirectory.dir("testData-$kotlinUnderTest").get()
+}
+
+val convertTestData = tasks.register("convertTestData") {
+    description = "Copies testData into the form the compiler test framework of -Pkimney.kotlinUnderTest reads"
+    val stage = frameworkShim(kotlinUnderTest) == "Stage"
+    val from = sourceTestData.asFile
+    val into = testDataDir.asFile
+    onlyIf { into != from }
+    inputs.dir(from).withPropertyName("testData").withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(into)
+    doLast {
+        into.deleteRecursively()
+        from.walkTopDown().filter { it.isFile }.forEach { file ->
+            val relative = file.relativeTo(from).path
+            val golden = stage && relative.endsWith(".diag.txt") && ".fir." in relative
+            if (!golden) {
+                file.copyTo(into.resolve(relative))
+            } else {
+                val source = from.resolve(relative.replace(Regex("""\.fir(\.ir)?\.diag\.txt$"""), ".kt")).readText()
+                    .replace(Regex("<!.*?!>|<!>"), "")
+                val converted = file.readText().replace(Regex(""":\((\d+),\d+\):""")) { match ->
+                    val before = source.take(match.groupValues[1].toInt())
+                    ":${before.count { it == '\n' } + 1}:${before.length - before.lastIndexOf('\n')}:"
+                }
+                into.resolve(relative.replace(".fir.", ".")).apply { parentFile.mkdirs() }.writeText(converted)
+            }
+        }
+    }
+}
+
 sourceSets {
+    testFixtures {
+        kotlin.srcDir("src/testFixtures${frameworkShim(kotlinUnderTest)}/kotlin")
+    }
     test {
         java.srcDir(testGenDir)
         resources.srcDir(testDataDir)
@@ -55,6 +110,7 @@ dependencies {
 // One JUnit class per directory under testData, regenerated whenever a test
 // data file is added. The generated sources are never committed.
 val generateTests = tasks.register<JavaExec>("generateTests") {
+    dependsOn(convertTestData)
     inputs.dir(testDataDir).withPropertyName("testData").withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(testGenDir).withPropertyName("generatedTests")
     classpath = sourceSets.testFixtures.get().runtimeClasspath
@@ -109,3 +165,24 @@ listOf("testFixturesApiElements", "testFixturesRuntimeElements", "testFixturesSo
         skip()
     }
 }
+
+// `-Pkimney.kotlinUnderTest=2.4.0` runs every compiler test on that Kotlin's compiler. The plugin itself stays
+// compiled against the catalog's Kotlin, as it is published: what is tested is that jar, loaded into another
+// compiler, which is what a user on that Kotlin runs.
+if (kotlinUnderTest != libs.versions.kotlin.get()) {
+    listOf(
+        "testFixturesCompileClasspath",
+        "testFixturesRuntimeClasspath",
+        "testCompileClasspath",
+        "testRuntimeClasspath",
+        "testArtifacts",
+    ).forEach { name ->
+        configurations.named(name) {
+            resolutionStrategy.eachDependency {
+                if (requested.group == "org.jetbrains.kotlin") useVersion(kotlinUnderTest)
+            }
+        }
+    }
+}
+
+tasks.processTestResources { dependsOn(convertTestData) }

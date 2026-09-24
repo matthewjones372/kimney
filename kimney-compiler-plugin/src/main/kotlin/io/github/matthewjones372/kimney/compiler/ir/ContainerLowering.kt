@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.builders.IrStatementsBuilder
 import org.jetbrains.kotlin.ir.builders.irBlock
 import org.jetbrains.kotlin.ir.builders.irCall
-import org.jetbrains.kotlin.ir.builders.irCallConstructor
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irImplicitCast
 import org.jetbrains.kotlin.ir.builders.irInt
@@ -52,7 +51,7 @@ internal class ContainerLowering(context: IrPluginContext) {
             if (sized) params.singleOrNull()?.type == builtIns.intType else params.isEmpty()
         }
         val out = irTemporary(
-            irCallConstructor(constructor.symbol, listOf(argument(target))).apply {
+            construct(constructor.symbol, listOf(argument(target))).apply {
                 if (sized) arguments[0] = size(builtIns.collectionClass, source)
             },
         )
@@ -119,7 +118,7 @@ internal class ContainerLowering(context: IrPluginContext) {
             constructor.parameters.none { it.kind == IrParameterKind.Regular }
         }
         val targetArguments = (target as IrSimpleType).arguments.map { checkNotNull((it as? IrTypeProjection)?.type) }
-        val out = irTemporary(irCallConstructor(constructor.symbol, targetArguments))
+        val out = irTemporary(construct(constructor.symbol, targetArguments))
         val entryType = builtIns.mapEntryClass.typeWith(sourceKey, from.element)
         val entriesGetter =
             checkNotNull(builtIns.mapClass.owner.properties.single { it.name.asString() == "entries" }.getter)
@@ -129,7 +128,8 @@ internal class ContainerLowering(context: IrPluginContext) {
         val put = member(builtIns.mutableMapClass, "put")
         loop(entries, entryType) { item ->
             val entry = irTemporary(item)
-            +irCall(put.symbol).apply {
+            // `put` returns the previous value, typed as the target's `V?`, not as `MutableMap`'s own `V`.
+            +irCall(put.symbol, targetArguments[1].makeNullable()).apply {
                 arguments[0] = irGet(out)
                 arguments[1] = key(entryPart(entry, "key", sourceKey))
                 arguments[2] = value(entryPart(entry, "value", from.element))

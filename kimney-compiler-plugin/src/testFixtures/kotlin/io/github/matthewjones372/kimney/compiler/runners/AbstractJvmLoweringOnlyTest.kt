@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.test.FirParser
-import org.jetbrains.kotlin.test.builders.NonGroupingPhaseTestConfigurationBuilder
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
 import org.jetbrains.kotlin.test.directives.DiagnosticsDirectives
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives
@@ -27,7 +26,7 @@ open class AbstractJvmLoweringOnlyTest : AbstractFirPhasedDiagnosticTest(FirPars
     override fun createKotlinStandardLibrariesPathProvider(): KotlinStandardLibrariesPathProvider =
         EnvironmentBasedStandardLibrariesPathProvider
 
-    override fun configure(builder: NonGroupingPhaseTestConfigurationBuilder) = with(builder) {
+    override fun configure(builder: KimneyConfigurationBuilder) = with(builder) {
         super.configure(this)
         defaultDirectives {
             +DiagnosticsDirectives.RENDER_IR_DIAGNOSTICS_FULL_TEXT

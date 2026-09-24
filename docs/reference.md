@@ -14,8 +14,9 @@ plugins {
 ```
 
 The plugin adds `kimney-runtime` to every JVM compilation and loads the
-compiler plugin into it. kimney is built for exactly one Kotlin version; on
-any other, the build fails at configuration naming both versions.
+compiler plugin into it. It supports Kotlin 2.4: a patch newer than the
+newest tested is applied with a warning, and another minor fails at
+configuration, naming the range ([Kotlin versions](../README.md#kotlin-versions)).
 
 ## `transformInto`
 

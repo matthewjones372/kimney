@@ -42,6 +42,7 @@ buildConfig {
     buildConfigField("String", "KIMNEY_GROUP", "\"$group\"")
     buildConfigField("String", "KIMNEY_VERSION", "\"$version\"")
     buildConfigField("String", "KOTLIN_VERSION", "\"${libs.versions.kotlin.get()}\"")
+    buildConfigField("String", "KOTLIN_TESTED", "\"${rootProperties.getProperty("kimney.kotlinTested")}\"")
 }
 
 mavenPublishing {

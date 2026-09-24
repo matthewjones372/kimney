@@ -1,7 +1,6 @@
 package io.github.matthewjones372.kimney.compiler.runners
 
 import org.jetbrains.kotlin.test.FirParser
-import org.jetbrains.kotlin.test.builders.NonGroupingPhaseTestConfigurationBuilder
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
 import org.jetbrains.kotlin.test.directives.DiagnosticsDirectives
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives
@@ -18,7 +17,7 @@ open class AbstractJvmDiagnosticTest : AbstractFirPhasedDiagnosticTest(FirParser
     override fun createKotlinStandardLibrariesPathProvider(): KotlinStandardLibrariesPathProvider =
         EnvironmentBasedStandardLibrariesPathProvider
 
-    override fun configure(builder: NonGroupingPhaseTestConfigurationBuilder) = with(builder) {
+    override fun configure(builder: KimneyConfigurationBuilder) = with(builder) {
         super.configure(this)
         defaultDirectives {
             +DiagnosticsDirectives.RENDER_DIAGNOSTICS_FULL_TEXT

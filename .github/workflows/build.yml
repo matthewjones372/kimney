@@ -40,3 +40,30 @@ jobs:
             **/build/reports/tests/
             **/build/test-results/
           retention-days: 7
+
+  # The published jar is compiled against the catalog's Kotlin; this runs every
+  # compiler test with it loaded into each tested Kotlin's compiler (spec 0019).
+  # The list is `kimney.kotlinTested` in gradle.properties, which
+  # BuildWorkflowTest holds this matrix to.
+  kotlin:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kotlin: ["2.4.0", "2.4.10", "2.4.20"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Compiler tests on Kotlin ${{ matrix.kotlin }}
+        run: ./gradlew :kimney-compiler-plugin:test -Pkimney.kotlinUnderTest=${{ matrix.kotlin }} --stacktrace
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-kotlin-${{ matrix.kotlin }}
+          path: kimney-compiler-plugin/build/reports/tests/
+          retention-days: 7
