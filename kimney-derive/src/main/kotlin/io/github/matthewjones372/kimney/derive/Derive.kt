@@ -22,7 +22,14 @@ fun <T> derive(
  * A user's transformer from [source] to [target]. [index] is unique within one derivation; [context] names the
  * context parameter it came from, and is null for one passed to the chain at that index.
  */
-data class Supplied<T>(val source: T, val target: T, val index: Int, val context: String? = null)
+data class Supplied<T>(
+    val source: T,
+    val target: T,
+    val index: Int,
+    val context: String? = null,
+    /** A `PartialTransformer`: it serves partial transformations only, and its errors are re-rooted. */
+    val canFail: Boolean = false,
+)
 
 /**
  * One pair being derived, where it sits, and the pairs above it. [owner] is the class the field at [path] belongs
@@ -53,9 +60,21 @@ private class Derivation<T>(
 
     // With overrides the target is built, even from its own type: `into<_, User>()` is a copy with changes.
     fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> {
-        val fitting = model.fitting(site, transformers)
+        val fits = model.fitting(site, transformers)
+        // A transformer that can fail serves a partial transformation only; in a total one it is named, not used.
+        val fitting = if (partial) fits else fits.filterNot { it.canFail }
+        val onlyFallible = !partial && fitting.isEmpty() && fits.isNotEmpty()
         return when {
-            fitting.size == 1 -> Derived.Planned(Plan.Transformed(fitting.single().index, site.target))
+            onlyFallible ->
+                failed(Failure.FallibleInTotal(site.path, model.render(site.target), model.render(site.source)))
+
+            fitting.size == 1 -> Derived.Planned(
+                Plan.Transformed(
+                    fitting.single().index,
+                    site.target,
+                    relocateAt = site.path.toString().takeIf { fitting.single().canFail },
+                ),
+            )
 
             fitting.size > 1 -> failed(
                 Failure.AmbiguousTransformer(

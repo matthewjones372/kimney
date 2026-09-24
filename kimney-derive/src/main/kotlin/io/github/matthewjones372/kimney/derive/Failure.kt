@@ -134,6 +134,11 @@ sealed interface Failure {
                 ".withTransformer(Transformer<$source, $target> { … })."
     }
 
+    data class FallibleInTotal(override val path: Path, override val type: String, val source: String) : Failure {
+        override val reason
+            get() = "the transformer that fits $source → $type can fail. End the chain with .transformPartial()."
+    }
+
     data class MissingCase(
         override val path: Path,
         override val type: String,

@@ -112,4 +112,25 @@ class TransformerTest {
         failed.failures.first().line shouldBe "TeamDto.lead: UserDto — two transformers fit User → UserDto: " +
             "withTransformer #1 and context parameter 'money'. Pass one."
     }
+
+    @Test
+    fun `a transformer that can fail serves a partial transformation, re-rooted where its value sits`() {
+        val parse = Supplied("User", "UserDto", index = 0, canFail = true)
+
+        derive(model, "Team", "TeamDto", transformers = listOf(parse), partial = true)
+            .shouldBeInstanceOf<Derived.Planned<String>>().plan.transformersUsed() shouldBe setOf(0)
+        val lead = (
+            derive(model, "Team", "TeamDto", transformers = listOf(parse), partial = true) as Derived.Planned
+            ).plan.let { (it as Plan.Construct).args.first() as Arg.FromProperty }
+        lead.plan shouldBe Plan.Transformed(0, "UserDto", relocateAt = "TeamDto.lead")
+    }
+
+    @Test
+    fun `in a total transformation a fitting transformer that can fail is refused, pointing at the partial call`() {
+        val parse = Supplied("User", "UserDto", index = 0, canFail = true)
+
+        derive(model, "Team", "TeamDto", transformers = listOf(parse)).shouldBeInstanceOf<Derived.Failed>()
+            .failures.first().line shouldBe "TeamDto.lead: UserDto — the transformer that fits User → UserDto can " +
+            "fail. End the chain with .transformPartial()."
+    }
 }

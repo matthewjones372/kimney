@@ -29,8 +29,11 @@ sealed interface Plan<out T> {
     /** The enclosing [Named] plan with this [depth], applied again: the pair has met itself. */
     data class Reference(val depth: Int) : Plan<Nothing>
 
-    /** The user's transformer at [index] in the chain, applied to the source. */
-    data class Transformed<T>(val index: Int, val target: T) : Plan<T>
+    /**
+     * The user's transformer at [index] in the chain, applied to the source. [relocateAt] is set for one that can
+     * fail: its errors are re-rooted there.
+     */
+    data class Transformed<T>(val index: Int, val target: T, val relocateAt: String? = null) : Plan<T>
 
     /** The target object, with nothing read from the source. */
     data class ObjectInstance<T>(val target: T) : Plan<T>
