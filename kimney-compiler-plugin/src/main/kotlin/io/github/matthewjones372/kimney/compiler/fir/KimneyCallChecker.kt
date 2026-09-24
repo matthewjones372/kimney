@@ -70,7 +70,8 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         // The compiler has already reported whatever left a type unresolved.
         if (source is ConeErrorType || target is ConeErrorType) return
         val model = FirTypeModel(context.session)
-        val transformers = chain?.transformers.orEmpty()
+        val passed = chain?.transformers.orEmpty()
+        val transformers = passed + context.contextTransformers(start = chain?.links ?: 0)
         when (val derived = derive(model, source, target, chain?.overrides.orEmpty(), transformers)) {
             is Derived.Failed -> {
                 val message = derived.message(model.render(source), model.render(target))
@@ -79,7 +80,8 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
 
             is Derived.Planned -> {
                 val used = derived.plan.transformersUsed()
-                transformers.filterNot { it.index in used }.forEach { unused ->
+                // Only one passed to this chain is expected to be used by it; one in context serves many calls.
+                passed.filterNot { it.index in used }.forEach { unused ->
                     val message = unusedTransformer(model.render(unused.source), model.render(unused.target))
                     val at = chain?.transformerCalls?.get(unused.index)?.source
                     reporter.reportOn(at, KimneyErrors.KIMNEY_UNUSED_TRANSFORMER, message)

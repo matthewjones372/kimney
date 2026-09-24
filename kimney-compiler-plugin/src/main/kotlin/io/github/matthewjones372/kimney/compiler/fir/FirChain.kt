@@ -30,6 +30,7 @@ data class FirChain(
     val overrides: List<Override<ConeKotlinType>>,
     val transformers: List<Supplied<ConeKotlinType>>,
     val transformerCalls: Map<Int, FirFunctionCall>,
+    val links: Int,
 )
 
 private sealed interface Link {
@@ -60,6 +61,7 @@ fun readChain(transform: FirFunctionCall): FirChain? {
             links.filterIsInstance<Link.Overriding>().map { it.override },
             transforming.map { it.supplied },
             transforming.associate { it.supplied.index to it.call },
+            links.size,
         )
     }
 }
