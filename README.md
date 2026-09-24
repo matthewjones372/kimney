@@ -35,12 +35,15 @@ names every field it could not fill, the path to it, and what would fix it.
 
 ## Why not by hand?
 
-A mapper is easy to write and only right on the day it is written. Add a field
-with a default to both classes and the hand-written mapper keeps compiling —
-using the default, silently. Add an enum entry and it falls into the `else`.
-kimney derives the mapping again on every build, so it picks up the field,
-and a new entry with nowhere to go is a compile error. Both bugs, and the
-test that runs them, are in [Why not write it by hand?](docs/why.md).
+Layered and domain-driven code gives one idea several shapes on purpose — a
+request, a command, an aggregate, an event, a row, a view — each saying which
+layer it belongs to and what is happening. The shapes are the design; the
+mapping between them is the tax, and it is why layers get collapsed. kimney
+removes the tax: each crossing is one line, derived again on every build, so
+it follows the types as they change and stops the build when it cannot.
+[Why not write it by hand?](docs/why.md) walks one order through six shapes
+in five one-line mappings, and shows the two bugs a hand-written mapper keeps
+compiling through.
 
 ## A first look
 

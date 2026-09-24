@@ -1,16 +1,100 @@
 # Why not write it by hand?
 
-A mapper is easy to write. That is not the problem. The problem is that a
-hand-written mapper is only right on the day it is written, and nothing in
-Kotlin tells you when it stops being right.
+## The classes are the design; the mapping is the tax
 
-kimney's answer is to not have a mapper to keep right: the mapping is derived
-again from the two types on every build, so a change to either type changes
-the mapping — or stops the build and says why.
+Domain-driven design gives one idea several shapes, on purpose. An order is a
+`PlaceOrderRequest` at the edge, a `PlaceOrder` command, an `Order` aggregate
+with its own identity and invariants, an `OrderPlaced` event, an `OrderRow` in
+storage and an `OrderView` going back out. They look alike field for field —
+and that is the point: each one says which layer you are in and what is
+happening, and each can change for its own reasons without dragging the
+others along.
 
-## Two bugs the compiler will not find for you
+The cost is the mapping between them. Every pair of shapes is a function that
+restates every field, and every field added to the domain is one more line in
+each of them. Under that weight, teams stop paying: the entity doubles as the
+DTO with `@JsonIgnore` on the parts the API must not see, the event reuses the
+row, the command is the request with a comment. The layers collapse because
+the boilerplate made them expensive, not because they were wrong.
 
-Both of these compile. Both are tested — the test asserts the bug.
+kimney takes the cost away and leaves the design. Here is one order through
+all six shapes — value-class identities in the domain, plain columns in the
+row, a view with an extra enum entry — with each crossing written once:
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/layers/OrderFlow.kt
+package example.cookbook.layers
+
+import io.github.matthewjones372.kimney.into
+import io.github.matthewjones372.kimney.transformInto
+
+// The domain: identities and quantities are types, not Longs and Ints.
+@JvmInline value class OrderId(val value: Long)
+
+@JvmInline value class CustomerId(val value: Long)
+
+@JvmInline value class Sku(val code: String)
+
+@JvmInline value class Quantity(val units: Int)
+
+enum class OrderStatus { PLACED, SHIPPED }
+
+data class OrderLine(val sku: Sku, val quantity: Quantity)
+
+data class Order(val id: OrderId, val customerId: CustomerId, val lines: List<OrderLine>, val status: OrderStatus)
+
+// The way in: what the API accepts, and the command it becomes.
+data class LineRequest(val sku: String, val quantity: Int)
+
+data class PlaceOrderRequest(val customerId: Long, val lines: List<LineRequest>)
+
+data class PlaceOrder(val customerId: CustomerId, val lines: List<OrderLine>)
+
+// The way out: what happened, what is stored, and what the API answers.
+data class OrderPlaced(val orderId: OrderId, val customerId: CustomerId, val lines: List<OrderLine>)
+
+enum class StatusColumn { PLACED, SHIPPED }
+
+data class OrderRow(val id: Long, val customerId: Long, val status: StatusColumn)
+
+enum class StatusView { PLACED, SHIPPED, UNKNOWN }
+
+data class LineView(val sku: String, val quantity: Int)
+
+data class OrderView(val id: Long, val lines: List<LineView>, val status: StatusView)
+
+// Five crossings between six shapes, one line each.
+fun PlaceOrderRequest.toCommand(): PlaceOrder = transformInto()
+
+fun PlaceOrder.toOrder(id: OrderId): Order = into<_, Order>()
+    .withFieldConst(Order::id, id)
+    .withFieldConst(Order::status, OrderStatus.PLACED)
+    .transform()
+
+fun Order.placed(): OrderPlaced = into<_, OrderPlaced>().withFieldRenamed(Order::id, OrderPlaced::orderId).transform()
+
+fun Order.toRow(): OrderRow = transformInto()
+
+fun Order.toView(): OrderView = transformInto()
+```
+
+Five crossings, one line each, and a test that runs every one. What each line
+does not say, kimney derives: `Long` into `CustomerId` and back, `String` into
+`Sku`, a `List<LineRequest>` into a `List<OrderLine>`, `OrderStatus` into
+`StatusColumn` and `StatusView`. What it cannot derive — a field the next
+shape needs and this one lacks — stops the build at that line, naming the
+field.
+
+So the shapes stay separate for as long as they are separate, and cost nothing
+while they are alike.
+
+## And the mapping you write by hand goes stale
+
+A mapper is easy to write and only right on the day it is written; nothing in
+Kotlin tells you when it stops being right. kimney derives the mapping again
+from the two types on every build, so a change to either type changes the
+mapping — or stops the build and says why. Two bugs the compiler will not find
+for you, both of which compile. Both are tested — the test asserts the bug.
 
 ```kotlin
 // file: example/src/main/kotlin/example/cookbook/why/Drift.kt
