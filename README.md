@@ -180,6 +180,14 @@ project.
 Inside this repository, [`example/`](example) applies the plugin the same way
 a consumer does, and runs every cookbook recipe on each build.
 
+### In the editor
+
+IntelliJ's K2 mode loads only bundled compiler plugins until told otherwise.
+Help → Find Action → Registry, uncheck
+`kotlin.k2.only.bundled.compiler.plugins.enabled`, and restart: kimney's errors
+then show on the call as you type. The setting is per IDE, so each developer
+sets it once.
+
 ### Kotlin versions
 
 A compiler plugin runs inside the compiler, whose plugin API promises nothing
@@ -190,9 +198,6 @@ warning that it is untested. Another minor stops the build at configuration,
 naming the range. 0.1.0 supports 2.4.10 alone.
 
 ### Known limitations
-- **Errors appear on build, not in the editor.** IntelliJ's K2 mode loads only
-  bundled compiler plugins by default, so kimney's diagnostics show when Gradle
-  compiles. The IDE has not been checked with the plugin enabled.
 - **JVM only.** The Gradle plugin applies to JVM compilations.
 - **No nested field overrides.** A transformer for the nested pair covers them.
 
