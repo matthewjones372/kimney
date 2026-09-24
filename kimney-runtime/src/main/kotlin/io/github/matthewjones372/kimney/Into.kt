@@ -20,6 +20,10 @@ public class Into<A, B> internal constructor() {
     public fun <S, T> withTransformer(transformer: Transformer<S, T>): Into<A, B> =
         throw KimneyNotApplied("withTransformer")
 
+    /** Used, in a partial call only, for every pair below the root that [transformer] fits. */
+    public fun <S, T> withPartialTransformer(transformer: PartialTransformer<S, T>): Into<A, B> =
+        throw KimneyNotApplied("withPartialTransformer")
+
     public fun transform(): B = throw KimneyNotApplied("transform")
 
     /** As [transform], collecting what does not fit into [Partial.Errors] rather than refusing to compile. */

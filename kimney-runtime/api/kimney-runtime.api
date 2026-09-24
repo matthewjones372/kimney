@@ -4,6 +4,7 @@ public final class io/github/matthewjones372/kimney/Into {
 	public final fun withFieldComputed (Lkotlin/reflect/KProperty1;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldConst (Lkotlin/reflect/KProperty1;Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withFieldRenamed (Lkotlin/reflect/KProperty1;Lkotlin/reflect/KProperty1;)Lio/github/matthewjones372/kimney/Into;
+	public final fun withPartialTransformer (Lio/github/matthewjones372/kimney/PartialTransformer;)Lio/github/matthewjones372/kimney/Into;
 	public final fun withTransformer (Lio/github/matthewjones372/kimney/Transformer;)Lio/github/matthewjones372/kimney/Into;
 }
 
@@ -54,8 +55,13 @@ public final class io/github/matthewjones372/kimney/PartialError {
 }
 
 public final class io/github/matthewjones372/kimney/PartialKt {
+	public static final fun relocatedTo (Lio/github/matthewjones372/kimney/Partial$Errors;Ljava/lang/String;)Ljava/util/List;
 	public static final fun transformIntoPartial (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Partial;
 	public static final fun valueOrNull (Lio/github/matthewjones372/kimney/Partial;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/matthewjones372/kimney/PartialTransformer {
+	public abstract fun transform (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Partial;
 }
 
 public final class io/github/matthewjones372/kimney/TransformKt {
