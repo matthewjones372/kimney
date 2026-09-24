@@ -15,8 +15,11 @@ fun <T> derive(
     return Derivation(model, transformers).pair(root, overrides)
 }
 
-/** A user's transformer from [source] to [target], at [index] in the chain. */
-data class Supplied<T>(val source: T, val target: T, val index: Int)
+/**
+ * A user's transformer from [source] to [target]. [index] is unique within one derivation; [context] names the
+ * context parameter it came from, and is null for one passed to the chain at that index.
+ */
+data class Supplied<T>(val source: T, val target: T, val index: Int, val context: String? = null)
 
 /**
  * One pair being derived, where it sits, and the pairs above it. [owner] is the class the field at [path] belongs
@@ -48,7 +51,8 @@ private class Derivation<T>(val model: TypeModel<T>, private val transformers: L
                     site.path,
                     model.render(site.target),
                     model.render(site.source),
-                    fitting.map { it.index },
+                    fitting.filter { it.context == null }.map { it.index },
+                    fitting.mapNotNull { it.context },
                 ),
             )
 

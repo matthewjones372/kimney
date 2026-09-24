@@ -112,15 +112,21 @@ sealed interface Failure {
         override val path: Path,
         override val type: String,
         val source: String,
-        val indices: List<Int>,
+        val chain: List<Int>,
+        val context: List<String> = emptyList(),
     ) : Failure {
         override val reason: String
             get() {
-                val count = if (indices.size == 2) "two" else "${indices.size}"
-                val which = indices.map { "#${it + 1}" }
-                val named = which.dropLast(1).joinToString(", ") + " and " + which.last()
-                return "$count transformers fit $source → $type: withTransformer $named. Pass one."
+                val count = chain.size + context.size
+                val sources = listOfNotNull(
+                    chain.takeIf { it.isNotEmpty() }?.let { "withTransformer " + and(it.map { i -> "#${i + 1}" }) },
+                ) + context.map { "context parameter '$it'" }
+                return "${if (count == 2) "two" else "$count"} transformers fit $source → $type: ${and(sources)}. " +
+                    "Pass one."
             }
+
+        private fun and(items: List<String>): String =
+            if (items.size == 1) items.single() else items.dropLast(1).joinToString(", ") + " and " + items.last()
     }
 
     /** [inner], with a transformer offered for the nested pair it sits in. */

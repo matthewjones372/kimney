@@ -99,4 +99,17 @@ class TransformerTest {
                 "default value. Or map User → UserDto with .withTransformer(Transformer<User, UserDto> { … }).",
         )
     }
+
+    @Test
+    fun `a transformer from context is matched like one from the chain, and named by its parameter`() {
+        val money = Supplied("User", "UserDto", index = 1, context = "money")
+
+        derive(model, "Team", "TeamDto", transformers = listOf(money)).shouldBeInstanceOf<Derived.Planned<String>>()
+            .plan.transformersUsed() shouldBe setOf(1)
+
+        val failed = derive(model, "Team", "TeamDto", transformers = listOf(userToDto, money))
+            .shouldBeInstanceOf<Derived.Failed>()
+        failed.failures.first().line shouldBe "TeamDto.lead: UserDto — two transformers fit User → UserDto: " +
+            "withTransformer #1 and context parameter 'money'. Pass one."
+    }
 }
