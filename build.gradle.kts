@@ -53,6 +53,16 @@ dependencies {
     subprojects.forEach { kover(project(it.path)) }
 }
 
+// The inner loop for engine and docs work: every check but the compiler plugin's
+// tests, which are the one suite that compiles Kotlin per test. `build` still
+// runs everything.
+tasks.register("quickCheck") {
+    group = "verification"
+    description = "Runs every check except the compiler plugin's compile-and-run tests."
+    dependsOn(subprojects.filter { it.name != "kimney-compiler-plugin" }.map { "${it.path}:check" })
+    dependsOn(":kimney-compiler-plugin:detektMain", ":kimney-compiler-plugin:spotlessCheck", "spotlessCheck")
+}
+
 tasks.named("check") {
     dependsOn("koverVerify")
     // The Gradle plugin is an included build, which this one does not check
