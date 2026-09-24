@@ -1,0 +1,10 @@
+/enumEntries.kt:(296,396): error: Cannot transform Status → StatusDto:
+    Into<Status, StatusDto> — withEnumEntryRenamed takes the entries themselves, like Status.ACTIVE, not a value that holds one.
+
+/enumEntries.kt:(437,689): error: Cannot transform Status → StatusDto:
+    StatusDto — Status.ARCHIVED is renamed twice, by withEnumEntryRenamed #1 and #3. Keep one.
+    StatusDto — StatusDto falls back twice, by withEnumFallback #2 and #4. Keep one.
+
+/enumEntries.kt:(737,874): warning: withEnumEntryRenamed(Other.A → OtherDto.B) is not used: no Other → OtherDto pair occurs. A type it names may have changed.
+
+/enumEntries.kt:(941,1002): warning: withEnumFallback(OtherDto.B) is not used: nothing becomes OtherDto. A type it names may have changed.

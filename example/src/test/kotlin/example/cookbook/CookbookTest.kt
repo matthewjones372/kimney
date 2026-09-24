@@ -3,6 +3,8 @@ package example.cookbook
 import example.cookbook.collections.toDto
 import example.cookbook.copy.suspend
 import example.cookbook.crossing.toDto
+import example.cookbook.entries.toDto
+import example.cookbook.entries.toTicket
 import example.cookbook.enums.toDto
 import example.cookbook.first.toDto
 import example.cookbook.ids.toOwnerId
@@ -59,6 +61,21 @@ class CookbookTest {
     @Test
     fun `enums map by name`() {
         example.cookbook.enums.Status.SUSPENDED.toDto() shouldBe example.cookbook.enums.StatusDto.SUSPENDED
+    }
+
+    @Test
+    fun `a renamed entry goes where it is sent, and a fallback takes the rest`() {
+        example.cookbook.entries.Status.entries.map { it.toDto() } shouldBe listOf(
+            example.cookbook.entries.StatusDto.ACTIVE,
+            example.cookbook.entries.StatusDto.SUSPENDED,
+            example.cookbook.entries.StatusDto.INACTIVE,
+        )
+        example.cookbook.entries.PartnerStatus.entries.map { it.toTicket() } shouldBe listOf(
+            example.cookbook.entries.TicketStatus.OPEN,
+            example.cookbook.entries.TicketStatus.CLOSED,
+            example.cookbook.entries.TicketStatus.UNKNOWN,
+            example.cookbook.entries.TicketStatus.UNKNOWN,
+        )
     }
 
     @Test

@@ -26,6 +26,8 @@ draft, not a substitute for it.
 | 0017 | Mutable collections as sources and targets |
 | 0018 | What it costs, measured |
 | 0019 | Every Kotlin 2.4: tested on each, accepted by the Gradle plugin |
+| 0021 | Enum entries renamed, and a fallback for the rest |
+| 0022 | Sealed cases renamed, built by a transformer, or a fallback object |
 | 0020 | Mappings recompile under incremental compilation when a type they read changes |
 
 ## Rule order

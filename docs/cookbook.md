@@ -32,6 +32,7 @@ and names the range ([Kotlin versions](../README.md#kotlin-versions)).
 - [A field with another name, a computed value, a constant](#a-field-with-another-name-a-computed-value-a-constant)
 - [A copy with changes](#a-copy-with-changes)
 - [Enums across layers](#enums-across-layers)
+- [An entry the other side does not have](#an-entry-the-other-side-does-not-have)
 - [Sealed types](#sealed-types)
 - [Generic sealed types](#generic-sealed-types)
 - [Optional values](#optional-values)
@@ -164,6 +165,43 @@ fun Status.toDto(): StatusDto = transformInto()
 
 Entries are compared by identity, never by ordinal, so an enum from another
 module can be reordered without breaking the mapping.
+
+## An entry the other side does not have
+
+A rename sends one entry somewhere else, and every other entry still matches
+by name, so an entry added later is still a compile error until someone
+decides where it goes. A fallback takes everything nothing else matched,
+including entries added later, which is the right call for an enum you do
+not own and the wrong one for your own: prefer the rename.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/entries/EnumEntries.kt
+package example.cookbook.entries
+
+import io.github.matthewjones372.kimney.into
+
+// The domain archives accounts; the API calls that inactive.
+enum class Status { ACTIVE, SUSPENDED, ARCHIVED }
+
+enum class StatusDto { ACTIVE, SUSPENDED, INACTIVE }
+
+fun Status.toDto(): StatusDto = into<_, StatusDto>()
+    .withEnumEntryRenamed(Status.ARCHIVED, StatusDto.INACTIVE)
+    .transform()
+
+// A partner's enum grows without asking; everything we do not model is UNKNOWN.
+enum class PartnerStatus { OPEN, CLOSED, ON_HOLD, ESCALATED }
+
+enum class TicketStatus { OPEN, CLOSED, UNKNOWN }
+
+fun PartnerStatus.toTicket(): TicketStatus = into<_, TicketStatus>()
+    .withEnumFallback(TicketStatus.UNKNOWN)
+    .transform()
+```
+
+Both calls name the entries themselves, so a typo or a removed entry fails
+the build at the call. They apply wherever their enums meet — here at the
+root, and equally in a field or a list of an `Account` being mapped.
 
 ## Sealed types
 

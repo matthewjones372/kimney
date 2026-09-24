@@ -1,16 +1,20 @@
 package io.github.matthewjones372.kimney.compiler.ir
 
+import io.github.matthewjones372.kimney.compiler.ENUM_LINKS
 import io.github.matthewjones372.kimney.compiler.INTO
+import io.github.matthewjones372.kimney.compiler.WITH_ENUM_ENTRY_RENAMED
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_COMPUTED
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_CONST
 import io.github.matthewjones372.kimney.compiler.WITH_FIELD_RENAMED
 import io.github.matthewjones372.kimney.compiler.WITH_PARTIAL_TRANSFORMER
 import io.github.matthewjones372.kimney.compiler.WITH_TRANSFORMER
+import io.github.matthewjones372.kimney.derive.EnumOverride
 import io.github.matthewjones372.kimney.derive.Override
 import io.github.matthewjones372.kimney.derive.Supplied
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionExpression
+import org.jetbrains.kotlin.ir.expressions.IrGetEnumValue
 import org.jetbrains.kotlin.ir.expressions.IrPropertyReference
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.callableId
@@ -26,6 +30,7 @@ data class IrChain(
     val overrides: List<Override<IrType>>,
     val given: List<IrExpression?>,
     val transformers: List<Supplied<IrType>> = emptyList(),
+    val enums: List<EnumOverride<IrType>> = emptyList(),
 )
 
 private sealed interface Link {
@@ -34,6 +39,11 @@ private sealed interface Link {
     data class Overriding(val override: Override<IrType>, override val given: IrExpression?) : Link
 
     data class Transforming(val supplied: Supplied<IrType>, override val given: IrExpression) : Link
+
+    /** Its entries are read here and nothing is evaluated: an entry is a constant. */
+    data class Mapping(val enum: EnumOverride<IrType>) : Link {
+        override val given: IrExpression? get() = null
+    }
 }
 
 /**
@@ -62,6 +72,7 @@ fun readChain(transform: IrCall): IrChain? {
             complete.filterIsInstance<Link.Overriding>().map { it.override },
             complete.map { it.given },
             complete.filterIsInstance<Link.Transforming>().map { it.supplied },
+            complete.filterIsInstance<Link.Mapping>().map { it.enum },
         )
     }
 }
@@ -79,6 +90,7 @@ private fun link(call: IrCall, index: Int): Link? {
             Link.Transforming(Supplied(from, to, index, canFail = canFail), transformer)
         }
     }
+    if (call.kimneyId in ENUM_LINKS) return enumLink(call, args, index)
     val field = field(args[if (call.kimneyId == WITH_FIELD_RENAMED) "to" else "field"]) ?: return null
     return when (call.kimneyId) {
         WITH_FIELD_CONST -> args["value"]?.let { Link.Overriding(Override.Const(field, it.type, index), it) }
@@ -91,6 +103,19 @@ private fun link(call: IrCall, index: Int): Link? {
         else -> null
     }
 }
+
+private fun enumLink(call: IrCall, args: Map<String, IrExpression?>, index: Int): Link? {
+    val to = args["to"] as? IrGetEnumValue
+    val from = args["from"] as? IrGetEnumValue
+    return when {
+        to == null -> null
+        call.kimneyId != WITH_ENUM_ENTRY_RENAMED -> Link.Mapping(EnumOverride.Fallback(to.type, to.entry, index))
+        from == null -> null
+        else -> Link.Mapping(EnumOverride.Renamed(from.type, from.entry, to.type, to.entry, index))
+    }
+}
+
+private val IrGetEnumValue.entry: String get() = symbol.owner.name.asString()
 
 private fun field(reference: IrExpression?): String? =
     (reference as? IrPropertyReference)?.symbol?.owner?.name?.asString()

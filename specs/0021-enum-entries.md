@@ -103,14 +103,14 @@ places.
 
 ## Stack
 
-- [ ] **`spec-0021-runtime`** — `withEnumEntryRenamed`, `withEnumFallback`; BCV.
+- [x] **`spec-0021-runtime`** — `withEnumEntryRenamed`, `withEnumFallback`; BCV.
       Done when: the stubs throw `KimneyNotApplied` naming themselves.
-- [ ] **`spec-0021-engine`** — `Plan.EnumByName` carries each source entry's
+- [x] **`spec-0021-engine`** — `Plan.EnumByName` carries each source entry's
       target entry; the renames and fallbacks in the enum rule; the failures
       and the hint.
       Done when: engine tests cover a rename, a rename over a name match, a
       fallback, both together, a nested pair, duplicates and unused ones.
-- [ ] **`spec-0021-plugin`** — both chain readers take the calls and read the
+- [x] **`spec-0021-plugin`** — both chain readers take the calls and read the
       entries; the lowering; goldens, box, agreement; cookbook and reference.
       Done when: box tests pass at the root, in a field, in a list and in a
       partial transformation, and goldens hold every message above.
@@ -136,3 +136,9 @@ answers:
 - **The fallback is also the `else`** of the lowered `when`, so an entry
   compiled in later falls back at runtime rather than throwing (decided while
   committing, from reading the lowering).
+- **The unused warning is its own diagnostic**, `KIMNEY_UNUSED_ENUM_MAPPING`,
+  so it can be suppressed apart from `KIMNEY_UNUSED_TRANSFORMER` (decided while
+  building).
+- **The not-an-entry message names a real entry** of the enum the argument
+  holds, `like Status.ACTIVE`, rather than the one the author meant, which the
+  plugin cannot know.

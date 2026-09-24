@@ -206,6 +206,13 @@ sealed interface Failure {
                 "it is inherited, an extension or not public."
     }
 
+    /** Found by an adapter reading the call: an enum link's argument must be the entry itself, [example]. */
+    data class NotAnEntry(override val path: Path, val method: String, val example: String) : Failure {
+        override val type: String? get() = null
+        override val reason
+            get() = "$method takes the entries themselves, like $example, not a value that holds one."
+    }
+
     /** Found by an adapter reading the call, not by the engine: the chain is syntax. */
     data class OverrideNotStatic(override val path: Path, val target: String) : Failure {
         override val type: String? get() = null

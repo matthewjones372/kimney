@@ -53,10 +53,11 @@ written. The source is evaluated once. For each target type, in order:
    neither side's edits reach the other.
 5. **Object.** An `object` target is its instance, from an `object` source
    only, so no case can drop the fields of the one it came from.
-6. **Enum.** Each source entry becomes the target entry of the same name. A
-   source entry with no target entry is a compile error; extra target entries
-   are fine. Entries are compared by identity, never by ordinal, so an enum
-   compiled elsewhere can be reordered safely.
+6. **Enum.** Each source entry becomes the target entry of the same name,
+   unless an [enum mapping](#enum-mappings) sends it elsewhere. A source entry
+   with no target entry is a compile error; extra target entries are fine.
+   Entries are compared by identity, never by ordinal, so an enum compiled
+   elsewhere can be reordered safely.
 7. **Sealed.** Each direct subclass of the source becomes the target's direct
    subclass of the same simple name, and each pair is derived by every rule
    here, so a case gets its defaults and a failure inside it has a path
@@ -102,7 +103,7 @@ The other failures:
 | Null into non-null | `StrictDto.name: String — User.name is String?, and a null has nowhere to go. Make StrictDto.name nullable, or fill it with .withFieldComputed(StrictDto::name) { … }.` |
 | Crossing kinds | `StrictOrder.tags: List<TagDto> — a Set is not turned into a List. Fill it with .withFieldComputed(StrictOrder::tags) { … }.` |
 | A map key that could collide | `StrictOrder.keyed[key]: LineDto — keys are transformed only as themselves or through a value class, since Line into LineDto could turn two keys into one.` |
-| A missing case | `StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto.` |
+| A missing case | `StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto. Map it with .withEnumEntryRenamed(Status.ARCHIVED, StatusDto.…), or send every unmatched entry to one with .withEnumFallback(StatusDto.…).` |
 
 ## Overrides
 
@@ -145,6 +146,49 @@ the plugin reads it at compile time. Anything else is a compile error:
 The wrong-value-type check is kimney's, not the compiler's: `KProperty1` is
 covariant in its value, so `withFieldConst(UserDto::age, "forty")` type-checks
 with `T` widened to `Any`.
+
+## Enum mappings
+
+```kotlin
+val dto = account.into<_, AccountDto>()
+    .withEnumEntryRenamed(Status.ARCHIVED, StatusDto.INACTIVE)
+    .withEnumFallback(StatusDto.UNKNOWN)
+    .transform()
+```
+
+An enum mapping decides what entries become wherever its two enums meet in
+the derivation — at the root, in a field, as an element, inside a sealed
+case — rather than naming a field:
+
+| Mapping | Does |
+|---|---|
+| `withEnumEntryRenamed(from, to)` | `from` becomes `to`, even when the target has an entry named like `from` |
+| `withEnumFallback(to)` | every entry of any enum becoming `to`'s enum, with no rename and no entry of the same name, becomes `to` |
+
+For each entry, a rename comes first, then the entry of the same name, then
+the fallback. The fallback is also what an entry compiled in after the call
+becomes, where without one it throws `NoWhenBranchMatchedException`. An enum
+mapped into itself is mapped entry by entry when a mapping names it, rather
+than passed through.
+
+The arguments must be the entries as written, `Status.ARCHIVED`, because the
+plugin reads them at compile time:
+
+| Failure | Says |
+|---|---|
+| Not an entry | `Into<Status, StatusDto> — withEnumEntryRenamed takes the entries themselves, like Status.ACTIVE, not a value that holds one.` |
+| One entry renamed twice | `StatusDto — Status.ARCHIVED is renamed twice, by withEnumEntryRenamed #1 and #3. Keep one.` |
+| Two fallbacks | `StatusDto — StatusDto falls back twice, by withEnumFallback #2 and #4. Keep one.` |
+
+A mapping whose enums never meet is a warning, `KIMNEY_UNUSED_ENUM_MAPPING`:
+
+```
+withEnumEntryRenamed(Other.A → OtherDto.B) is not used: no Other → OtherDto pair occurs. A type it names may have changed.
+withEnumFallback(OtherDto.B) is not used: nothing becomes OtherDto. A type it names may have changed.
+```
+
+A fallback that has nothing to catch today is not a warning: written ahead
+of need is what it is for.
 
 ## Transformers
 

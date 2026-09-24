@@ -25,9 +25,21 @@ val WITH_FIELD_COMPUTED = CallableId(INTO_CLASS, Name.identifier("withFieldCompu
 val WITH_FIELD_RENAMED = CallableId(INTO_CLASS, Name.identifier("withFieldRenamed"))
 val WITH_TRANSFORMER = CallableId(INTO_CLASS, Name.identifier("withTransformer"))
 val WITH_PARTIAL_TRANSFORMER = CallableId(INTO_CLASS, Name.identifier("withPartialTransformer"))
+val WITH_ENUM_ENTRY_RENAMED = CallableId(INTO_CLASS, Name.identifier("withEnumEntryRenamed"))
+val WITH_ENUM_FALLBACK = CallableId(INTO_CLASS, Name.identifier("withEnumFallback"))
 val PARTIAL_TRANSFORMER = ClassId(KIMNEY, Name.identifier("PartialTransformer"))
 val RELOCATED_TO = CallableId(KIMNEY, Name.identifier("relocatedTo"))
 
 /** Every link a chain may have between `into()` and `transform()`. */
-val OVERRIDES =
-    setOf(WITH_FIELD_CONST, WITH_FIELD_COMPUTED, WITH_FIELD_RENAMED, WITH_TRANSFORMER, WITH_PARTIAL_TRANSFORMER)
+val OVERRIDES = setOf(
+    WITH_FIELD_CONST,
+    WITH_FIELD_COMPUTED,
+    WITH_FIELD_RENAMED,
+    WITH_TRANSFORMER,
+    WITH_PARTIAL_TRANSFORMER,
+    WITH_ENUM_ENTRY_RENAMED,
+    WITH_ENUM_FALLBACK,
+)
+
+/** The links that name enum entries rather than a field: each is read as an `EnumOverride`. */
+val ENUM_LINKS = setOf(WITH_ENUM_ENTRY_RENAMED, WITH_ENUM_FALLBACK)
