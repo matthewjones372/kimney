@@ -204,9 +204,9 @@ partial transformer that fits is a compile error:
 
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
-Not yet: nested field overrides (a transformer covers the pair), mutable collection targets, primitive arrays
-other than as themselves, a sealed case into its target's sealed parent,
-generic sealed hierarchies and generic value classes. `docs/roadmap.md` has the order.
+Not yet: nested field overrides (a transformer covers the pair), mutable
+collection targets, primitive arrays other than as themselves, generic sealed
+hierarchies and generic value classes. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
 says how to apply it.
