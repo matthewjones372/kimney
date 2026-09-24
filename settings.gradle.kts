@@ -17,6 +17,8 @@ include(
     "kimney-derive",
     "kimney-compiler-plugin",
     "example",
+    // Builds a consumer twice under incremental compilation (spec 0020).
+    "ic-test",
     // A JMH harness, run only when asked for: ./gradlew :benchmarks:jmh
     "benchmarks",
 )

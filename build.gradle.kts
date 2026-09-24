@@ -45,7 +45,7 @@ kover {
 apiValidation {
     // Only the runtime is linked against by user code; the rest is loaded by
     // the compiler or is the example.
-    ignoredProjects += listOf("kimney-derive", "kimney-compiler-plugin", "example", "benchmarks")
+    ignoredProjects += listOf("kimney-derive", "kimney-compiler-plugin", "example", "benchmarks", "ic-test")
 }
 
 /** What each published artifact is, as a Maven search result should say. */
@@ -69,7 +69,7 @@ dependencies {
 tasks.register("quickCheck") {
     group = "verification"
     description = "Runs every check except the compiler plugin's compile-and-run tests."
-    dependsOn(subprojects.filter { it.name != "kimney-compiler-plugin" }.map { "${it.path}:check" })
+    dependsOn(subprojects.filter { it.name !in setOf("kimney-compiler-plugin", "ic-test") }.map { "${it.path}:check" })
     dependsOn(":kimney-compiler-plugin:detektMain", ":kimney-compiler-plugin:spotlessCheck", "spotlessCheck")
 }
 
@@ -160,6 +160,10 @@ subprojects {
                 ),
             )
             pom { kimneyPom(this@subprojects.name, summary) }
+        }
+        // Where ic-test's nested builds resolve kimney from, so none of them reads ~/.m2.
+        extensions.configure<PublishingExtension> {
+            repositories { maven { name = "icTest"; url = uri(rootProject.layout.buildDirectory.dir("ic-repo")) } }
         }
     }
 }

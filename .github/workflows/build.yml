@@ -60,10 +60,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       - name: Compiler tests on Kotlin ${{ matrix.kotlin }}
         run: ./gradlew :kimney-compiler-plugin:test -Pkimney.kotlinUnderTest=${{ matrix.kotlin }} --stacktrace
+      # A consumer built twice under incremental compilation, on that Kotlin (spec 0020).
+      - name: Incremental builds on Kotlin ${{ matrix.kotlin }}
+        run: ./gradlew :ic-test:test -Pkimney.kotlinUnderTest=${{ matrix.kotlin }} --stacktrace
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: test-reports-kotlin-${{ matrix.kotlin }}
-          path: kimney-compiler-plugin/build/reports/tests/
+          path: |
+            kimney-compiler-plugin/build/reports/tests/
+            ic-test/build/reports/tests/
           retention-days: 7
