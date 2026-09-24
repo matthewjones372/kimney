@@ -155,7 +155,7 @@ dependencyResolutionManagement {
 // build.gradle.kts
 plugins {
     kotlin("jvm") version "2.4.10"
-    id("io.github.matthewjones372.kimney") version "0.2.0"
+    id("io.github.matthewjones372.kimney") version "0.3.0"
 }
 ```
 
