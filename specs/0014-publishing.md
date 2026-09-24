@@ -21,14 +21,15 @@ that can be built and checked here.
   plugin as pelican; sources jars are real, javadoc jars empty.
 - `kimney-gradle-plugin` publishes its plugin marker, so a consumer resolves
   the plugin by id from a repository rather than an included build.
-- Signing is required for a release version and skipped for a `-SNAPSHOT`, as
-  pelican does, so `publishToMavenLocal` needs no key.
+- Every publication is signed when a signing key is configured, and a release
+  to Central requires one. Measured: with the maintainer's key configured,
+  `publishToMavenLocal` of the `-SNAPSHOT` signed every file.
 - A consumer check: `publishToMavenLocal`, then a scratch build that uses
   only `mavenLocal()` and the plugin id compiles and runs a transformation.
 
 ## Stack
 
-- [ ] **`spec-0014-publish`** — publishing for all four artifacts; the
+- [x] **`spec-0014-publish`** — publishing for all four artifacts; the
       consumer check; the README's release steps.
       Done when: the scratch consumer resolves everything from Maven Local and
       prints a transformed value.

@@ -30,3 +30,5 @@ detekt = { id = "dev.detekt", version = "2.0.0-alpha.6" }
 kover = { id = "org.jetbrains.kotlinx.kover", version = "0.9.9" }
 bcv = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version = "0.18.1" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "5.6.5" }
+# Publishing to the Central Portal, as pelican does; it wraps maven-publish and signing.
+maven-publish = { id = "com.vanniktech.maven.publish", version = "0.37.0" }

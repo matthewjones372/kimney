@@ -135,8 +135,40 @@ Not yet: fallible user transformers, and generic sealed hierarchies. The
 
 ## Trying it
 
-kimney is not published yet. To use it from another project, include it as a
-composite build:
+kimney is not on Maven Central yet. Two ways to use it from another project:
+
+**From Maven Local.** Publish everything, the Gradle plugin and its marker
+included, then resolve it like any published plugin:
+
+```bash
+./gradlew publishToMavenLocal
+```
+
+```kotlin
+// settings.gradle.kts
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+```
+
+```kotlin
+// build.gradle.kts
+plugins {
+    kotlin("jvm") version "2.4.10"
+    id("io.github.matthewjones372.kimney") version "0.1.0-SNAPSHOT"
+}
+```
+
+**As a composite build**, to work on kimney and a project together:
 
 ```kotlin
 // settings.gradle.kts
@@ -146,20 +178,33 @@ pluginManagement {
 includeBuild("../kimney")
 ```
 
-```kotlin
-// build.gradle.kts
-plugins {
-    kotlin("jvm") version "2.4.10"
-    id("io.github.matthewjones372.kimney")
-}
-```
-
-The Gradle plugin adds `kimney-runtime` to every JVM compilation and loads the
-compiler plugin into it. kimney is built for exactly one Kotlin version,
-2.4.10; on any other, the build stops at configuration and names both.
+Either way the Gradle plugin adds `kimney-runtime` to every JVM compilation and
+loads the compiler plugin into it. kimney is built for exactly one Kotlin
+version, 2.4.10; on any other, the build stops at configuration and names
+both. Both setups were checked from a separate project.
 
 Inside this repository, [`example/`](example) applies the plugin the same way
 a consumer does, and runs every cookbook recipe on each build.
+
+### Releasing
+
+The build publishes to the Central Portal with the vanniktech plugin, leaving
+the upload staged for a manual release. With `mavenCentralUsername`,
+`mavenCentralPassword` and a signing key in `~/.gradle/gradle.properties`,
+set a release `version` in `gradle.properties` and run both — the Gradle plugin
+is a build of its own:
+
+```bash
+./gradlew publishToMavenCentral
+```
+
+```bash
+./gradlew -p kimney-gradle-plugin publishToMavenCentral
+```
+
+The plugin's marker goes to Central with it, so a consumer resolves the plugin
+by id with `mavenCentral()` in `pluginManagement.repositories`; publishing to
+the Gradle Plugin Portal is not set up.
 
 ## How it works
 

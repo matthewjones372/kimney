@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     `java-gradle-plugin`
     `maven-publish`
+    alias(libs.plugins.maven.publish)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.spotless)
     alias(libs.plugins.detekt)
@@ -40,6 +41,37 @@ buildConfig {
     buildConfigField("String", "KIMNEY_GROUP", "\"$group\"")
     buildConfigField("String", "KIMNEY_VERSION", "\"$version\"")
     buildConfigField("String", "KOTLIN_VERSION", "\"${libs.versions.kotlin.get()}\"")
+}
+
+mavenPublishing {
+    configure(
+        com.vanniktech.maven.publish.GradlePlugin(
+            javadocJar = com.vanniktech.maven.publish.JavadocJar.Empty(),
+            sourcesJar = true,
+        ),
+    )
+    pom {
+        name.set("kimney-gradle-plugin")
+        description.set("Applies kimney's compiler plugin and adds kimney-runtime to every JVM compilation.")
+        url.set("https://github.com/matthewjones372/kimney")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("matthewjones372")
+                name.set("Matt Jones")
+            }
+        }
+        scm {
+            url.set("https://github.com/matthewjones372/kimney")
+            connection.set("scm:git:https://github.com/matthewjones372/kimney.git")
+            developerConnection.set("scm:git:ssh://git@github.com/matthewjones372/kimney.git")
+        }
+    }
 }
 
 gradlePlugin {

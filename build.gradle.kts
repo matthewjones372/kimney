@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kover)
     // The runtime's binary surface as a file somebody reads in a diff.
     alias(libs.plugins.bcv)
+    alias(libs.plugins.maven.publish) apply false
     base
 }
 
@@ -45,6 +46,13 @@ apiValidation {
     ignoredProjects += listOf("kimney-derive", "kimney-compiler-plugin", "example")
 }
 
+/** What each published artifact is, as a Maven search result should say. */
+val published = mapOf(
+    "kimney-runtime" to "The calls kimney's compiler plugin replaces: transformInto, the override chain, Partial.",
+    "kimney-derive" to "kimney's derivation engine: source and target types to a plan, or every reason not.",
+    "kimney-compiler-plugin" to "The K2 compiler plugin that derives transformations between Kotlin types.",
+)
+
 // The modules AGENTS.md promises depend on the standard library alone. Each
 // one's NoThirdPartyDependenciesTest reads the classpath handed over here.
 val stdlibOnly = setOf("kimney-runtime", "kimney-derive")
@@ -61,6 +69,14 @@ tasks.register("quickCheck") {
     description = "Runs every check except the compiler plugin's compile-and-run tests."
     dependsOn(subprojects.filter { it.name != "kimney-compiler-plugin" }.map { "${it.path}:check" })
     dependsOn(":kimney-compiler-plugin:detektMain", ":kimney-compiler-plugin:spotlessCheck", "spotlessCheck")
+}
+
+// The Gradle plugin is an included build, so a root publishToMavenLocal would
+// otherwise publish every artifact but the one a consumer applies first.
+tasks.register("publishToMavenLocal") {
+    group = "publishing"
+    description = "Publishes every kimney artifact, the Gradle plugin and its marker included, to Maven Local."
+    dependsOn(gradle.includedBuild("kimney-gradle-plugin").task(":publishToMavenLocal"))
 }
 
 tasks.named("check") {
@@ -129,5 +145,43 @@ subprojects {
             target("*.gradle.kts")
             ktlint(ktlintVersion).editorConfigOverride(ktlintOverrides)
         }
+    }
+
+    published[name]?.let { summary ->
+        apply(plugin = "com.vanniktech.maven.publish")
+        extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
+            // Central requires a javadoc jar; an empty one until KDoc rendering is decided (spec 0014).
+            configure(
+                com.vanniktech.maven.publish.KotlinJvm(
+                    javadocJar = com.vanniktech.maven.publish.JavadocJar.Empty(),
+                    sourcesJar = true,
+                ),
+            )
+            pom { kimneyPom(this@subprojects.name, summary) }
+        }
+    }
+}
+
+/** The POM every kimney artifact shares; the Gradle plugin's build writes the same one. */
+fun org.gradle.api.publish.maven.MavenPom.kimneyPom(artifact: String, summary: String) {
+    name.set(artifact)
+    description.set(summary)
+    url.set("https://github.com/matthewjones372/kimney")
+    licenses {
+        license {
+            name.set("The Apache License, Version 2.0")
+            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+        }
+    }
+    developers {
+        developer {
+            id.set("matthewjones372")
+            name.set("Matt Jones")
+        }
+    }
+    scm {
+        url.set("https://github.com/matthewjones372/kimney")
+        connection.set("scm:git:https://github.com/matthewjones372/kimney.git")
+        developerConnection.set("scm:git:ssh://git@github.com/matthewjones372/kimney.git")
     }
 }
