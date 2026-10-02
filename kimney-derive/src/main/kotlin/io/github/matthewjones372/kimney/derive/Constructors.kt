@@ -24,7 +24,13 @@ internal class ConstructorRule<T>(
             Construction.SecondaryOnly ->
                 failed(Failure.NoPrimaryConstructor(site.path, target, "it has only secondary constructors"))
 
-            Construction.NotAClass -> model.noRule(site)
+            // An override reaching past a leaf names a field it has none of, which says more than "no rule".
+            Construction.NotAClass ->
+                if (overrides.isEmpty()) {
+                    model.noRule(site)
+                } else {
+                    Derived.Failed(overrides.map { Failure.NotAParameter(site.path / it.field, it.method, target) })
+                }
         }
         // Offered only where a class was being built: a leaf pair such as Int into Long has no inside to fix. Not
         // where overrides reach in, since a transformer for the pair would conflict with them.

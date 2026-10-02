@@ -35,7 +35,8 @@ import org.jetbrains.kotlin.name.CallableId
 /**
  * An override chain read back from its `transform()` call: the source type, each override, transformer and enum link
  * in written order, and each link's call by its place in the chain, for a warning to point at. [notAnEntry] is the
- * first enum or sealed link given something not written out, which the chain cannot be derived without.
+ * first link given something not written out, an enum or sealed link's argument or an override's selector, which the
+ * chain cannot be derived without.
  */
 data class FirChain(
     val source: ConeKotlinType,
@@ -50,7 +51,7 @@ data class FirChain(
 
 /** A link's argument that is not written out as [kind] requires: [type] is the enum, class or object it names. */
 data class NotAnEntry(val method: String, val type: ConeKotlinType, val kind: Kind = Kind.ENTRY) {
-    enum class Kind { ENTRY, CLASS_LITERAL, OBJECT }
+    enum class Kind { ENTRY, CLASS_LITERAL, OBJECT, SELECTOR }
 }
 
 private sealed interface Link {
@@ -110,7 +111,7 @@ private fun link(call: FirFunctionCall, index: Int): Link? = if (call.callableId
 } else if (call.callableId in SEALED_LINKS) {
     sealedLink(call, index)
 } else {
-    override(call, index)?.let { Link.Overriding(it) }
+    override(call, index)
 }
 
 private fun enumLink(call: FirFunctionCall, index: Int): Link? {
@@ -170,19 +171,32 @@ private fun isClassLiteral(expression: FirExpression): Boolean =
 private fun entry(expression: FirExpression?): String? =
     ((expression as? FirQualifiedAccessExpression)?.calleeReference?.symbol as? FirEnumEntrySymbol)?.name?.asString()
 
-private fun override(call: FirFunctionCall, index: Int): Override<ConeKotlinType>? {
+private fun override(call: FirFunctionCall, index: Int): Link? {
     val args = call.resolvedArgumentMapping?.entries?.associate { (arg, param) -> param.name.asString() to arg }
-    val field = field(args?.get(if (call.callableId == WITH_FIELD_RENAMED) "to" else "field")) ?: return null
-    return when (call.callableId) {
-        WITH_FIELD_CONST -> args?.get("value")?.let { Override.Const(field, it.resolvedType, index) }
+        ?: return null
+    val target = args[if (call.callableId == WITH_FIELD_RENAMED) "to" else "field"]
+    // A lambda there is a selector; anything but a chain of properties in it is a failure, not an unreadable chain.
+    val path = (target as? FirAnonymousFunctionExpression)
+        ?.let { selector -> selected(selector) ?: return notASelector(call, selector) }
+        ?: field(target)?.let(::listOf)
+        ?: return null
+    val (field, rest) = path.first() to path.drop(1)
+    val override = when (call.callableId) {
+        WITH_FIELD_CONST -> args["value"]?.let { Override.Const(field, it.resolvedType, index, rest) }
 
-        WITH_FIELD_COMPUTED -> (args?.get("compute") as? FirAnonymousFunctionExpression)
-            ?.let { Override.Computed(field, it.anonymousFunction.returnTypeRef.coneType, index) }
+        WITH_FIELD_COMPUTED -> (args["compute"] as? FirAnonymousFunctionExpression)
+            ?.let { Override.Computed(field, it.anonymousFunction.returnTypeRef.coneType, index, rest) }
 
-        WITH_FIELD_RENAMED -> field(args?.get("from"))?.let { Override.Renamed(field, it) }
+        WITH_FIELD_RENAMED -> field(args["from"])?.let { Override.Renamed(field, it) }
 
         else -> null
     }
+    return override?.let { Link.Overriding(it) }
+}
+
+private fun notASelector(call: FirFunctionCall, selector: FirAnonymousFunctionExpression): Link? {
+    val method = call.callableId?.callableName?.asString() ?: return null
+    return Link.Unreadable(NotAnEntry(method, selector.resolvedType, NotAnEntry.Kind.SELECTOR))
 }
 
 private fun field(reference: FirExpression?): String? =

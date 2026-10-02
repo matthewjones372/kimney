@@ -144,4 +144,12 @@ class NestedOverrideTest {
         derive(model, "Person", "StrictDto", listOf(override)).shouldBeInstanceOf<Derived.Failed>()
             .failures.single().shouldBeInstanceOf<Failure.NullableToNonNull>()
     }
+
+    @Test
+    fun `a path past a leaf names the field the leaf does not have`() {
+        lines(Override.Const("address", "Int", 0, rest = listOf("zip", "length"))) shouldBe listOf(
+            "PersonDto.address.zip.length — withFieldConst names 'length', which is not a constructor parameter " +
+                "of String.",
+        )
+    }
 }

@@ -1,0 +1,17 @@
+/nestedOverrides.kt:(1026,1128): error: Cannot transform Person → PersonDto:
+    PersonDto.address.geo.country.length — withFieldConst names 'length', which is not a constructor parameter of String.
+
+/nestedOverrides.kt:(1176,1271): error: Cannot transform Person → PersonDto:
+    Into<Person, PersonDto> — the selector given to withFieldConst must be a chain of properties, like { it.name }.
+
+/nestedOverrides.kt:(1319,1405): error: Cannot transform Person → PersonDto:
+    PersonDto.lines — the selector crosses List<LineDto>; an override cannot reach inside elements. Map LineDto with .withTransformer(…).
+
+/nestedOverrides.kt:(1458,1587): error: Cannot transform Person → PersonDto:
+    PersonDto.address.zip — withFieldConst reaches inside Address → AddressDto, which withTransformer #1 also maps. Keep one.
+
+/nestedOverrides.kt:(1637,1799): error: Cannot transform Person → PersonDto:
+    PersonDto.address — overridden twice, by withFieldConst and withFieldConst. Keep one.
+
+/nestedOverrides.kt:(1844,1946): error: Cannot transform Person → PersonDto:
+    Into<Person, PersonDto> — the selector given to withFieldConst must be a chain of properties, like { it.name }.

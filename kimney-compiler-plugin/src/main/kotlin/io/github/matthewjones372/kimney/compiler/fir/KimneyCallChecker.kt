@@ -108,8 +108,12 @@ object KimneyCallChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
         val model = FirTypeModel(context.session, context.lookups(call.source))
         val (source, target) = (into as? ConeClassLikeType)?.typeArguments?.map { it as? ConeKotlinType } ?: return
         if (source == null || target == null) return
-        val (what, example) = model.writtenOut(given)
-        val failure = Failure.NotWrittenOut(Path(model.render(into)), given.method, what, example)
+        val failure = if (given.kind == NotAnEntry.Kind.SELECTOR) {
+            Failure.NotASelector(Path(model.render(into)), given.method, model.selectorExample(target))
+        } else {
+            val (what, example) = model.writtenOut(given)
+            Failure.NotWrittenOut(Path(model.render(into)), given.method, what, example)
+        }
         val message = Derived.Failed(listOf(failure)).message(model.render(source), model.render(target))
         reporter.reportOn(call.source, KimneyErrors.KIMNEY_CANNOT_TRANSFORM, message)
     }
