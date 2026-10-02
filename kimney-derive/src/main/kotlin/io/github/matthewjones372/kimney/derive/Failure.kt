@@ -185,6 +185,36 @@ sealed interface Failure {
             get() = "$method names '${path.fields.last()}', which is not a constructor parameter of $owner."
     }
 
+    /** An override reaching inside a pair that a transformer also maps: one of the two would be ignored. */
+    data class OverrideUnderTransformer(
+        override val path: Path,
+        val method: String,
+        val source: String,
+        val target: String,
+        val chain: List<Int>,
+        val context: List<String> = emptyList(),
+    ) : Failure {
+        override val type: String? get() = null
+        override val reason: String
+            get() {
+                val by = (chain.map { "withTransformer #${it + 1}" } + context.map { "context parameter '$it'" })
+                    .joinToString(" and ")
+                return "$method reaches inside $source → $target, which $by also maps. Keep one."
+            }
+    }
+
+    /** An override whose path runs through a container, whose elements have no field of their own to name. */
+    data class CrossesContainer(
+        override val path: Path,
+        val container: String,
+        val element: String,
+    ) : Failure {
+        override val type: String? get() = null
+        override val reason
+            get() = "the selector crosses $container; an override cannot reach inside elements. " +
+                "Map $element with .withTransformer(…)."
+    }
+
     data class DuplicateOverride(override val path: Path, val methods: List<String>) : Failure {
         override val type: String? get() = null
         override val reason: String

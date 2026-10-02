@@ -96,7 +96,7 @@ sealed interface Arg<out T> {
     /** The value given by the override at [index] in the chain. */
     data class Const(override val param: String, val index: Int) : Arg<Nothing>
 
-    /** The lambda at [index] in the chain, applied to the source. */
+    /** The lambda at [index] in the chain, applied to the root source, at whatever depth the field is. */
     data class Computed(override val param: String, val index: Int) : Arg<Nothing>
 
     /** Left out of the call, so the parameter's default applies. */
