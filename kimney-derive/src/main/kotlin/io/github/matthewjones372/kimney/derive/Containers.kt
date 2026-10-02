@@ -39,7 +39,8 @@ private fun <T> TypeModel<T>.entries(
 ): Derived<T> {
     val sourceKey = checkNotNull(from.key) { "a map has a key" }
     val targetKey = checkNotNull(to.key) { "a map has a key" }
-    val keyPath = Site(sourceKey, targetKey, site.path / "[key]", site.seen + (site.source to site.target))
+    val keyPath =
+        Site(sourceKey, targetKey, site.path / "[key]", site.seen + (site.source to site.target), selector = null)
     val key = when (val derived = pair(keyPath)) {
         is Derived.Planned -> if (injective(derived.plan)) {
             derived

@@ -92,7 +92,7 @@ not be filled and the path to it:
 ```
 e: Main.kt:15:13 Cannot transform User → UserDto:
     UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default value, or add .withFieldConst(UserDto::email, …).
-    UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip a default value.
+    UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, give AddressDto.zip a default value, or add .withFieldConst({ it.address.zip }, …).
 ```
 
 The other failures:

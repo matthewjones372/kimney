@@ -115,5 +115,5 @@ internal fun <T> TypeModel<T>.caseIntoSealed(
                 Failure.MissingCase(site.path, render(site.target), render(site.source), "subclass", offers = false),
             ),
         )
-    return pair(site.copy(target = match.type))
+    return pair(site.copy(target = match.type, selector = null))
 }

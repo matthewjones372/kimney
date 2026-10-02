@@ -30,16 +30,23 @@ sealed interface Failure {
         override val type: String,
         val source: String,
         val owner: String,
+        /** A selector reaching the field, `it.address.zip`, or null where none can. */
+        val selector: String? = null,
     ) : Failure {
         private val field get() = path.fields.last()
 
-        // Overrides name top-level fields only, so a nested field is not offered one.
+        // A top-level field is named by a property reference; a nested one by a selector, where one can reach it.
         override val reason
-            get() = if (path.fields.size == 1) {
-                "$source has no property '$field'. Add it to $source, give $owner.$field a default value, " +
-                    "or add .withFieldConst($owner::$field, …)."
-            } else {
-                "$source has no property '$field'. Add it to $source, or give $owner.$field a default value."
+            get() = when {
+                path.fields.size == 1 ->
+                    "$source has no property '$field'. Add it to $source, give $owner.$field a default value, " +
+                        "or add .withFieldConst($owner::$field, …)."
+
+                selector != null ->
+                    "$source has no property '$field'. Add it to $source, give $owner.$field a default value, " +
+                        "or add .withFieldConst({ $selector }, …)."
+
+                else -> "$source has no property '$field'. Add it to $source, or give $owner.$field a default value."
             }
     }
 
