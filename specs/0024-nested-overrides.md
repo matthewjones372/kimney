@@ -91,7 +91,7 @@ and it repeats each class name. Recommended: the lambda.
 - [x] **`spec-0024-fir`** ([#7](https://github.com/matthewjones372/kimney/pull/7)): reading a selector into a path, and the
       not-a-chain failure.
       Done when: diagnostic goldens pass for all three new failures.
-- [ ] **`spec-0024-ir`**: lowering the overridden field into the nested
+- [x] **`spec-0024-ir`** ([#8](https://github.com/matthewjones372/kimney/pull/8)): lowering the overridden field into the nested
       constructor call, keeping 0003's evaluation order; agreement tests; a
       cookbook recipe; the README's "Not yet" line removed.
       Done when: box tests pass at each depth, including evaluation order.
