@@ -10,7 +10,9 @@ class IntoTest {
 
     private data class User(val name: String)
 
-    private data class UserDto(val name: String)
+    private data class AddressDto(val zip: String)
+
+    private data class UserDto(val name: String, val address: AddressDto = AddressDto(""))
 
     private val chain = Into<User, UserDto>()
 
@@ -37,6 +39,14 @@ class IntoTest {
             .message shouldStartWith "withSealedCaseRenamed reached runtime"
         shouldThrow<KimneyNotApplied> { chain.withSealedFallback(Shape.Unknown) }
             .message shouldStartWith "withSealedFallback reached runtime"
+    }
+
+    @Test
+    fun `each selector override says it was not replaced`() {
+        shouldThrow<KimneyNotApplied> { chain.withFieldConst({ it.address.zip }, "N1") }
+            .message shouldStartWith "withFieldConst reached runtime"
+        shouldThrow<KimneyNotApplied> { chain.withFieldComputed({ it.address.zip }) { it.name } }
+            .message shouldStartWith "withFieldComputed reached runtime"
     }
 
     @Test

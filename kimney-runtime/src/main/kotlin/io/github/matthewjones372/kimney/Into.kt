@@ -14,6 +14,16 @@ public class Into<A, B> internal constructor() {
     public fun <T> withFieldComputed(field: KProperty1<B, T>, compute: (A) -> T): Into<A, B> =
         throw KimneyNotApplied("withFieldComputed")
 
+    /**
+     * Fills the field [field] selects, at any depth: `{ it.address.zip }`. The selector is read, never run; a safe
+     * call on the way, `{ it.billing?.zip }`, applies [value] only when that step is not null.
+     */
+    public fun <T> withFieldConst(field: (B) -> T, value: T): Into<A, B> = throw KimneyNotApplied("withFieldConst")
+
+    /** As the selector [withFieldConst], computing the value from the whole source. */
+    public fun <T> withFieldComputed(field: (B) -> T, compute: (A) -> T): Into<A, B> =
+        throw KimneyNotApplied("withFieldComputed")
+
     public fun <S, T> withFieldRenamed(from: KProperty1<A, S>, to: KProperty1<B, T>): Into<A, B> =
         throw KimneyNotApplied("withFieldRenamed")
 
