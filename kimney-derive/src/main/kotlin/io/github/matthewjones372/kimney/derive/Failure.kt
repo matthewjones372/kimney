@@ -255,6 +255,12 @@ sealed interface Failure {
         override val reason get() = "$method takes $what, like $example, not a value that holds one."
     }
 
+    /** Found by an adapter reading the call: a selector is read as syntax, so it may only name properties. */
+    data class NotASelector(override val path: Path, val method: String, val example: String) : Failure {
+        override val type: String? get() = null
+        override val reason get() = "the selector given to $method must be a chain of properties, like $example."
+    }
+
     /** Found by an adapter reading the call, not by the engine: the chain is syntax. */
     data class OverrideNotStatic(override val path: Path, val target: String) : Failure {
         override val type: String? get() = null
