@@ -677,7 +677,7 @@ from the target and what would fix it:
 ```
 e: Main.kt:12:5 Cannot transform User → UserDto:
     UserDto.email: String — User has no property 'email'. Add it to User, give UserDto.email a default value, or add .withFieldConst(UserDto::email, …).
-    UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, or give AddressDto.zip a default value. Or map Address → AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).
+    UserDto.address.zip: String — Address has no property 'zip'. Add it to Address, give AddressDto.zip a default value, or add .withFieldConst({ it.address.zip }, …). Or map Address → AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).
 ```
 
 The ones you will meet, each quoted from the plugin's tests:

@@ -114,6 +114,7 @@ internal class ConstructorRule<T>(
                     model.render(param.type),
                     model.render(site.source),
                     model.render(site.target),
+                    selector = site.selector?.let { "$it.${param.name}" },
                 ),
             )
         }
@@ -136,6 +137,7 @@ internal class ConstructorRule<T>(
         param.type,
         owner = model.render(site.target),
         origin = "${model.render(site.source)}.$name",
+        selectable = true,
     )
 
     private fun unreadable(field: Path, param: Param<T>, site: Site<T>, property: String): Step<T> =

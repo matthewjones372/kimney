@@ -152,4 +152,33 @@ class NestedOverrideTest {
                 "of String.",
         )
     }
+
+    @Test
+    fun `a missing nested field names the selector that reaches it, and none inside an element`() {
+        val missing = FakeModel(
+            constructions = mapOf(
+                "PersonDto" to primary(
+                    param("address", "AddressDto"),
+                    param("billing", "AddressDto?"),
+                    param("lines", "List<LineDto>"),
+                ),
+                "AddressDto" to primary(param("zip", "String"), param("state", "String")),
+                "LineDto" to primary(param("sku", "String"), param("qty", "Int")),
+            ),
+            properties = mapOf(
+                "Person" to mapOf("address" to "Address", "billing" to "Address?", "lines" to "List<Line>"),
+                "Address" to mapOf("zip" to "String"),
+                "Line" to mapOf("sku" to "String"),
+            ),
+            containers = mapOf(
+                "List<Line>" to Container(Kind.LIST, "Line"),
+                "List<LineDto>" to Container(Kind.LIST, "LineDto"),
+            ),
+        )
+
+        derive(missing, "Person", "PersonDto").shouldBeInstanceOf<Derived.Failed>().failures
+            .map { it.shouldBeInstanceOf<Failure.WithTransformerHint>().inner }
+            .map { it.shouldBeInstanceOf<Failure.MissingSource>().selector } shouldBe
+            listOf("it.address.state", "it.billing?.state", null)
+    }
 }

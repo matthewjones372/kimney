@@ -36,6 +36,8 @@ data class Supplied<T>(
 /**
  * One pair being derived, where it sits, and the pairs above it. [owner] is the class the field at [path] belongs
  * to and [origin] the source property it was read from, as a message names them; both are null at the root.
+ * [selector] is the body of a selector reaching this pair, `it.billing?`, or null where none can: inside an element,
+ * a sealed case or a value class.
  */
 internal data class Site<T>(
     val source: T,
@@ -45,12 +47,28 @@ internal data class Site<T>(
     val owner: String? = null,
     val origin: String? = null,
     val shareable: Boolean = true,
+    val selector: String? = "it",
 ) {
     /** Where this pair sits on the path: a reference to it back from below names it by this. */
     val depth: Int get() = seen.size
 
-    fun below(field: String, source: T, target: T, owner: String? = null, origin: String? = null): Site<T> =
-        Site(source, target, path / field, seen + (this.source to this.target).takeIf { shareable }, owner, origin)
+    /** [field] is a constructor parameter when [selectable], so a selector can name it; anything else cannot. */
+    fun below(
+        field: String,
+        source: T,
+        target: T,
+        owner: String? = null,
+        origin: String? = null,
+        selectable: Boolean = false,
+    ): Site<T> = Site(
+        source,
+        target,
+        path / field,
+        seen + (this.source to this.target).takeIf { shareable },
+        owner,
+        origin,
+        selector = selector?.takeIf { selectable }?.let { "$it.$field" },
+    )
 }
 
 private class Derivation<T>(
