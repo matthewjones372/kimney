@@ -1,0 +1,30 @@
+name: release
+
+# A GitHub release for a tag already pushed, with notes written for it. Run by
+# hand; publishing the artifacts stays where it is.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "An existing tag, v0.4.0"
+        required: true
+      notes:
+        description: "Release notes, Markdown"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # Inputs reach the shell as environment, never pasted into the script.
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          printf '%s\n' "$NOTES" > notes.md
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --notes-file notes.md
