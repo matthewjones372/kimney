@@ -193,7 +193,7 @@ Be honest with yourself about these:
   compiler; kimney supports Kotlin 2.4, and a build on another minor stops at
   configuration until a kimney release supports it.
 - **You need a 1.0.** kimney is 0.x: on Maven Central, but its surface may
-  still change between releases, and editor support is unchecked
+  still change between releases
   ([known limitations](../README.md#known-limitations)).
 - **You need what is not there yet**: overrides on nested fields, which a
   transformer for the pair covers instead. The
