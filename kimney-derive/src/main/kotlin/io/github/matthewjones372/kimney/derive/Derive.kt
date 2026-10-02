@@ -2,7 +2,7 @@ package io.github.matthewjones372.kimney.derive
 
 /**
  * The whole of kimney's decision about one call: a plan to build [target] from [source], or every reason not.
- * [overrides] name top-level fields of [target] only; [transformers] serve every pair below the root they fit.
+ * [overrides] name fields of [target], at any depth; [transformers] serve every pair below the root they fit.
  * [partial] plans a transformation that may fail at runtime, collecting errors instead of refusing to compile.
  * [enums] and [sealed] serve every pair of their enums and sealed types, the root included.
  */
@@ -16,8 +16,7 @@ fun <T> derive(
     enums: List<EnumOverride<T>> = emptyList(),
     sealed: List<SealedOverride<T>> = emptyList(),
 ): Derived<T> {
-    // A root with overrides is not a pair recursion may return to: its overrides name its own fields only.
-    val root = Site(source, target, Path(model.render(target)), emptyList(), shareable = overrides.isEmpty())
+    val root = Site(source, target, Path(model.render(target)), emptyList())
     return Derivation(model, transformers, partial, enums, sealed).pair(root, overrides)
 }
 
@@ -61,11 +60,31 @@ private class Derivation<T>(
     private val enums: List<EnumOverride<T>>,
     private val sealed: List<SealedOverride<T>>,
 ) {
-    private val constructors = ConstructorRule(model, partial) { pair(it) }
+    private val constructors = ConstructorRule(model, partial, ::pair)
 
-    // With overrides the target is built, even from its own type: `into<_, User>()` is a copy with changes.
-    fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> =
-        supplied(site) ?: unsupplied(site, overrides)
+    // With overrides the target is built, even from its own type: `into<_, User>()` is a copy with changes. Such a
+    // pair is not one recursion may return to, since its overrides apply here only.
+    fun pair(site: Site<T>, overrides: List<Override<T>> = emptyList()): Derived<T> {
+        val here = if (overrides.isEmpty()) site else site.copy(shareable = false)
+        val supplied = supplied(here)
+        return when {
+            supplied == null -> unsupplied(here, overrides)
+            overrides.isEmpty() -> supplied
+            else -> Derived.Failed(overrides.map { overrideUnderTransformer(here, it) })
+        }
+    }
+
+    private fun overrideUnderTransformer(site: Site<T>, override: Override<T>): Failure {
+        val fits = model.fitting(site, transformers)
+        return Failure.OverrideUnderTransformer(
+            site.path / override.field,
+            override.method,
+            model.render(site.source),
+            model.render(site.target),
+            fits.filter { it.context == null }.map { it.index },
+            fits.mapNotNull { it.context },
+        )
+    }
 
     /** The transformer that fits [site], or why none can be used; null when none fits. */
     private fun supplied(site: Site<T>): Derived<T>? {
@@ -106,7 +125,7 @@ private class Derivation<T>(
         }
         return when {
             model.passes(site, overrides) && !mapped(site) -> Derived.Planned(Plan.Identity)
-            above >= 0 -> Derived.Planned(Plan.Reference(above))
+            above >= 0 && overrides.isEmpty() -> Derived.Planned(Plan.Reference(above))
             else -> named(site, byShape(site, overrides))
         }
     }
@@ -132,13 +151,25 @@ private class Derivation<T>(
             derived
         }
 
-    /** Every rule but the constructor answers by the target's shape; overrides can only fill a constructor. */
+    /**
+     * Every rule but the constructor answers by the target's shape. Overrides fill a constructor; they pass through a
+     * nullable step, and a container is a place they cannot reach into.
+     */
     private fun byShape(site: Site<T>, overrides: List<Override<T>>): Derived<T> {
         val shaped = shapedRule(site) ?: return constructors.construct(site, overrides)
-        return if (overrides.isEmpty()) {
-            shaped()
-        } else {
-            Derived.Failed(
+        val container = model.container(site.target)
+        return when {
+            overrides.isEmpty() -> shaped()
+
+            model.isNullable(site.target) -> model.nullable(site) { pair(it, overrides) }
+
+            // In a total call a nullable source fails on its own; the override changes nothing about that.
+            model.isNullable(site.source) -> if (partial) model.required(site) { pair(it, overrides) } else shaped()
+
+            container != null ->
+                failed(Failure.CrossesContainer(site.path, model.render(site.target), model.render(container.element)))
+
+            else -> Derived.Failed(
                 overrides.map { Failure.NotAParameter(site.path / it.field, it.method, model.render(site.target)) },
             )
         }
@@ -202,7 +233,7 @@ internal fun <T> TypeModel<T>.offerTransformer(site: Site<T>, failed: Derived.Fa
 }
 
 // The root is the chain's own pair, so a transformer serves only what lies below it.
-private fun <T> TypeModel<T>.fitting(site: Site<T>, transformers: List<Supplied<T>>): List<Supplied<T>> =
+internal fun <T> TypeModel<T>.fitting(site: Site<T>, transformers: List<Supplied<T>>): List<Supplied<T>> =
     if (site.path.fields.isEmpty()) {
         emptyList()
     } else {
