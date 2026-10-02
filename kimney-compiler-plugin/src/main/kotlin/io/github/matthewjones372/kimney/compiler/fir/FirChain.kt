@@ -184,8 +184,13 @@ private fun override(call: FirFunctionCall, index: Int): Link? {
     val override = when (call.callableId) {
         WITH_FIELD_CONST -> args["value"]?.let { Override.Const(field, it.resolvedType, index, rest) }
 
-        WITH_FIELD_COMPUTED -> (args["compute"] as? FirAnonymousFunctionExpression)
-            ?.let { Override.Computed(field, it.anonymousFunction.returnTypeRef.coneType, index, rest) }
+        WITH_FIELD_COMPUTED -> (args["compute"] as? FirAnonymousFunctionExpression)?.let {
+            val declared = it.anonymousFunction.returnTypeRef.coneType
+            // Behind a selector the declared type is the selector's, nullable after a safe call; what is checked is
+            // what the lambda gives.
+            val given = if (target is FirAnonymousFunctionExpression) returned(it) ?: declared else declared
+            Override.Computed(field, given, index, rest)
+        }
 
         WITH_FIELD_RENAMED -> field(args["from"])?.let { Override.Renamed(field, it) }
 

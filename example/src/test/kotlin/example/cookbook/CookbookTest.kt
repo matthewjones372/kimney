@@ -4,6 +4,7 @@ import example.cookbook.cases.toMessage
 import example.cookbook.collections.toDto
 import example.cookbook.copy.suspend
 import example.cookbook.crossing.toDto
+import example.cookbook.deep.toDto
 import example.cookbook.entries.toDto
 import example.cookbook.entries.toTicket
 import example.cookbook.enums.toDto
@@ -51,6 +52,19 @@ class CookbookTest {
     fun `overrides rename, compute and fix fields`() {
         example.cookbook.overrides.Person("Ada Lovelace", 1815, "ada@example.com").toDto(year = 2026) shouldBe
             example.cookbook.overrides.PersonDto("Ada Lovelace", 211, "ada@example.com", "import")
+    }
+
+    @Test
+    fun `a selector overrides a field inside a nested class, behind a null check where it is optional`() {
+        val home = example.cookbook.deep.Address("1 Loop Rd", "N1 9GU")
+
+        example.cookbook.deep.Customer("Ada", home, billing = home).toDto(country = "GB") shouldBe
+            example.cookbook.deep.CustomerDto(
+                "Ada",
+                example.cookbook.deep.AddressDto("1 Loop Rd", "N1 9GU", "GB"),
+                example.cookbook.deep.AddressDto("1 Loop Rd", "N1 9GU", "GB"),
+            )
+        example.cookbook.deep.Customer("Bo", home, billing = null).toDto(country = "GB").billing shouldBe null
     }
 
     @Test

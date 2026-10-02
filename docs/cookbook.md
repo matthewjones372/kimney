@@ -30,6 +30,7 @@ and names the range ([Kotlin versions](../README.md#kotlin-versions)).
 - [A first transformation](#a-first-transformation)
 - [Nested classes and defaults](#nested-classes-and-defaults)
 - [A field with another name, a computed value, a constant](#a-field-with-another-name-a-computed-value-a-constant)
+- [A field inside a nested class](#a-field-inside-a-nested-class)
 - [A copy with changes](#a-copy-with-changes)
 - [Enums across layers](#enums-across-layers)
 - [An entry the other side does not have](#an-entry-the-other-side-does-not-have)
@@ -98,7 +99,8 @@ fun Customer.toDto(): CustomerDto = transformInto()
 ## A field with another name, a computed value, a constant
 
 `into<_, Target>()` starts an override chain: the `_` lets Kotlin infer the
-source while you name the target. Each override fills one top-level field.
+source while you name the target. Each override fills one field; the next
+recipe reaches into nested ones.
 
 ```kotlin
 // file: example/src/main/kotlin/example/cookbook/overrides/Overrides.kt
@@ -126,6 +128,41 @@ fun Person.toDto(year: Int): PersonDto = into<_, PersonDto>()
 The chain must be written as one expression from `into()` to `.transform()`,
 because the plugin reads it at compile time. A builder stored in a `val` is a
 compile error that says so.
+
+## A field inside a nested class
+
+An override names a field inside a nested class with a selector, a lambda over
+the target: `{ it.address.zip }`. The plugin reads it and never runs it, so it
+may only read properties; everything around the field is still derived.
+
+```kotlin
+// file: example/src/main/kotlin/example/cookbook/deep/NestedOverrides.kt
+package example.cookbook.deep
+
+import io.github.matthewjones372.kimney.into
+
+data class Address(val street: String, val postcode: String)
+
+data class Customer(val name: String, val address: Address, val billing: Address?)
+
+data class AddressDto(val street: String, val zip: String, val country: String)
+
+data class CustomerDto(val name: String, val address: AddressDto, val billing: AddressDto?)
+
+fun Customer.toDto(country: String): CustomerDto = into<_, CustomerDto>()
+    .withFieldComputed({ it.address.zip }) { it.address.postcode }
+    .withFieldConst({ it.address.country }, country)
+    .withFieldComputed({ it.billing?.zip }) { it.billing?.postcode.orEmpty() }
+    .withFieldConst({ it.billing?.country }, country)
+    .transform()
+```
+
+- A computed lambda gets the whole source, at whatever depth its field is.
+- A safe call, `{ it.billing?.zip }`, fills the field only when `billing` is
+  there. The lambda still runs once, so read through the same `?.`.
+- A selector cannot reach inside a list's elements or a sealed case: a
+  [transformer for that pair](#your-own-transformer-for-a-nested-pair)
+  covers it.
 
 ## A copy with changes
 
@@ -461,8 +498,9 @@ would.
 
 ## Your own transformer for a nested pair
 
-Overrides reach top-level fields only. When a nested pair needs one — every
-`User` inside a `Team` renames `fullName` — write how that pair maps once, as a
+An override changes one field in one place. When every occurrence of a pair
+needs the same change — every `User` inside a `Team` renames `fullName`, the
+lead and each member — write how that pair maps once, as a
 `Transformer`, and pass it to the chain. It serves every pair it fits below the
 root: fields, list elements, map values and sealed cases.
 

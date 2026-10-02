@@ -15,3 +15,6 @@
 
 /nestedOverrides.kt:(1844,1946): error: Cannot transform Person → PersonDto:
     Into<Person, PersonDto> — the selector given to withFieldConst must be a chain of properties, like { it.name }.
+
+/nestedOverrides.kt:(2002,2099): error: Cannot transform Person → PersonDto:
+    PersonDto.billing.zip: String — withFieldComputed gives Nothing?, which is not a String.

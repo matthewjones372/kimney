@@ -119,17 +119,22 @@ val dto = user.into<_, UserDto>()
 ```
 
 `into<_, UserDto>()` infers the source and names the target. An override
-fills one top-level constructor parameter of the target and wins over every
-other way of filling it:
+fills one constructor parameter, of the target or of a class nested in it, and
+wins over every other way of filling it. `withFieldConst` and
+`withFieldComputed` name it with a property reference, `UserDto::source`, or
+a selector, `{ it.address.zip }`: a lambda the plugin reads as a chain of
+properties and never runs. A selector may take a safe call, `{ it.billing?.zip }`,
+and the override then applies only when `billing` is not null.
+`withFieldRenamed` names top-level fields only.
 
 | Override | Fills the field with |
 |---|---|
 | `withFieldConst(field, value)` | `value` |
-| `withFieldComputed(field) { source -> … }` | the lambda's result, applied to the source |
+| `withFieldComputed(field) { source -> … }` | the lambda's result, applied to the whole source at any depth |
 | `withFieldRenamed(from, to)` | the source property `from`, transformed by the rules above |
 
 The source is evaluated once, then each override's expression in the order
-written, then the constructor. A computed lambda compiles to a direct call of
+written, whatever its depth, then the constructors. A computed lambda compiles to a direct call of
 its body: no function object is created.
 
 The whole chain must be one expression from `into()` to `.transform()`, with
@@ -143,6 +148,9 @@ the plugin reads it at compile time. Anything else is a compile error:
 | Wrong value type | `UserDto.age: Long — withFieldConst gives String, which is not a Long.` |
 | Unreadable renamed source | `UserDto.name: String — withFieldRenamed reads User.inherited, which kimney cannot read: it is inherited, an extension or not public.` |
 | The chain escapes | `Into<User, UserDto> — the overrides must be one chain from into() to .transform(), …` |
+| A selector that does more than read | `Into<Person, PersonDto> — the selector given to withFieldConst must be a chain of properties, like { it.name }.` |
+| Through a list | `PersonDto.lines — the selector crosses List<LineDto>; an override cannot reach inside elements. Map LineDto with .withTransformer(…).` |
+| Inside a transformer's pair | `PersonDto.address.zip — withFieldConst reaches inside Address → AddressDto, which withTransformer #1 also maps. Keep one.` |
 
 The wrong-value-type check is kimney's, not the compiler's: `KProperty1` is
 covariant in its value, so `withFieldConst(UserDto::age, "forty")` type-checks
@@ -301,8 +309,8 @@ partial transformer that fits is a compile error:
 
 A Java platform type (`String!`) counts as non-null, as Kotlin lets it be used.
 
-Not yet: nested field overrides (a transformer covers the pair), concrete
-collection targets (`ArrayList`, `HashMap`), and primitive arrays other than
+Not yet: overrides inside list elements and sealed cases (a transformer covers
+the pair), concrete collection targets (`ArrayList`, `HashMap`), and primitive arrays other than
 as themselves. `docs/roadmap.md` has the order.
 
 Compiled without the plugin, the call throws `KimneyNotApplied`, whose message
