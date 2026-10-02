@@ -46,3 +46,7 @@ fun wholeAndInside(person: Person): PersonDto = <!KIMNEY_CANNOT_TRANSFORM!>perso
 fun notAChain(person: Person): PersonDto = <!KIMNEY_CANNOT_TRANSFORM!>person.into<_, PersonDto>()
     .withFieldConst({ it.address.zip.uppercase() }, "N1")
     .transform()<!>
+
+fun nullThroughASafeCall(person: Person): PersonDto = <!KIMNEY_CANNOT_TRANSFORM!>person.into<_, PersonDto>()
+    .withFieldComputed({ it.billing?.zip }) { null }
+    .transform()<!>

@@ -195,6 +195,6 @@ Be honest with yourself about these:
 - **You need a 1.0.** kimney is 0.x: on Maven Central, but its surface may
   still change between releases
   ([known limitations](../README.md#known-limitations)).
-- **You need what is not there yet**: overrides on nested fields, which a
-  transformer for the pair covers instead. The
+- **You need what is not there yet**: overrides inside list elements or
+  sealed cases, which a transformer for the pair covers instead. The
   [roadmap](roadmap.md) has them in order.

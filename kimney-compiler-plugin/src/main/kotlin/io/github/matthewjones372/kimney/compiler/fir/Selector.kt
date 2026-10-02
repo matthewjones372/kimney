@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.fir.expressions.FirReturnExpression
 import org.jetbrains.kotlin.fir.expressions.FirSafeCallExpression
 import org.jetbrains.kotlin.fir.references.symbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.resolvedType
 
 /** The properties a selector reads from its parameter, outermost first: `{ it.address?.zip }` is address, zip. */
 internal fun selected(selector: FirAnonymousFunctionExpression): List<String>? {
@@ -39,3 +41,9 @@ private fun name(expression: FirExpression?): String? =
 // Inside a safe call the selector's receiver is a stand-in for the value checked; its place is taken by the receiver.
 private fun FirExpression?.unwrapSafeSubject(): FirExpression? =
     if (this is FirCheckedSafeCallSubject) originalReceiverRef.value else this
+
+/** The type of what [lambda] returns from its last statement, when that is an expression. */
+internal fun returned(lambda: FirAnonymousFunctionExpression): ConeKotlinType? {
+    val last = lambda.anonymousFunction.body?.statements?.lastOrNull()
+    return ((last as? FirReturnExpression)?.result ?: last as? FirExpression)?.resolvedType
+}

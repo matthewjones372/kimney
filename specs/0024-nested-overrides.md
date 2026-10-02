@@ -80,15 +80,15 @@ and it repeats each class name. Recommended: the lambda.
 
 ## Stack
 
-- [ ] **`spec-0024-runtime`**: the two selector stubs and the BCV `.api`.
+- [x] **`spec-0024-runtime`** ([#5](https://github.com/matthewjones372/kimney/pull/5)): the two selector stubs and the BCV `.api`.
       Done when: each throws `KimneyNotApplied` naming itself.
-- [ ] **`spec-0024-engine`**: `Override.path`, handing overrides down to nested
+- [x] **`spec-0024-engine`** ([#6](https://github.com/matthewjones372/kimney/pull/6)): `Override.path`, handing overrides down to nested
       pairs, building a pair that has overrides from its constructor, and the
       container, stray-path and transformer-conflict failures.
       Done when: engine tests cover depths one, two and three, a pair of the
       same type, a nullable step, the stray path, the container crossing and
       the transformer conflict.
-- [ ] **`spec-0024-fir`**: reading a selector into a path, and the
+- [x] **`spec-0024-fir`** ([#7](https://github.com/matthewjones372/kimney/pull/7)): reading a selector into a path, and the
       not-a-chain failure.
       Done when: diagnostic goldens pass for all three new failures.
 - [ ] **`spec-0024-ir`**: lowering the overridden field into the nested

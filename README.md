@@ -126,12 +126,10 @@ of refusing what might not fit
 ([recipe](docs/cookbook.md#validating-at-the-edge)).
 
 An override — `withFieldConst`, `withFieldComputed` or `withFieldRenamed` —
-comes before all of these for the field it names, and your own `Transformer`,
+comes before all of these for the field it names, at any depth
+([recipe](docs/cookbook.md#a-field-inside-a-nested-class)), and your own `Transformer`,
 passed with `withTransformer`, before all of them for every nested pair it
 fits ([recipe](docs/cookbook.md#your-own-transformer-for-a-nested-pair)).
-
-Not yet: overrides on nested fields (a transformer covers the pair). The
-[roadmap](docs/roadmap.md) has the order.
 
 ## Trying it
 
@@ -200,7 +198,7 @@ naming the range. 0.1.0 supports 2.4.10 alone.
 
 ### Known limitations
 - **JVM only.** The Gradle plugin applies to JVM compilations.
-- **No nested field overrides.** A transformer for the nested pair covers them.
+- **No overrides inside elements or sealed cases.** A transformer for the pair covers them.
 
 ### Releasing
 
