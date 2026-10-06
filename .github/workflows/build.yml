@@ -72,3 +72,13 @@ jobs:
             kimney-compiler-plugin/build/reports/tests/
             ic-test/build/reports/tests/
           retention-days: 7
+
+  # The one check main requires, so the required set does not move with the
+  # matrices above.
+  checks:
+    if: always()
+    needs: [build, kotlin]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every build and kotlin job passed
+        run: test "${{ needs.build.result }}" = success && test "${{ needs.kotlin.result }}" = success
