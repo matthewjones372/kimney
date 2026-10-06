@@ -33,16 +33,16 @@ and [what it costs](docs/what-it-costs.md) has the measurements.
 When it cannot derive a mapping, the call does not compile. The error names
 each field it could not fill, the path to it, and what would fix it.
 
-## Why not by hand?
+## Why
 
 Layered and domain-driven code often gives one idea several shapes on purpose:
 a request, a command, an aggregate, an event, a row, a view. Each shape says
 which layer it belongs to. Writing the mappings between them is tedious, and
 that cost is often why layers end up merged. With kimney each mapping is one
 line, derived again on every build, so it follows the types as they change and
-fails the build when it cannot. [Why not write it by hand?](docs/why.md) takes
-one order through six shapes with five one-line mappings, and shows two bugs
-that a hand-written mapper keeps compiling through.
+fails the build when it cannot. [docs/why.md](docs/why.md) takes one order
+through six shapes with five one-line mappings, and shows two bugs that a
+hand-written mapper keeps compiling through.
 
 ## A first look
 
@@ -175,9 +175,10 @@ includeBuild("../kimney")
 
 In each case the Gradle plugin adds `kimney-runtime` to every JVM compilation
 and loads the compiler plugin into it. Both setups have been checked from a
-separate project. From 0.4.0 the plugin supports Gradle's configuration cache:
-a consumer build is stored, reused, and still derives mappings on every tested
-Kotlin version.
+separate project. The next release, 0.4.0, adds support for Gradle's
+configuration cache: a consumer build is stored, reused, and still derives
+mappings on every tested Kotlin version. Until it is on Central, use a
+`-SNAPSHOT` from Maven Local to try it.
 
 In this repository, [`example/`](example) applies the plugin the same way a
 consumer would, and runs every cookbook recipe on each build.
