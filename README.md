@@ -225,6 +225,16 @@ The plugin marker is published to Central as well, so a consumer resolves the
 plugin by id with `mavenCentral()` in `pluginManagement.repositories`.
 Publishing to the Gradle Plugin Portal is not set up.
 
+## Used in
+
+- [petshop](https://github.com/matthewjones372/petshop) maps between its domain
+  and its API's DTOs, and between its events and their Avro wire records, with
+  kimney. Its README has a section on how that went.
+- [tweet-street](https://github.com/matthewjones372/tweet-street), a bank in four
+  services: the bank's
+  [`protocol`](https://github.com/matthewjones372/tweet-street/tree/main/lark-bank/protocol)
+  module maps the wire shapes to and from the domain.
+
 ## How it works
 
 The derivation engine, `kimney-derive`, is a pure function: it takes a source
