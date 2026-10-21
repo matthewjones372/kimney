@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
     steps:
       # Inputs reach the shell as environment, never pasted into the script.
       - name: Create the release

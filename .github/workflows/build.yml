@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
     strategy:
       fail-fast: false
       matrix:
@@ -46,7 +46,7 @@ jobs:
   # The list is `kimney.kotlinTested` in gradle.properties, which
   # BuildWorkflowTest holds this matrix to.
   kotlin:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
     strategy:
       fail-fast: false
       matrix:
@@ -78,7 +78,7 @@ jobs:
   checks:
     if: always()
     needs: [build, kotlin]
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
     steps:
       - name: Every build and kotlin job passed
         run: test "${{ needs.build.result }}" = success && test "${{ needs.kotlin.result }}" = success
