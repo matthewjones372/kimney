@@ -9,7 +9,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
 class KotlinVersionTest {
-    private val tested = listOf("2.4.0", "2.4.10", "2.4.20")
+    private val tested = listOf("2.4.0", "2.4.10", "2.4.20", "2.4.21")
 
     @Test
     fun `every tested Kotlin is supported`() {
@@ -24,7 +24,7 @@ class KotlinVersionTest {
     @Test
     fun `a newer patch of the tested minor is applied, with a warning`() {
         checkKotlin(tested, found = "2.4.30") shouldBe KotlinCheck.Untested(
-            "kimney ${BuildConfig.KIMNEY_VERSION} is tested on Kotlin 2.4.0 to 2.4.20; this build uses 2.4.30, " +
+            "kimney ${BuildConfig.KIMNEY_VERSION} is tested on Kotlin 2.4.0 to 2.4.21; this build uses 2.4.30, " +
                 "which it has not been tested on.",
         )
     }
@@ -32,11 +32,11 @@ class KotlinVersionTest {
     @Test
     fun `another minor is refused, naming the range and the way out`() {
         checkKotlin(tested, found = "2.5.0") shouldBe KotlinCheck.Unsupported(
-            "kimney ${BuildConfig.KIMNEY_VERSION} supports Kotlin 2.4.0 to 2.4.20; this build uses 2.5.0. " +
+            "kimney ${BuildConfig.KIMNEY_VERSION} supports Kotlin 2.4.0 to 2.4.21; this build uses 2.5.0. " +
                 "Use one of those, or a kimney release built for 2.5.",
         )
         checkKotlin(tested, found = "2.3.21") shouldBe KotlinCheck.Unsupported(
-            "kimney ${BuildConfig.KIMNEY_VERSION} supports Kotlin 2.4.0 to 2.4.20; this build uses 2.3.21. " +
+            "kimney ${BuildConfig.KIMNEY_VERSION} supports Kotlin 2.4.0 to 2.4.21; this build uses 2.3.21. " +
                 "Use one of those, or a kimney release built for 2.3.",
         )
     }
@@ -44,7 +44,7 @@ class KotlinVersionTest {
     @Test
     fun `a version that is not three numbers is refused as itself`() {
         checkKotlin(tested, found = "2.4") shouldBe KotlinCheck.Unsupported(
-            "kimney ${BuildConfig.KIMNEY_VERSION} supports Kotlin 2.4.0 to 2.4.20; this build uses 2.4. " +
+            "kimney ${BuildConfig.KIMNEY_VERSION} supports Kotlin 2.4.0 to 2.4.21; this build uses 2.4. " +
                 "Use one of those, or a kimney release built for 2.4.",
         )
     }
@@ -58,7 +58,7 @@ class KotlinVersionTest {
     fun `a build on another minor fails at configuration with that message`(@TempDir dir: File) {
         val result = build(dir, kotlin = "2.3.21").buildAndFail()
 
-        result.output shouldContain "supports Kotlin 2.4.0 to 2.4.20; this build uses 2.3.21."
+        result.output shouldContain "supports Kotlin 2.4.0 to 2.4.21; this build uses 2.3.21."
     }
 
     @Test

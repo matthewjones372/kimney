@@ -6,7 +6,7 @@
 You say which type to turn into which, and the compiler writes the mapping or
 tells you why it cannot.
 
-[![Kotlin 2.4](https://img.shields.io/badge/Kotlin-2.4.0–2.4.20-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Kotlin 2.4](https://img.shields.io/badge/Kotlin-2.4.0–2.4.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![K2 compiler plugin](https://img.shields.io/badge/K2-compiler%20plugin-7F52FF)](docs/reference.md)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/kimney-runtime)](https://central.sonatype.com/artifact/io.github.matthewjones372/kimney-runtime)
 [![status: 0.x](https://img.shields.io/badge/status-0.x-orange)](docs/roadmap.md)
@@ -196,7 +196,7 @@ needs to set it once.
 A compiler plugin runs inside the compiler, and the compiler's plugin API can
 change between minor versions, so each kimney release lists the Kotlin versions
 it supports. From 0.2.0 that is any Kotlin 2.4: CI runs every compiler test on
-2.4.0, 2.4.10 and 2.4.20, and a newer 2.4 patch release is applied with a
+2.4.0, 2.4.10, 2.4.20 and 2.4.21, and a newer 2.4 patch release is applied with a
 warning that it is untested. Any other minor version stops the build at
 configuration time with a message naming the supported range. 0.1.0 supports
 2.4.10 only.
