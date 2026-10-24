@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        kotlin: ["2.4.0", "2.4.10", "2.4.20"]
+        kotlin: ["2.4.0", "2.4.10", "2.4.20", "2.4.21"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6

@@ -6,7 +6,7 @@
 Say what you want to turn into what; the compiler writes the mapping, or tells
 you exactly why it cannot.
 
-[![Kotlin 2.4](https://img.shields.io/badge/Kotlin-2.4.0–2.4.20-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Kotlin 2.4](https://img.shields.io/badge/Kotlin-2.4.0–2.4.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![K2 compiler plugin](https://img.shields.io/badge/K2-compiler%20plugin-7F52FF)](docs/reference.md)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/kimney-runtime)](https://central.sonatype.com/artifact/io.github.matthewjones372/kimney-runtime)
 [![status: 0.x](https://img.shields.io/badge/status-0.x-orange)](docs/roadmap.md)
@@ -186,7 +186,7 @@ a consumer does, and runs every cookbook recipe on each build.
 A compiler plugin runs inside the compiler, whose plugin API promises nothing
 from one minor to the next, so each kimney release names the Kotlins it
 supports. From 0.2.0 that is any Kotlin 2.4: every compiler test runs on
-2.4.0, 2.4.10 and 2.4.20 in CI, and a newer 2.4 patch is applied with a
+2.4.0, 2.4.10, 2.4.20 and 2.4.21 in CI, and a newer 2.4 patch is applied with a
 warning that it is untested. Another minor stops the build at configuration,
 naming the range. 0.1.0 supports 2.4.10 alone.
 
