@@ -59,6 +59,9 @@ val published = mapOf(
 // one's NoThirdPartyDependenciesTest reads the classpath handed over here.
 val stdlibOnly = setOf("kimney-runtime", "kimney-derive")
 
+/** Whether this build publishes a release, the only time a signature is required. */
+val releasing = gradle.startParameter.taskNames.any { "MavenCentral" in it || "publishPlugins" in it }
+
 dependencies {
     subprojects.forEach { kover(project(it.path)) }
 }
@@ -165,6 +168,8 @@ subprojects {
         extensions.configure<PublishingExtension> {
             repositories { maven { name = "icTest"; url = uri(rootProject.layout.buildDirectory.dir("ic-repo")) } }
         }
+        // A release version is signed for Central, but `build` also publishes it to icTest, which needs no key.
+        tasks.withType<Sign>().configureEach { isRequired = releasing }
     }
 }
 

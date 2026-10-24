@@ -1,20 +1,45 @@
 package io.github.matthewjones372.kimney.derive
 
-/** One override from the chain, naming a top-level field of the target. [index] is its place in the chain. */
+/**
+ * One override from the chain. It names the target field [field] and, when it reaches deeper, the fields [rest] below
+ * it: `{ it.address.zip }` is `address` then `zip`. [index] is its place in the chain.
+ */
 sealed interface Override<out T> {
     val field: String
+    val rest: List<String>
     val method: String
 
-    data class Const<T>(override val field: String, val valueType: T, val index: Int) : Override<T> {
+    /** The same override, one pair down: what [field] holds is where it now applies. */
+    fun descend(): Override<T>
+
+    data class Const<T>(
+        override val field: String,
+        val valueType: T,
+        val index: Int,
+        override val rest: List<String> = emptyList(),
+    ) : Override<T> {
         override val method get() = "withFieldConst"
+
+        override fun descend() = copy(field = rest.first(), rest = rest.drop(1))
     }
 
-    data class Computed<T>(override val field: String, val resultType: T, val index: Int) : Override<T> {
+    data class Computed<T>(
+        override val field: String,
+        val resultType: T,
+        val index: Int,
+        override val rest: List<String> = emptyList(),
+    ) : Override<T> {
         override val method get() = "withFieldComputed"
+
+        override fun descend() = copy(field = rest.first(), rest = rest.drop(1))
     }
 
+    /** Top-level only: its source is a property of the root source. */
     data class Renamed(override val field: String, val from: String) : Override<Nothing> {
+        override val rest: List<String> get() = emptyList()
         override val method get() = "withFieldRenamed"
+
+        override fun descend() = error("withFieldRenamed names a top-level field")
     }
 }
 

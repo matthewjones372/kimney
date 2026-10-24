@@ -2,4 +2,4 @@
     InvoiceDto.total: MoneyDto — two transformers fit Money → MoneyDto: withTransformer #1 and context parameter 'money'. Pass one.
 
 /contextTransformers.kt:(1066,1101): error: Cannot transform Invoice → InvoiceDto:
-    InvoiceDto.total.pounds: String — Money has no property 'pounds'. Add it to Money, or give MoneyDto.pounds a default value. Or map Money → MoneyDto with .withTransformer(Transformer<Money, MoneyDto> { … }).
+    InvoiceDto.total.pounds: String — Money has no property 'pounds'. Add it to Money, give MoneyDto.pounds a default value, or add .withFieldConst({ it.total.pounds }, …). Or map Money → MoneyDto with .withTransformer(Transformer<Money, MoneyDto> { … }).

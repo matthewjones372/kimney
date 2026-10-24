@@ -97,6 +97,11 @@ gradlePlugin {
 val functionalRepo = layout.buildDirectory.dir("functional-repo")
 publishing { repositories { maven { name = "functional"; url = uri(functionalRepo) } } }
 
+// A release version is signed for Central and the Portal, but the tests also publish it to functional, which needs
+// no key.
+val releasing = gradle.startParameter.taskNames.any { "MavenCentral" in it || "publishPlugins" in it }
+tasks.withType<Sign>().configureEach { isRequired = releasing }
+
 tasks.test {
     useJUnitPlatform()
     dependsOn("publishAllPublicationsToFunctionalRepository")

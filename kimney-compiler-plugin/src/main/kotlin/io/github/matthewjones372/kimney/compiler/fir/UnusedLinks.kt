@@ -1,6 +1,7 @@
 package io.github.matthewjones372.kimney.compiler.fir
 
 import io.github.matthewjones372.kimney.compiler.KimneyErrors
+import io.github.matthewjones372.kimney.derive.Construction
 import io.github.matthewjones372.kimney.derive.EnumOverride
 import io.github.matthewjones372.kimney.derive.SealedOverride
 import io.github.matthewjones372.kimney.derive.unusedEnumFallback
@@ -57,8 +58,16 @@ fun FirTypeModel.writtenOut(given: NotAnEntry): Pair<String, String> {
 
         NotAnEntry.Kind.CLASS_LITERAL -> "class literals" to "$named::class"
 
+        NotAnEntry.Kind.SELECTOR -> "a chain of properties" to selectorExample(given.type)
+
         NotAnEntry.Kind.OBJECT ->
             "the object itself" to
                 (sealedCases(given.type)?.firstOrNull { isObject(it.type) }?.let { render(it.type) } ?: named)
     }
+}
+
+/** A selector over [target]'s first constructor parameter, as an example a reader can copy. */
+fun FirTypeModel.selectorExample(target: ConeKotlinType): String {
+    val first = (construction(target) as? Construction.Primary)?.params?.firstOrNull()?.name ?: "name"
+    return "{ it.$first }"
 }

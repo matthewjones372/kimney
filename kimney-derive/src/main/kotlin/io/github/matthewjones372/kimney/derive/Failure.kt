@@ -30,16 +30,23 @@ sealed interface Failure {
         override val type: String,
         val source: String,
         val owner: String,
+        /** A selector reaching the field, `it.address.zip`, or null where none can. */
+        val selector: String? = null,
     ) : Failure {
         private val field get() = path.fields.last()
 
-        // Overrides name top-level fields only, so a nested field is not offered one.
+        // A top-level field is named by a property reference; a nested one by a selector, where one can reach it.
         override val reason
-            get() = if (path.fields.size == 1) {
-                "$source has no property '$field'. Add it to $source, give $owner.$field a default value, " +
-                    "or add .withFieldConst($owner::$field, …)."
-            } else {
-                "$source has no property '$field'. Add it to $source, or give $owner.$field a default value."
+            get() = when {
+                path.fields.size == 1 ->
+                    "$source has no property '$field'. Add it to $source, give $owner.$field a default value, " +
+                        "or add .withFieldConst($owner::$field, …)."
+
+                selector != null ->
+                    "$source has no property '$field'. Add it to $source, give $owner.$field a default value, " +
+                        "or add .withFieldConst({ $selector }, …)."
+
+                else -> "$source has no property '$field'. Add it to $source, or give $owner.$field a default value."
             }
     }
 
@@ -185,6 +192,36 @@ sealed interface Failure {
             get() = "$method names '${path.fields.last()}', which is not a constructor parameter of $owner."
     }
 
+    /** An override reaching inside a pair that a transformer also maps: one of the two would be ignored. */
+    data class OverrideUnderTransformer(
+        override val path: Path,
+        val method: String,
+        val source: String,
+        val target: String,
+        val chain: List<Int>,
+        val context: List<String> = emptyList(),
+    ) : Failure {
+        override val type: String? get() = null
+        override val reason: String
+            get() {
+                val by = (chain.map { "withTransformer #${it + 1}" } + context.map { "context parameter '$it'" })
+                    .joinToString(" and ")
+                return "$method reaches inside $source → $target, which $by also maps. Keep one."
+            }
+    }
+
+    /** An override whose path runs through a container, whose elements have no field of their own to name. */
+    data class CrossesContainer(
+        override val path: Path,
+        val container: String,
+        val element: String,
+    ) : Failure {
+        override val type: String? get() = null
+        override val reason
+            get() = "the selector crosses $container; an override cannot reach inside elements. " +
+                "Map $element with .withTransformer(…)."
+    }
+
     data class DuplicateOverride(override val path: Path, val methods: List<String>) : Failure {
         override val type: String? get() = null
         override val reason: String
@@ -223,6 +260,12 @@ sealed interface Failure {
         Failure {
         override val type: String? get() = null
         override val reason get() = "$method takes $what, like $example, not a value that holds one."
+    }
+
+    /** Found by an adapter reading the call: a selector is read as syntax, so it may only name properties. */
+    data class NotASelector(override val path: Path, val method: String, val example: String) : Failure {
+        override val type: String? get() = null
+        override val reason get() = "the selector given to $method must be a chain of properties, like $example."
     }
 
     /** Found by an adapter reading the call, not by the engine: the chain is syntax. */

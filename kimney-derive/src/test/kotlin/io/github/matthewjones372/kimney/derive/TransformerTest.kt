@@ -93,8 +93,9 @@ class TransformerTest {
         val failed = derive(model, "Team", "TeamDto").shouldBeInstanceOf<Derived.Failed>()
 
         failed.failures.map { it.line } shouldBe listOf(
-            "TeamDto.lead.name: String — User has no property 'name'. Add it to User, or give UserDto.name a default " +
-                "value. Or map User → UserDto with .withTransformer(Transformer<User, UserDto> { … }).",
+            "TeamDto.lead.name: String — User has no property 'name'. Add it to User, give UserDto.name a default " +
+                "value, or add .withFieldConst({ it.lead.name }, …). " +
+                "Or map User → UserDto with .withTransformer(Transformer<User, UserDto> { … }).",
             "TeamDto.members[].name: String — User has no property 'name'. Add it to User, or give UserDto.name a " +
                 "default value. Or map User → UserDto with .withTransformer(Transformer<User, UserDto> { … }).",
         )

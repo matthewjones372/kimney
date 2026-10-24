@@ -103,12 +103,22 @@ private fun link(call: IrCall, index: Int): Link? {
     }
     if (call.kimneyId in ENUM_LINKS) return enumLink(call, args, index)
     if (call.kimneyId in SEALED_LINKS) return sealedLink(call, args, index)
-    val field = field(args[if (call.kimneyId == WITH_FIELD_RENAMED) "to" else "field"]) ?: return null
-    return when (call.kimneyId) {
-        WITH_FIELD_CONST -> args["value"]?.let { Link.Overriding(Override.Const(field, it.type, index), it) }
+    return overrideLink(call, args, index)
+}
 
-        WITH_FIELD_COMPUTED -> (args["compute"] as? IrFunctionExpression)
-            ?.let { Link.Overriding(Override.Computed(field, it.function.returnType, index), it) }
+private fun overrideLink(call: IrCall, args: Map<String, IrExpression?>, index: Int): Link? {
+    val target = args[if (call.kimneyId == WITH_FIELD_RENAMED) "to" else "field"]
+    val path = (target as? IrFunctionExpression)?.let(::selected) ?: field(target)?.let(::listOf) ?: return null
+    val (field, rest) = path.first() to path.drop(1)
+    return when (call.kimneyId) {
+        WITH_FIELD_CONST -> args["value"]?.let { Link.Overriding(Override.Const(field, it.type, index, rest), it) }
+
+        WITH_FIELD_COMPUTED -> (args["compute"] as? IrFunctionExpression)?.let {
+            // As the checker does: behind a selector, the type the lambda gives, not the selector's.
+            val declared = it.function.returnType
+            val given = if (target is IrFunctionExpression) returned(it) ?: declared else declared
+            Link.Overriding(Override.Computed(field, given, index, rest), it)
+        }
 
         WITH_FIELD_RENAMED -> field(args["from"])?.let { Link.Overriding(Override.Renamed(field, it), null) }
 

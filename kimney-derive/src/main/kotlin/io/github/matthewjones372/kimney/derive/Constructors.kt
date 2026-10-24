@@ -10,7 +10,7 @@ private typealias Step<T> = Pair<Arg<T>?, List<Failure>>
 internal class ConstructorRule<T>(
     private val model: TypeModel<T>,
     private val partial: Boolean,
-    private val pair: (Site<T>) -> Derived<T>,
+    private val pair: (Site<T>, List<Override<T>>) -> Derived<T>,
 ) {
 
     fun construct(site: Site<T>, overrides: List<Override<T>>): Derived<T> {
@@ -24,11 +24,18 @@ internal class ConstructorRule<T>(
             Construction.SecondaryOnly ->
                 failed(Failure.NoPrimaryConstructor(site.path, target, "it has only secondary constructors"))
 
-            Construction.NotAClass -> model.noRule(site)
+            // An override reaching past a leaf names a field it has none of, which says more than "no rule".
+            Construction.NotAClass ->
+                if (overrides.isEmpty()) {
+                    model.noRule(site)
+                } else {
+                    Derived.Failed(overrides.map { Failure.NotAParameter(site.path / it.field, it.method, target) })
+                }
         }
-        // Offered only where a class was being built: a leaf pair such as Int into Long has no inside to fix.
+        // Offered only where a class was being built: a leaf pair such as Int into Long has no inside to fix. Not
+        // where overrides reach in, since a transformer for the pair would conflict with them.
         val nestedClass = site.path.fields.isNotEmpty() && model.construction(site.target) is Construction.Primary
-        return if (derived is Derived.Failed && nestedClass) {
+        return if (derived is Derived.Failed && nestedClass && overrides.isEmpty()) {
             model.offerTransformer(site, derived)
         } else {
             derived
@@ -39,14 +46,18 @@ internal class ConstructorRule<T>(
         val names = params.map { it.name }.toSet()
         val stray = overrides.filter { it.field !in names }
             .map { Failure.NotAParameter(site.path / it.field, it.method, model.render(site.target)) }
-        val duplicated = overrides.groupBy { it.field }.filterValues { it.size > 1 }
+        val (here, deeper) = overrides.partition { it.rest.isEmpty() }
+        // A field filled whole cannot also be reached into, so either way it counts as overridden twice.
+        val duplicated = here.groupBy { it.field }
+            .mapValues { (field, all) -> all + deeper.filter { it.field == field } }
+            .filterValues { it.size > 1 }
         val duplicates = duplicated.map { (field, all) ->
             Failure.DuplicateOverride(site.path / field, all.map { it.method })
         }
         val steps = params.filterNot { it.name in duplicated }.map { param ->
-            overrides.firstOrNull { it.field == param.name }
+            here.firstOrNull { it.field == param.name }
                 ?.let { overridden(it, param, site) }
-                ?: derived(param, site)
+                ?: derived(param, site, deeper.filter { it.field == param.name }.map { it.descend() })
         }
         val failures = stray + duplicates + steps.flatMap { it.second }
         return if (failures.isEmpty()) {
@@ -89,12 +100,13 @@ internal class ConstructorRule<T>(
             null to listOf(Failure.OverrideTypeMismatch(field, model.render(param.type), method, model.render(given)))
         }
 
-    private fun derived(param: Param<T>, site: Site<T>): Step<T> {
+    /** [below] are the overrides that reach inside this parameter; a default cannot take them, so it is not used. */
+    private fun derived(param: Param<T>, site: Site<T>, below: List<Override<T>> = emptyList()): Step<T> {
         val property = model.property(site.source, param.name)
         return when {
-            property != null -> fromProperty(param, param.name, beneath(site, param, property, param.name))
+            property != null -> fromProperty(param, param.name, beneath(site, param, property, param.name), below)
 
-            param.hasDefault -> Arg.Default(param.name) to emptyList()
+            param.hasDefault && below.isEmpty() -> Arg.Default(param.name) to emptyList()
 
             else -> null to listOf(
                 Failure.MissingSource(
@@ -102,13 +114,19 @@ internal class ConstructorRule<T>(
                     model.render(param.type),
                     model.render(site.source),
                     model.render(site.target),
+                    selector = site.selector?.let { "$it.${param.name}" },
                 ),
             )
         }
     }
 
-    private fun fromProperty(param: Param<T>, property: String, nested: Site<T>): Step<T> =
-        when (val derived = pair(nested)) {
+    private fun fromProperty(
+        param: Param<T>,
+        property: String,
+        nested: Site<T>,
+        below: List<Override<T>> = emptyList(),
+    ): Step<T> =
+        when (val derived = pair(nested, below)) {
             is Derived.Planned -> Arg.FromProperty(param.name, property, derived.plan) to emptyList()
             is Derived.Failed -> null to derived.failures
         }
@@ -119,6 +137,7 @@ internal class ConstructorRule<T>(
         param.type,
         owner = model.render(site.target),
         origin = "${model.render(site.source)}.$name",
+        selectable = true,
     )
 
     private fun unreadable(field: Path, param: Param<T>, site: Site<T>, property: String): Step<T> =

@@ -3,10 +3,12 @@ package io.github.matthewjones372.kimney.derive
 /** Nullable and value class rules: each derives through the type inside, so every other rule applies there. */
 internal fun <T> TypeModel<T>.nullable(site: Site<T>, pair: (Site<T>) -> Derived<T>): Derived<T> {
     val target = nonNull(site.target)
+    // A selector reads past a nullable target with a safe call.
+    val selector = site.selector?.let { "$it?" }
     return if (isNullable(site.source)) {
-        pair(site.copy(source = nonNull(site.source), target = target)).map { Plan.NullSafe(it) }
+        pair(site.copy(source = nonNull(site.source), target = target, selector = selector)).map { Plan.NullSafe(it) }
     } else {
-        pair(site.copy(target = target))
+        pair(site.copy(target = target, selector = selector))
     }
 }
 
