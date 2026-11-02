@@ -175,10 +175,19 @@ includeBuild("../kimney")
 
 In each case the Gradle plugin adds `kimney-runtime` to every JVM compilation
 and loads the compiler plugin into it. Both setups have been checked from a
-separate project. The next release, 0.4.0, adds support for Gradle's
+separate project. The next release, 0.5.0, adds support for Gradle's
 configuration cache: a consumer build is stored, reused, and still derives
 mappings on every tested Kotlin version. Until it is on Central, use a
 `-SNAPSHOT` from Maven Local to try it.
+
+**Moving from `io.github.matthewjones372`.** From 0.5.0 kimney's group is
+`dev.surefold`, its plugin ID is `dev.surefold.kimney`, and its packages are
+`dev.surefold.kimney`. Up to 0.3.0 they were `io.github.matthewjones372`,
+`io.github.matthewjones372.kimney` and `io.github.matthewjones372.kimney`.
+Change the plugin ID and each import's prefix in the same change, since the
+compiler plugin's options are keyed by its ID. The old coordinates relocate to
+the new ones at 0.5.0, and the old plugin ID applies the same plugin once more
+at 0.5.0 and is not published after it.
 
 In this repository, [`example/`](example) applies the plugin the same way a
 consumer would, and runs every cookbook recipe on each build.
