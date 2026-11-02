@@ -76,6 +76,16 @@ tasks.register("quickCheck") {
     dependsOn(":kimney-compiler-plugin:detektMain", ":kimney-compiler-plugin:spotlessCheck", "spotlessCheck")
 }
 
+// Snapshots (surefold spec 0281): snapshot.yml runs this with the workflow's token as githubPackagesUsername and
+// githubPackagesPassword. It reaches the included Gradle plugin build as publishToMavenLocal does below.
+tasks.register("publishSnapshot") {
+    group = "publishing"
+    description = "Publishes every kimney artifact, the Gradle plugin and its marker included, to GitHub Packages."
+    val publish = "publishAllPublicationsToGithubPackagesRepository"
+    dependsOn(subprojects.filter { it.name in published }.map { "${it.path}:$publish" })
+    dependsOn(gradle.includedBuild("kimney-gradle-plugin").task(":$publish"))
+}
+
 // The Gradle plugin is an included build, so a root publishToMavenLocal would
 // otherwise publish every artifact but the one a consumer applies first.
 tasks.register("publishToMavenLocal") {
@@ -167,8 +177,10 @@ subprojects {
         // Where ic-test's nested builds resolve kimney from, so none of them reads ~/.m2.
         extensions.configure<PublishingExtension> {
             repositories { maven { name = "icTest"; url = uri(rootProject.layout.buildDirectory.dir("ic-repo")) } }
+            repositories { githubPackages() }
             relocatedFromOldGroup(this@subprojects.name, version.toString())
         }
+        onlyDevSurefoldToGithubPackages()
         // A release version is signed for Central, but `build` also publishes it to icTest, which needs no key.
         tasks.withType<Sign>().configureEach { isRequired = releasing }
     }
@@ -194,6 +206,19 @@ fun PublishingExtension.relocatedFromOldGroup(artifact: String, version: String)
             }
         }
     }
+}
+
+/** This repository's GitHub Packages registry, where snapshots go (surefold spec 0281); releases go to Central. */
+fun RepositoryHandler.githubPackages() = maven("https://maven.pkg.github.com/surefold/kimney") {
+    name = "githubPackages"
+    credentials(PasswordCredentials::class)
+}
+
+/** The relocation POMs and anything else outside `dev.surefold` are for Central only, never a snapshot. */
+fun Project.onlyDevSurefoldToGithubPackages() = tasks.withType<PublishToMavenRepository>().configureEach {
+    val toGithubPackages = repository.name == "githubPackages"
+    val group = publication.groupId
+    onlyIf("only dev.surefold goes to GitHub Packages") { !toGithubPackages || group == "dev.surefold" }
 }
 
 /** The POM every kimney artifact shares; the Gradle plugin's build writes the same one. */
