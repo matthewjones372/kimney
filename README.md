@@ -154,13 +154,13 @@ dependencyResolutionManagement {
 // build.gradle.kts
 plugins {
     kotlin("jvm") version "2.4.10"
-    id("dev.surefold.kimney") version "0.3.0"
+    id("dev.surefold.kimney") version "0.5.0"
 }
 ```
 
 **From GitHub Packages**, to try `main` before it is released: every push to
-`main` publishes the next version as a `-SNAPSHOT` (`0.5.0-SNAPSHOT` while
-`gradle.properties` says `0.5.0`). GitHub Packages asks for a token even to read
+`main` publishes the next version as a `-SNAPSHOT` (`0.6.0-SNAPSHOT` while
+`gradle.properties` says `0.6.0`). GitHub Packages asks for a token even to read
 a public package, so put a classic personal access token with only
 `read:packages` in `~/.gradle/gradle.properties` as `gpr.user` and `gpr.key`,
 and add this to both repository lists above:
@@ -193,10 +193,9 @@ includeBuild("../kimney")
 
 In each case the Gradle plugin adds `kimney-runtime` to every JVM compilation
 and loads the compiler plugin into it. Both setups have been checked from a
-separate project. The next release, 0.5.0, adds support for Gradle's
-configuration cache: a consumer build is stored, reused, and still derives
-mappings on every tested Kotlin version. Until it is on Central, use a
-`-SNAPSHOT` from Maven Local to try it.
+separate project. From 0.5.0 kimney supports Gradle's configuration cache: a
+consumer build is stored, reused, and still derives mappings on every tested
+Kotlin version.
 
 **Moving from `io.github.matthewjones372`.** From 0.5.0 kimney's group is
 `dev.surefold`, its plugin ID is `dev.surefold.kimney`, and its packages are
