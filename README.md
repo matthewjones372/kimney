@@ -227,7 +227,7 @@ Publishing to the Gradle Plugin Portal is not set up.
 
 ## Used in
 
-- [petshop](https://github.com/matthewjones372/petshop) maps between its domain
+- [petshop](https://github.com/surefold/petshop) maps between its domain
   and its API's DTOs, and between its events and their Avro wire records, with
   kimney. Its README has a section on how that went.
 - [tweet-street](https://github.com/matthewjones372/tweet-street), a bank in four

@@ -177,7 +177,7 @@ subprojects {
 fun org.gradle.api.publish.maven.MavenPom.kimneyPom(artifact: String, summary: String) {
     name.set(artifact)
     description.set(summary)
-    url.set("https://github.com/matthewjones372/kimney")
+    url.set("https://github.com/surefold/kimney")
     licenses {
         license {
             name.set("The Apache License, Version 2.0")
@@ -191,8 +191,8 @@ fun org.gradle.api.publish.maven.MavenPom.kimneyPom(artifact: String, summary: S
         }
     }
     scm {
-        url.set("https://github.com/matthewjones372/kimney")
-        connection.set("scm:git:https://github.com/matthewjones372/kimney.git")
-        developerConnection.set("scm:git:ssh://git@github.com/matthewjones372/kimney.git")
+        url.set("https://github.com/surefold/kimney")
+        connection.set("scm:git:https://github.com/surefold/kimney.git")
+        developerConnection.set("scm:git:ssh://git@github.com/surefold/kimney.git")
     }
 }
