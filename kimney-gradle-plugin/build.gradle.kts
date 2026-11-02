@@ -89,6 +89,36 @@ gradlePlugin {
             // Held by ic-test's ConfigurationCacheTest, on every tested Kotlin (spec 0023).
             compatibility { features { configurationCache = true } }
         }
+        // The ID kimney had before 0.5.0, published once more at 0.5.0 so a build that still applies it gets this
+        // plugin and the description of where it went (spec 0025). Remove after 0.5.0: the marker stays on Central.
+        create("kimneyOldId") {
+            id = "io.github.matthewjones372.kimney"
+            implementationClass = "dev.surefold.kimney.gradle.KimneyGradlePlugin"
+            displayName = "kimney (moved to dev.surefold.kimney)"
+            description = "kimney is now dev.surefold.kimney, with group dev.surefold and packages " +
+                "dev.surefold.kimney. This ID applies the same plugin at 0.5.0 and is not published again."
+            tags = listOf("kotlin", "compiler-plugin", "mapping", "dto", "transformation")
+            compatibility { features { configurationCache = true } }
+        }
+    }
+}
+
+// A POM-only publication at the plugin's old coordinates, relocating to dev.surefold (spec 0025), as the root build
+// declares for the other artifacts.
+publishing {
+    publications.register<MavenPublication>("relocation") {
+        groupId = "io.github.matthewjones372"
+        artifactId = "kimney-gradle-plugin"
+        version = project.version.toString()
+        pom {
+            packaging = "pom"
+            distributionManagement {
+                relocation {
+                    groupId.set("dev.surefold")
+                    message.set("kimney moved to dev.surefold in 0.5.0; packages and the plugin ID moved with it.")
+                }
+            }
+        }
     }
 }
 

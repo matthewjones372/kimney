@@ -167,9 +167,32 @@ subprojects {
         // Where ic-test's nested builds resolve kimney from, so none of them reads ~/.m2.
         extensions.configure<PublishingExtension> {
             repositories { maven { name = "icTest"; url = uri(rootProject.layout.buildDirectory.dir("ic-repo")) } }
+            relocatedFromOldGroup(this@subprojects.name, version.toString())
         }
         // A release version is signed for Central, but `build` also publishes it to icTest, which needs no key.
         tasks.withType<Sign>().configureEach { isRequired = releasing }
+    }
+}
+
+/**
+ * A POM-only publication at the coordinates kimney had before 0.5.0, relocating to the same artifact under
+ * `dev.surefold` (spec 0025). Maven and Gradle follow it, so a build still on `io.github.matthewjones372` resolves
+ * the new artifact. The Gradle plugin's build declares the same for its own artifact.
+ */
+fun PublishingExtension.relocatedFromOldGroup(artifact: String, version: String) {
+    publications.register<MavenPublication>("relocation") {
+        groupId = "io.github.matthewjones372"
+        artifactId = artifact
+        this.version = version
+        pom {
+            packaging = "pom"
+            distributionManagement {
+                relocation {
+                    groupId.set("dev.surefold")
+                    message.set("kimney moved to dev.surefold in 0.5.0; packages and the plugin ID moved with it.")
+                }
+            }
+        }
     }
 }
 
