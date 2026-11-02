@@ -144,6 +144,17 @@ tasks.withType<PublishToMavenRepository>().configureEach {
     }
 }
 
+// One namespace per Central deployment, as the root build does: `dev.surefold` (the plugin and its marker) by default,
+// then the relocation POM and the old ID's marker with `-PcentralNamespace=io.github.matthewjones372`.
+val centralNamespace = providers.gradleProperty("centralNamespace").getOrElse("dev.surefold")
+tasks.withType<PublishToMavenRepository>().configureEach {
+    onlyIf("only $centralNamespace goes to Central in this run") { task ->
+        val publish = task as PublishToMavenRepository
+        val group = publish.publication.groupId
+        publish.repository.name != "mavenCentral" || group == centralNamespace || group.startsWith("$centralNamespace.")
+    }
+}
+
 // A release version is signed for Central and the Portal, but the tests also publish it to functional, which needs
 // no key.
 val releasing = gradle.startParameter.taskNames.any { "MavenCentral" in it || "publishPlugins" in it }

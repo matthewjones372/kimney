@@ -237,15 +237,26 @@ configuration time with a message naming the supported range. 0.1.0 supports
 The build publishes to the Central Portal with the vanniktech plugin and leaves
 the upload staged for a manual release. With `mavenCentralUsername`,
 `mavenCentralPassword` and a signing key in `~/.gradle/gradle.properties`, set
-a release `version` in `gradle.properties` and run both commands below. The
-Gradle plugin is a separate build, so it needs its own:
+a release `version` in `gradle.properties` and run the commands below. The
+Gradle plugin is a separate build, so it needs its own. The Portal takes one
+namespace per deployment and a Gradle run uploads one, so `dev.surefold` goes
+first and the relocation POMs and old plugin ID at `io.github.matthewjones372`
+(spec 0025) go in runs of their own; that makes four deployments to release:
 
 ```bash
 ./gradlew publishToMavenCentral
 ```
 
 ```bash
+./gradlew publishToMavenCentral -PcentralNamespace=io.github.matthewjones372
+```
+
+```bash
 ./gradlew -p kimney-gradle-plugin publishToMavenCentral
+```
+
+```bash
+./gradlew -p kimney-gradle-plugin publishToMavenCentral -PcentralNamespace=io.github.matthewjones372
 ```
 
 The plugin marker is published to Central as well, so a consumer resolves the
