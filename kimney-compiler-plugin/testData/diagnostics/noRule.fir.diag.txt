@@ -1,12 +1,12 @@
-/noRule.kt:(238,269): error: Cannot transform Order → OrderDto:
+/noRule.kt:(225,256): error: Cannot transform Order → OrderDto:
     OrderDto.count: Long — no rule transforms Int into Long.
     OrderDto.tags[]: String — no rule transforms Int into String.
 
-/noRule.kt:(298,323): error: Cannot transform Int → String:
+/noRule.kt:(285,310): error: Cannot transform Int → String:
     String — no rule transforms Int into String.
 
-/noRule.kt:(402,432): error: Cannot transform Box<Int> → Box<Long>:
+/noRule.kt:(389,419): error: Cannot transform Box<Int> → Box<Long>:
     Box<Long>.value: Long — no rule transforms Int into Long.
 
-/noRule.kt:(544,573): error: Cannot transform Maybe → Surely:
+/noRule.kt:(531,560): error: Cannot transform Maybe → Surely:
     Surely.name: String — Maybe.name is String?, and a null has nowhere to go. Make Surely.name nullable, or fill it with .withFieldComputed(Surely::name) { … }.

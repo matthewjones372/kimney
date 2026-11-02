@@ -1,2 +1,2 @@
-/recursive.kt:(414,449): error: Cannot transform Tree → TaggedTreeDto:
+/recursive.kt:(401,436): error: Cannot transform Tree → TaggedTreeDto:
     TaggedTreeDto.tag: String — Tree has no property 'tag'. Add it to Tree, give TaggedTreeDto.tag a default value, or add .withFieldConst(TaggedTreeDto::tag, …).

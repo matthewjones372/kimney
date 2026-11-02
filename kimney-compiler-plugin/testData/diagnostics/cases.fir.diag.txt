@@ -1,18 +1,18 @@
-/cases.kt:(760,793): error: Cannot transform Status → StatusDto:
+/cases.kt:(747,780): error: Cannot transform Status → StatusDto:
     StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto. Map it with .withEnumEntryRenamed(Status.ARCHIVED, StatusDto.…), or send every unmatched entry to one with .withEnumFallback(StatusDto.…).
 
-/cases.kt:(831,862): error: Cannot transform Shape → ShapeDto:
+/cases.kt:(818,849): error: Cannot transform Shape → ShapeDto:
     ShapeDto.Circle.radius: Double — no rule transforms Int into Double. Or map Shape.Circle → ShapeDto.Circle with .withTransformer(Transformer<Shape.Circle, ShapeDto.Circle> { … }).
     ShapeDto — Shape.Hexagon has no subclass of the same name in ShapeDto. Map it with .withSealedCaseRenamed(Shape.Hexagon::class, ShapeDto.….class), build it with .withTransformer(Transformer<Shape.Hexagon, ShapeDto> { … }), or send every unmatched case to one object with .withSealedFallback(ShapeDto.…).
 
-/cases.kt:(908,943): error: Cannot transform Account → AccountDto:
+/cases.kt:(895,930): error: Cannot transform Account → AccountDto:
     AccountDto.status: StatusDto — Status.ARCHIVED has no entry of the same name in StatusDto. Map it with .withEnumEntryRenamed(Status.ARCHIVED, StatusDto.…), or send every unmatched entry to one with .withEnumFallback(StatusDto.…).
 
-/cases.kt:(998,1033): error: Cannot transform Something → Nothing1:
+/cases.kt:(985,1020): error: Cannot transform Something → Nothing1:
     Nothing1 — no rule transforms Something into Nothing1.
 
-/cases.kt:(1076,1108): error: Cannot transform Status → ShapeDto:
+/cases.kt:(1063,1095): error: Cannot transform Status → ShapeDto:
     ShapeDto — no rule transforms Status into ShapeDto.
 
-/cases.kt:(1345,1372): error: Cannot transform Figure.Oval → ShapeDto:
+/cases.kt:(1332,1359): error: Cannot transform Figure.Oval → ShapeDto:
     ShapeDto — Figure.Oval has no subclass of the same name in ShapeDto.
