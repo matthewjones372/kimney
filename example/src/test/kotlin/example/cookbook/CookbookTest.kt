@@ -1,5 +1,7 @@
 package example.cookbook
 
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.PartialError
 import example.cookbook.cases.toMessage
 import example.cookbook.collections.toDto
 import example.cookbook.copy.suspend
@@ -23,8 +25,6 @@ import example.cookbook.transformers.toDto
 import example.cookbook.trees.Comment
 import example.cookbook.trees.CommentView
 import example.cookbook.trees.toView
-import dev.surefold.kimney.Partial
-import dev.surefold.kimney.PartialError
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
