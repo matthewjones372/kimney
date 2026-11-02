@@ -1,0 +1,58 @@
+name: snapshot
+
+# A snapshot of every push to main, and of a branch when dispatched from it, on
+# GitHub Packages (surefold spec 0281): https://maven.pkg.github.com/surefold/kimney.
+# It does not expire. Releases stay on Central.
+#
+# gradle.properties holds the next release's version, so this publishes it as
+# `<that>-SNAPSHOT` (0.5.0 becomes 0.5.0-SNAPSHOT until 0.5.0 is released), and the
+# Gradle plugin adds kimney-runtime at the same snapshot version. Consumers add
+# the repository with a classic personal access token holding only
+# read:packages: GitHub Packages asks for one even to read a public package.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+# One publish at a time, in push order: a later snapshot never lands under an earlier one.
+concurrency:
+  group: snapshot-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+
+    # No signing key: a snapshot does not have to be signed. The token is the
+    # workflow's own, which can write this repository's packages and no others.
+    env:
+      ORG_GRADLE_PROJECT_githubPackagesUsername: ${{ github.actor }}
+      ORG_GRADLE_PROJECT_githubPackagesPassword: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v6
+
+      # Both builds read the version from gradle.properties (the Gradle plugin's
+      # included build reads the file itself), so the snapshot suffix goes there,
+      # in this checkout only.
+      - name: Snapshot version
+        run: |
+          version=$(sed -n 's/^version=//p' gradle.properties)
+          case "$version" in
+            *-SNAPSHOT) ;;
+            *) sed -i "s/^version=.*/version=$version-SNAPSHOT/" gradle.properties ;;
+          esac
+          echo "publishing $(sed -n 's/^version=//p' gradle.properties)"
+
+      # A push to main has already passed its pull request's build, so this
+      # publishes without running the tests again.
+      - run: ./gradlew publishSnapshot

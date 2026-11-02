@@ -158,6 +158,24 @@ plugins {
 }
 ```
 
+**From GitHub Packages**, to try `main` before it is released: every push to
+`main` publishes the next version as a `-SNAPSHOT` (`0.5.0-SNAPSHOT` while
+`gradle.properties` says `0.5.0`). GitHub Packages asks for a token even to read
+a public package, so put a classic personal access token with only
+`read:packages` in `~/.gradle/gradle.properties` as `gpr.user` and `gpr.key`,
+and add this to both repository lists above:
+
+```kotlin
+maven("https://maven.pkg.github.com/surefold/kimney") {
+    credentials {
+        username = providers.gradleProperty("gpr.user").get()
+        password = providers.gradleProperty("gpr.key").get()
+    }
+    content { includeGroupAndSubgroups("dev.surefold") }
+    mavenContent { snapshotsOnly() }
+}
+```
+
 **From Maven Local**, to try a change before it is released: run
 `./gradlew publishToMavenLocal` in this repository and put `mavenLocal()` first
 in both repository lists above, with the `-SNAPSHOT` version from

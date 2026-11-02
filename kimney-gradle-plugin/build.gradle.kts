@@ -127,6 +127,23 @@ publishing {
 val functionalRepo = layout.buildDirectory.dir("functional-repo")
 publishing { repositories { maven { name = "functional"; url = uri(functionalRepo) } } }
 
+// Snapshots go to GitHub Packages (surefold spec 0281), as the root build's artifacts do: dev.surefold only, so the
+// relocation POM and the old ID's marker stay Central's.
+publishing {
+    repositories {
+        maven("https://maven.pkg.github.com/surefold/kimney") {
+            name = "githubPackages"
+            credentials(PasswordCredentials::class)
+        }
+    }
+}
+tasks.withType<PublishToMavenRepository>().configureEach {
+    onlyIf("only dev.surefold goes to GitHub Packages") { task ->
+        val publish = task as PublishToMavenRepository
+        publish.repository.name != "githubPackages" || publish.publication.groupId == "dev.surefold"
+    }
+}
+
 // A release version is signed for Central and the Portal, but the tests also publish it to functional, which needs
 // no key.
 val releasing = gradle.startParameter.taskNames.any { "MavenCentral" in it || "publishPlugins" in it }
