@@ -1,5 +1,5 @@
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.into
 
 enum class Status { ACTIVE, PENDING, ARCHIVED }
 enum class StatusDto { ACTIVE, PENDING, INACTIVE, UNKNOWN }

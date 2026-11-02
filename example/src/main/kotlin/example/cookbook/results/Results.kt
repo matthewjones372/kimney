@@ -1,6 +1,6 @@
 package example.cookbook.results
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 sealed interface Lookup<out T> {
     data class Found<T>(val value: T) : Lookup<T>

@@ -38,7 +38,7 @@ dependencies {
 }
 
 buildConfig {
-    packageName("io.github.matthewjones372.kimney.gradle")
+    packageName("dev.surefold.kimney.gradle")
     useKotlinOutput { internalVisibility = true }
     buildConfigField("String", "KIMNEY_GROUP", "\"$group\"")
     buildConfigField("String", "KIMNEY_VERSION", "\"$version\"")
@@ -80,8 +80,8 @@ gradlePlugin {
     vcsUrl = "https://github.com/surefold/kimney.git"
     plugins {
         create("kimney") {
-            id = "io.github.matthewjones372.kimney"
-            implementationClass = "io.github.matthewjones372.kimney.gradle.KimneyGradlePlugin"
+            id = "dev.surefold.kimney"
+            implementationClass = "dev.surefold.kimney.gradle.KimneyGradlePlugin"
             displayName = "kimney"
             description = "Compile-time, type-safe transformations for Kotlin, inspired by Scala Chimney: a K2 " +
                 "compiler plugin, and a transformation that cannot be derived fails the build naming every reason."

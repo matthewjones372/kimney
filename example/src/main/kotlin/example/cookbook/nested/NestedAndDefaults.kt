@@ -1,6 +1,6 @@
 package example.cookbook.nested
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Address(val street: String, val zip: String)
 

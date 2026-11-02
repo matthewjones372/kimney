@@ -1,7 +1,7 @@
 // A fallback is also the `else`: a case compiled in after this call lands there rather than throwing.
 // CHECK_BYTECODE_TEXT
 // 0 NEW kotlin/NoWhenBranchMatchedException
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 sealed interface Event {
     data class Opened(val id: Long) : Event

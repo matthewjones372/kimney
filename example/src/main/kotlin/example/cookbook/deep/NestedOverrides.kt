@@ -1,6 +1,6 @@
 package example.cookbook.deep
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Address(val street: String, val postcode: String)
 

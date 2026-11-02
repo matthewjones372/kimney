@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 enum class Status { ACTIVE }
 enum class StatusDto { ACTIVE }

@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Box<A>(val value: A, val label: String)
 data class BoxDto<A>(val value: A, val label: String)

@@ -114,7 +114,7 @@ val generateTests = tasks.register<JavaExec>("generateTests") {
     inputs.dir(testDataDir).withPropertyName("testData").withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(testGenDir).withPropertyName("generatedTests")
     classpath = sourceSets.testFixtures.get().runtimeClasspath
-    mainClass.set("io.github.matthewjones372.kimney.compiler.GenerateTestsKt")
+    mainClass.set("dev.surefold.kimney.compiler.GenerateTestsKt")
     workingDir = rootDir
     args(testGenDir.get().asFile.absolutePath, testDataDir.asFile.absolutePath)
     // The generator only writes, so a test for a removed testData directory would otherwise outlive it.

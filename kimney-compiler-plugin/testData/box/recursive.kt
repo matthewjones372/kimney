@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Tree(val label: String, val children: List<Tree>)
 data class TreeDto(val label: String, val children: List<TreeDto>)

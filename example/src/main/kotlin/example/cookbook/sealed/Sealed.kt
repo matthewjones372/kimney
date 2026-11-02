@@ -1,6 +1,6 @@
 package example.cookbook.sealed
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 sealed interface Payment {
     data class Card(val last4: String) : Payment

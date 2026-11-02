@@ -1,6 +1,6 @@
 package example.cookbook.enums
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 enum class Status { ACTIVE, SUSPENDED }
 

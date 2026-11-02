@@ -1,7 +1,7 @@
 package example.cookbook.layers
 
-import io.github.matthewjones372.kimney.into
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.into
+import dev.surefold.kimney.transformInto
 
 // The domain: identities and quantities are types, not Longs and Ints.
 @JvmInline value class OrderId(val value: Long)

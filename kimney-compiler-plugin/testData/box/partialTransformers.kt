@@ -1,8 +1,8 @@
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.PartialError
-import io.github.matthewjones372.kimney.PartialTransformer
-import io.github.matthewjones372.kimney.into
-import io.github.matthewjones372.kimney.transformIntoPartial
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.PartialError
+import dev.surefold.kimney.PartialTransformer
+import dev.surefold.kimney.into
+import dev.surefold.kimney.transformIntoPartial
 
 @JvmInline value class Day(val iso: String)
 

@@ -9,7 +9,7 @@ rule below.
 ```kotlin
 plugins {
     kotlin("jvm") version "2.4.10"
-    id("io.github.matthewjones372.kimney")
+    id("dev.surefold.kimney")
 }
 ```
 
@@ -21,7 +21,7 @@ configuration, naming the range ([Kotlin versions](../README.md#kotlin-versions)
 ## `transformInto`
 
 ```kotlin
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 val dto: UserDto = user.transformInto<UserDto>()
 ```
@@ -109,7 +109,7 @@ The other failures:
 ## Overrides
 
 ```kotlin
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 val dto = user.into<_, UserDto>()
     .withFieldRenamed(User::fullName, UserDto::name)
@@ -244,8 +244,8 @@ is that warning too.
 ## Transformers
 
 ```kotlin
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
 
 val userToDto = Transformer<User, UserDto> { UserDto(it.fullName) }
 
@@ -278,8 +278,8 @@ AddressDto with .withTransformer(Transformer<Address, AddressDto> { … }).`
 ## Partial transformations
 
 ```kotlin
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.transformIntoPartial
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.transformIntoPartial
 
 val result: Partial<Signup> = form.transformIntoPartial()
 ```

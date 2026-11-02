@@ -1,7 +1,7 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
+import dev.surefold.kimney.transformInto
 
 data class Money(val pence: Long)
 data class MoneyDto(val pounds: String)

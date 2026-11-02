@@ -1,5 +1,5 @@
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
 
 data class Inner(val v: String)
 data class InnerDto(val v: String, val tag: String)

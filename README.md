@@ -8,7 +8,7 @@ tells you why it cannot.
 
 [![Kotlin 2.4](https://img.shields.io/badge/Kotlin-2.4.0–2.4.21-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![K2 compiler plugin](https://img.shields.io/badge/K2-compiler%20plugin-7F52FF)](docs/reference.md)
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/kimney-runtime)](https://central.sonatype.com/artifact/io.github.matthewjones372/kimney-runtime)
+[![Maven Central](https://img.shields.io/maven-central/v/dev.surefold/kimney-runtime)](https://central.sonatype.com/artifact/dev.surefold/kimney-runtime)
 [![status: 0.x](https://img.shields.io/badge/status-0.x-orange)](docs/roadmap.md)
 [![Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
@@ -50,7 +50,7 @@ hand-written mapper keeps compiling through.
 // file: example/src/main/kotlin/example/cookbook/first/FirstTransform.kt
 package example.cookbook.first
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class User(val name: String, val email: String, val admin: Boolean)
 
@@ -70,7 +70,7 @@ type-checked:
 // file: example/src/main/kotlin/example/cookbook/overrides/Overrides.kt
 package example.cookbook.overrides
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Person(val fullName: String, val born: Int, val email: String)
 
@@ -154,7 +154,7 @@ dependencyResolutionManagement {
 // build.gradle.kts
 plugins {
     kotlin("jvm") version "2.4.10"
-    id("io.github.matthewjones372.kimney") version "0.3.0"
+    id("dev.surefold.kimney") version "0.3.0"
 }
 ```
 

@@ -1,6 +1,6 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.Into
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Into
+import dev.surefold.kimney.into
 import kotlin.reflect.KProperty1
 
 data class User(val name: String)

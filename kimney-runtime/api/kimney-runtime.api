@@ -1,58 +1,58 @@
-public final class io/github/matthewjones372/kimney/Into {
+public final class dev/surefold/kimney/Into {
 	public final fun transform ()Ljava/lang/Object;
-	public final fun transformPartial ()Lio/github/matthewjones372/kimney/Partial;
-	public final fun withEnumEntryRenamed (Ljava/lang/Enum;Ljava/lang/Enum;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withEnumFallback (Ljava/lang/Enum;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withFieldComputed (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withFieldComputed (Lkotlin/reflect/KProperty1;Lkotlin/jvm/functions/Function1;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withFieldConst (Lkotlin/jvm/functions/Function1;Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withFieldConst (Lkotlin/reflect/KProperty1;Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withFieldRenamed (Lkotlin/reflect/KProperty1;Lkotlin/reflect/KProperty1;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withPartialTransformer (Lio/github/matthewjones372/kimney/PartialTransformer;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withSealedCaseRenamed (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withSealedFallback (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
-	public final fun withTransformer (Lio/github/matthewjones372/kimney/Transformer;)Lio/github/matthewjones372/kimney/Into;
+	public final fun transformPartial ()Ldev/surefold/kimney/Partial;
+	public final fun withEnumEntryRenamed (Ljava/lang/Enum;Ljava/lang/Enum;)Ldev/surefold/kimney/Into;
+	public final fun withEnumFallback (Ljava/lang/Enum;)Ldev/surefold/kimney/Into;
+	public final fun withFieldComputed (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)Ldev/surefold/kimney/Into;
+	public final fun withFieldComputed (Lkotlin/reflect/KProperty1;Lkotlin/jvm/functions/Function1;)Ldev/surefold/kimney/Into;
+	public final fun withFieldConst (Lkotlin/jvm/functions/Function1;Ljava/lang/Object;)Ldev/surefold/kimney/Into;
+	public final fun withFieldConst (Lkotlin/reflect/KProperty1;Ljava/lang/Object;)Ldev/surefold/kimney/Into;
+	public final fun withFieldRenamed (Lkotlin/reflect/KProperty1;Lkotlin/reflect/KProperty1;)Ldev/surefold/kimney/Into;
+	public final fun withPartialTransformer (Ldev/surefold/kimney/PartialTransformer;)Ldev/surefold/kimney/Into;
+	public final fun withSealedCaseRenamed (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)Ldev/surefold/kimney/Into;
+	public final fun withSealedFallback (Ljava/lang/Object;)Ldev/surefold/kimney/Into;
+	public final fun withTransformer (Ldev/surefold/kimney/Transformer;)Ldev/surefold/kimney/Into;
 }
 
-public final class io/github/matthewjones372/kimney/IntoKt {
-	public static final fun into (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Into;
+public final class dev/surefold/kimney/IntoKt {
+	public static final fun into (Ljava/lang/Object;)Ldev/surefold/kimney/Into;
 }
 
-public final class io/github/matthewjones372/kimney/KimneyNotApplied : java/lang/IllegalStateException {
+public final class dev/surefold/kimney/KimneyNotApplied : java/lang/IllegalStateException {
 	public fun <init> (Ljava/lang/String;)V
 }
 
-public abstract interface class io/github/matthewjones372/kimney/Partial {
+public abstract interface class dev/surefold/kimney/Partial {
 }
 
-public final class io/github/matthewjones372/kimney/Partial$Errors : io/github/matthewjones372/kimney/Partial {
+public final class dev/surefold/kimney/Partial$Errors : dev/surefold/kimney/Partial {
 	public fun <init> (Ljava/util/List;)V
 	public final fun component1 ()Ljava/util/List;
-	public final fun copy (Ljava/util/List;)Lio/github/matthewjones372/kimney/Partial$Errors;
-	public static synthetic fun copy$default (Lio/github/matthewjones372/kimney/Partial$Errors;Ljava/util/List;ILjava/lang/Object;)Lio/github/matthewjones372/kimney/Partial$Errors;
+	public final fun copy (Ljava/util/List;)Ldev/surefold/kimney/Partial$Errors;
+	public static synthetic fun copy$default (Ldev/surefold/kimney/Partial$Errors;Ljava/util/List;ILjava/lang/Object;)Ldev/surefold/kimney/Partial$Errors;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getErrors ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/matthewjones372/kimney/Partial$Ok : io/github/matthewjones372/kimney/Partial {
+public final class dev/surefold/kimney/Partial$Ok : dev/surefold/kimney/Partial {
 	public fun <init> (Ljava/lang/Object;)V
 	public final fun component1 ()Ljava/lang/Object;
-	public final fun copy (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Partial$Ok;
-	public static synthetic fun copy$default (Lio/github/matthewjones372/kimney/Partial$Ok;Ljava/lang/Object;ILjava/lang/Object;)Lio/github/matthewjones372/kimney/Partial$Ok;
+	public final fun copy (Ljava/lang/Object;)Ldev/surefold/kimney/Partial$Ok;
+	public static synthetic fun copy$default (Ldev/surefold/kimney/Partial$Ok;Ljava/lang/Object;ILjava/lang/Object;)Ldev/surefold/kimney/Partial$Ok;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getValue ()Ljava/lang/Object;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/matthewjones372/kimney/PartialError {
+public final class dev/surefold/kimney/PartialError {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/matthewjones372/kimney/PartialError;
-	public static synthetic fun copy$default (Lio/github/matthewjones372/kimney/PartialError;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/matthewjones372/kimney/PartialError;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Ldev/surefold/kimney/PartialError;
+	public static synthetic fun copy$default (Ldev/surefold/kimney/PartialError;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ldev/surefold/kimney/PartialError;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMessage ()Ljava/lang/String;
 	public final fun getPath ()Ljava/lang/String;
@@ -60,21 +60,21 @@ public final class io/github/matthewjones372/kimney/PartialError {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/matthewjones372/kimney/PartialKt {
-	public static final fun relocatedTo (Lio/github/matthewjones372/kimney/Partial$Errors;Ljava/lang/String;)Ljava/util/List;
-	public static final fun transformIntoPartial (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Partial;
-	public static final fun valueOrNull (Lio/github/matthewjones372/kimney/Partial;)Ljava/lang/Object;
+public final class dev/surefold/kimney/PartialKt {
+	public static final fun relocatedTo (Ldev/surefold/kimney/Partial$Errors;Ljava/lang/String;)Ljava/util/List;
+	public static final fun transformIntoPartial (Ljava/lang/Object;)Ldev/surefold/kimney/Partial;
+	public static final fun valueOrNull (Ldev/surefold/kimney/Partial;)Ljava/lang/Object;
 }
 
-public abstract interface class io/github/matthewjones372/kimney/PartialTransformer {
-	public abstract fun transform (Ljava/lang/Object;)Lio/github/matthewjones372/kimney/Partial;
+public abstract interface class dev/surefold/kimney/PartialTransformer {
+	public abstract fun transform (Ljava/lang/Object;)Ldev/surefold/kimney/Partial;
 }
 
-public final class io/github/matthewjones372/kimney/TransformKt {
+public final class dev/surefold/kimney/TransformKt {
 	public static final fun transformInto (Ljava/lang/Object;)Ljava/lang/Object;
 }
 
-public abstract interface class io/github/matthewjones372/kimney/Transformer {
+public abstract interface class dev/surefold/kimney/Transformer {
 	public abstract fun transform (Ljava/lang/Object;)Ljava/lang/Object;
 }
 

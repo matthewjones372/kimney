@@ -7,7 +7,7 @@ data class User(val id: UserId)
 
 // MODULE: main(lib)
 // FILE: main.kt
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 import lib.User
 import lib.UserId
 

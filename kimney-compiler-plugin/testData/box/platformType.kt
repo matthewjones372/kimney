@@ -1,5 +1,5 @@
 // FILE: main.kt
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 class Source(legacy: Legacy) {
     val name = legacy.name

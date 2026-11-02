@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 class Geo(val country: String)
 class Address(val zip: String, val geo: Geo)

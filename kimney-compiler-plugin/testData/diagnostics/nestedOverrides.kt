@@ -1,6 +1,6 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
 
 class Geo(val country: String)
 class Address(val zip: String, val geo: Geo)

@@ -1,7 +1,7 @@
 package kimney.benchmarks
 
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.PartialError
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.PartialError
 
 // The same mappings as a careful person writes them: `map` for a list, a
 // `when` for an enum, and a validator that collects every error with its path.

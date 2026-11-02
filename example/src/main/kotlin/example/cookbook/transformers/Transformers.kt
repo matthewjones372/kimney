@@ -1,7 +1,7 @@
 package example.cookbook.transformers
 
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
 
 data class User(val fullName: String, val email: String)
 

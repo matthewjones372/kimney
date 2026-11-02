@@ -1,5 +1,5 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Order(val count: Int, val tags: List<Int>)
 data class OrderDto(val count: Long, val tags: List<String>)

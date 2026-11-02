@@ -1,7 +1,7 @@
 // CHECK_BYTECODE_TEXT
 // 0 LambdaMetafactory
 // 0 INVOKEINTERFACE kotlin/jvm/functions/Function1.invoke
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 enum class Tag { C, A, B }
 enum class TagDto { A, B, C }

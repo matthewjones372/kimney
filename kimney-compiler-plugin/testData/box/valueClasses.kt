@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 @JvmInline value class UserId(val raw: Long)
 @JvmInline value class OrderId(val value: Long)

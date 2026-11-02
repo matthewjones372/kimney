@@ -1,6 +1,6 @@
 package example.cookbook.crossing
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Article(val title: String, val tags: Set<String>)
 

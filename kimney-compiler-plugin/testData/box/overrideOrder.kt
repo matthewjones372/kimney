@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Source(val a: String)
 data class Target(val c: String, val b: String, val a: String)

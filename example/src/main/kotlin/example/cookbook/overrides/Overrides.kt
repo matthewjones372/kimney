@@ -1,6 +1,6 @@
 package example.cookbook.overrides
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Person(val fullName: String, val born: Int, val email: String)
 

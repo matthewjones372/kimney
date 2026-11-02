@@ -1,6 +1,6 @@
 plugins {
     application
-    id("io.github.matthewjones372.kimney")
+    id("dev.surefold.kimney")
 }
 
 application {
@@ -12,8 +12,8 @@ application {
 // coordinates by itself.
 configurations.configureEach {
     resolutionStrategy.dependencySubstitution {
-        substitute(module("io.github.matthewjones372:kimney-compiler-plugin")).using(project(":kimney-compiler-plugin"))
-        substitute(module("io.github.matthewjones372:kimney-runtime")).using(project(":kimney-runtime"))
+        substitute(module("dev.surefold:kimney-compiler-plugin")).using(project(":kimney-compiler-plugin"))
+        substitute(module("dev.surefold:kimney-runtime")).using(project(":kimney-runtime"))
     }
 }
 

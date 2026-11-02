@@ -1,7 +1,7 @@
 package example.cookbook.context
 
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.transformInto
 
 data class Money(val pence: Long, val currency: String)
 

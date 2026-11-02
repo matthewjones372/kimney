@@ -1,6 +1,6 @@
 package example.cookbook.trees
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Comment(val author: String, val text: String, val replies: List<Comment>)
 

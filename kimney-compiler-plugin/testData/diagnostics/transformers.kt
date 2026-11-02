@@ -1,6 +1,6 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
 
 open class Person(val fullName: String)
 class User(fullName: String) : Person(fullName)

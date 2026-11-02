@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 open class Animal(val name: String)
 class Dog(name: String) : Animal(name)

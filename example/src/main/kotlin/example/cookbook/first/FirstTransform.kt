@@ -1,6 +1,6 @@
 package example.cookbook.first
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class User(val name: String, val email: String, val admin: Boolean)
 
