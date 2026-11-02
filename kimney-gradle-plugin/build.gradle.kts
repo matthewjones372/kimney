@@ -52,7 +52,7 @@ mavenPublishing {
     pom {
         name.set("kimney-gradle-plugin")
         description.set("Applies kimney's compiler plugin and adds kimney-runtime to every JVM compilation.")
-        url.set("https://github.com/matthewjones372/kimney")
+        url.set("https://github.com/surefold/kimney")
         licenses {
             license {
                 name.set("The Apache License, Version 2.0")
@@ -66,9 +66,9 @@ mavenPublishing {
             }
         }
         scm {
-            url.set("https://github.com/matthewjones372/kimney")
-            connection.set("scm:git:https://github.com/matthewjones372/kimney.git")
-            developerConnection.set("scm:git:ssh://git@github.com/matthewjones372/kimney.git")
+            url.set("https://github.com/surefold/kimney")
+            connection.set("scm:git:https://github.com/surefold/kimney.git")
+            developerConnection.set("scm:git:ssh://git@github.com/surefold/kimney.git")
         }
     }
 }
@@ -76,8 +76,8 @@ mavenPublishing {
 // `publishPlugins` sends it to the Gradle Plugin Portal, with `gradle.publish.key` and `gradle.publish.secret` in
 // ~/.gradle/gradle.properties; `publishToMavenCentral` still sends it to Central.
 gradlePlugin {
-    website = "https://github.com/matthewjones372/kimney"
-    vcsUrl = "https://github.com/matthewjones372/kimney.git"
+    website = "https://github.com/surefold/kimney"
+    vcsUrl = "https://github.com/surefold/kimney.git"
     plugins {
         create("kimney") {
             id = "io.github.matthewjones372.kimney"
