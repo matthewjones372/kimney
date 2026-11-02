@@ -54,6 +54,6 @@ grep -rn "io.github.matthewjones372" --include=*.kt --include=*.kts . | grep -v 
 
 ## Open questions
 
-1. Version. **Recommended:** 0.5.0, the next minor.
+1. Version. **Answered (owner, 2 Nov 2026):** 0.5.0, the next minor.
 2. The compiler plugin keys its options by plugin ID string. A user who upgrades must update the plugin ID in their build
-   in the same change. **Recommended:** accept that, and say it in the release notes.
+   in the same change. **Answered (owner, 2 Nov 2026):** accept that, and say it in the release notes.
