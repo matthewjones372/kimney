@@ -20,7 +20,7 @@ The one piece of setup, for every recipe:
 // build.gradle.kts
 plugins {
     kotlin("jvm") version "2.4.10"
-    id("io.github.matthewjones372.kimney")
+    id("dev.surefold.kimney")
 }
 ```
 
@@ -60,7 +60,7 @@ ask for — `admin` — is left behind.
 // file: example/src/main/kotlin/example/cookbook/first/FirstTransform.kt
 package example.cookbook.first
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class User(val name: String, val email: String, val admin: Boolean)
 
@@ -81,7 +81,7 @@ parameter with a default takes it when the source has nothing of that name.
 // file: example/src/main/kotlin/example/cookbook/nested/NestedAndDefaults.kt
 package example.cookbook.nested
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Address(val street: String, val zip: String)
 
@@ -106,7 +106,7 @@ recipe reaches into nested ones.
 // file: example/src/main/kotlin/example/cookbook/overrides/Overrides.kt
 package example.cookbook.overrides
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Person(val fullName: String, val born: Int, val email: String)
 
@@ -139,7 +139,7 @@ may only read properties; everything around the field is still derived.
 // file: example/src/main/kotlin/example/cookbook/deep/NestedOverrides.kt
 package example.cookbook.deep
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Address(val street: String, val postcode: String)
 
@@ -174,7 +174,7 @@ class that has no `copy`.
 // file: example/src/main/kotlin/example/cookbook/copy/CopyWithChanges.kt
 package example.cookbook.copy
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Account(val id: Long, val owner: String, val suspended: Boolean)
 
@@ -192,7 +192,7 @@ entries are fine; a source entry the target lacks is a compile error.
 // file: example/src/main/kotlin/example/cookbook/enums/Enums.kt
 package example.cookbook.enums
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 enum class Status { ACTIVE, SUSPENDED }
 
@@ -216,7 +216,7 @@ not own and the wrong one for your own: prefer the rename.
 // file: example/src/main/kotlin/example/cookbook/entries/EnumEntries.kt
 package example.cookbook.entries
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 // The domain archives accounts; the API calls that inactive.
 enum class Status { ACTIVE, SUSPENDED, ARCHIVED }
@@ -250,7 +250,7 @@ through every rule — so `Card` picks up its default `network`.
 // file: example/src/main/kotlin/example/cookbook/sealed/Sealed.kt
 package example.cookbook.sealed
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 sealed interface Payment {
     data class Card(val last4: String) : Payment
@@ -286,8 +286,8 @@ object takes whatever is left, including cases added later.
 // file: example/src/main/kotlin/example/cookbook/cases/SealedCases.kt
 package example.cookbook.cases
 
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
 
 sealed interface Event {
     data class Opened(val ticket: Long) : Event
@@ -335,7 +335,7 @@ sealed type, each case's type arguments worked out from the sealed type's:
 // file: example/src/main/kotlin/example/cookbook/results/Results.kt
 package example.cookbook.results
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 sealed interface Lookup<out T> {
     data class Found<T>(val value: T) : Lookup<T>
@@ -370,7 +370,7 @@ null.
 // file: example/src/main/kotlin/example/cookbook/optionals/Optionals.kt
 package example.cookbook.optionals
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Address(val street: String)
 
@@ -396,7 +396,7 @@ another value class — through the value inside.
 // file: example/src/main/kotlin/example/cookbook/ids/ValueClasses.kt
 package example.cookbook.ids
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 @JvmInline
 value class UserId(val raw: Long)
@@ -427,7 +427,7 @@ value class, as here, since anything else could turn two keys into one.
 // file: example/src/main/kotlin/example/cookbook/collections/Collections.kt
 package example.cookbook.collections
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 @JvmInline
 value class Sku(val code: String)
@@ -460,7 +460,7 @@ the decision down:
 // file: example/src/main/kotlin/example/cookbook/crossing/CrossingKinds.kt
 package example.cookbook.crossing
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Article(val title: String, val tags: Set<String>)
 
@@ -480,7 +480,7 @@ itself derives like any other, to whatever depth the value has.
 // file: example/src/main/kotlin/example/cookbook/trees/Trees.kt
 package example.cookbook.trees
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Comment(val author: String, val text: String, val replies: List<Comment>)
 
@@ -508,8 +508,8 @@ root: fields, list elements, map values and sealed cases.
 // file: example/src/main/kotlin/example/cookbook/transformers/Transformers.kt
 package example.cookbook.transformers
 
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
 
 data class User(val fullName: String, val email: String)
 
@@ -554,8 +554,8 @@ pairs it fits.
 // file: example/src/main/kotlin/example/cookbook/context/ContextTransformers.kt
 package example.cookbook.context
 
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.transformInto
 
 data class Money(val pence: Long, val currency: String)
 
@@ -595,8 +595,8 @@ failure, and a constructor's `require` is an error at what it was building.
 // file: example/src/main/kotlin/example/cookbook/partial/Validation.kt
 package example.cookbook.partial
 
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.transformIntoPartial
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.transformIntoPartial
 
 @JvmInline
 value class Email(val address: String) {
@@ -637,10 +637,10 @@ passed with `withPartialTransformer`, or put in a context parameter.
 // file: example/src/main/kotlin/example/cookbook/parsing/Parsing.kt
 package example.cookbook.parsing
 
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.PartialError
-import io.github.matthewjones372.kimney.PartialTransformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.PartialError
+import dev.surefold.kimney.PartialTransformer
+import dev.surefold.kimney.into
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 

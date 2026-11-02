@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 sealed interface Result<out T> {
     data class Ok<T>(val value: T) : Result<T>

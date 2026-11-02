@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 sealed class Event {
     sealed class Payment : Event() {

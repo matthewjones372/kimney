@@ -25,8 +25,8 @@ row, a view with an extra enum entry — with each crossing written once:
 // file: example/src/main/kotlin/example/cookbook/layers/OrderFlow.kt
 package example.cookbook.layers
 
-import io.github.matthewjones372.kimney.into
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.into
+import dev.surefold.kimney.transformInto
 
 // The domain: identities and quantities are types, not Longs and Ints.
 @JvmInline value class OrderId(val value: Long)
@@ -100,7 +100,7 @@ for you, both of which compile. Both are tested — the test asserts the bug.
 // file: example/src/main/kotlin/example/cookbook/why/Drift.kt
 package example.cookbook.why
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Signup(val email: String, val marketingConsent: Boolean)
 

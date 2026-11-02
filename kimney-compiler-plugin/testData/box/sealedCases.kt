@@ -1,6 +1,6 @@
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.Transformer
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.Transformer
+import dev.surefold.kimney.into
 
 sealed interface Shape {
     data class Circle(val radius: Double) : Shape

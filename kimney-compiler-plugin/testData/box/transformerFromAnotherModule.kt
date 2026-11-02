@@ -2,7 +2,7 @@
 // FILE: lib.kt
 package lib
 
-import io.github.matthewjones372.kimney.Transformer
+import dev.surefold.kimney.Transformer
 
 data class Money(val pence: Long)
 data class MoneyDto(val pounds: String)
@@ -11,7 +11,7 @@ val moneyToDto = Transformer<Money, MoneyDto> { MoneyDto("%d.%02d".format(it.pen
 
 // MODULE: main(lib)
 // FILE: main.kt
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 import lib.Money
 import lib.MoneyDto
 import lib.moneyToDto

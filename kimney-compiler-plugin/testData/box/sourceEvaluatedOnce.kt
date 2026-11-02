@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Pair2(val a: Int, val b: Int)
 data class Pair2Dto(val a: Int, val b: Int)

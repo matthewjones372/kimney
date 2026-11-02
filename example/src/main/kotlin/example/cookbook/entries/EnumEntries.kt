@@ -1,6 +1,6 @@
 package example.cookbook.entries
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 // The domain archives accounts; the API calls that inactive.
 enum class Status { ACTIVE, SUSPENDED, ARCHIVED }

@@ -1,6 +1,6 @@
 package example.cookbook.collections
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 @JvmInline
 value class Sku(val code: String)

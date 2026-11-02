@@ -1,6 +1,6 @@
 package example.cookbook.why
 
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Signup(val email: String, val marketingConsent: Boolean)
 

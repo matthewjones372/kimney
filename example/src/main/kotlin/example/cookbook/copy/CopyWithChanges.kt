@@ -1,6 +1,6 @@
 package example.cookbook.copy
 
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class Account(val id: Long, val owner: String, val suspended: Boolean)
 

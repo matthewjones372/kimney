@@ -1,8 +1,8 @@
 package kimney.benchmarks
 
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.transformInto
-import io.github.matthewjones372.kimney.transformIntoPartial
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.transformInto
+import dev.surefold.kimney.transformIntoPartial
 
 // Each mapping as a kimney user writes it.
 

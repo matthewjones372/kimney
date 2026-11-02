@@ -1,5 +1,5 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 sealed interface Box<out T> {
     data class Plain<T>(val value: T) : Box<T>

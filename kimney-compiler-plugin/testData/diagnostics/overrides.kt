@@ -1,5 +1,5 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 open class Base(val inherited: String)
 class User(val fullName: String, val born: Int, inherited: String) : Base(inherited)

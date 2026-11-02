@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class User(val fullName: String, val born: Int, val email: String)
 data class UserDto(val name: String, val source: String, val age: Int, val email: String)

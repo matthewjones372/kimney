@@ -1,7 +1,7 @@
 package example.cookbook.partial
 
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.transformIntoPartial
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.transformIntoPartial
 
 @JvmInline
 value class Email(val address: String) {

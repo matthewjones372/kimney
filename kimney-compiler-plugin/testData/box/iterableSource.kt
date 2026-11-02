@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Line(val sku: String)
 data class LineDto(val sku: String)

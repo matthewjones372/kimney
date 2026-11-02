@@ -1,7 +1,7 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.transformIntoPartial
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.transformIntoPartial
+import dev.surefold.kimney.transformInto
 
 data class Form(val email: String?)
 data class Signup(val email: String)

@@ -1,5 +1,5 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 enum class Status { ACTIVE, ARCHIVED }
 enum class StatusDto { ACTIVE, INACTIVE, UNKNOWN }

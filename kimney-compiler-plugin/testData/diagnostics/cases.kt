@@ -1,5 +1,5 @@
 // RUN_PIPELINE_TILL: FRONTEND
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 enum class Status { ACTIVE, SUSPENDED, ARCHIVED }
 enum class StatusDto { ACTIVE, SUSPENDED, UNKNOWN }

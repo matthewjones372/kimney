@@ -23,8 +23,8 @@ import example.cookbook.transformers.toDto
 import example.cookbook.trees.Comment
 import example.cookbook.trees.CommentView
 import example.cookbook.trees.toView
-import io.github.matthewjones372.kimney.Partial
-import io.github.matthewjones372.kimney.PartialError
+import dev.surefold.kimney.Partial
+import dev.surefold.kimney.PartialError
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 

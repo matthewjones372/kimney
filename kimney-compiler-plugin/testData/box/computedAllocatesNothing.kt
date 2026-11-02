@@ -2,7 +2,7 @@
 // 0 INVOKEINTERFACE kotlin/jvm/functions/Function1.invoke
 // 0 NEW .*Lambda
 // 0 LambdaMetafactory
-import io.github.matthewjones372.kimney.into
+import dev.surefold.kimney.into
 
 data class User(val born: Int)
 data class UserDto(val age: Int)

@@ -1,7 +1,7 @@
 package example
 
-import io.github.matthewjones372.kimney.into
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.into
+import dev.surefold.kimney.transformInto
 
 const val THIS_YEAR = 2026
 

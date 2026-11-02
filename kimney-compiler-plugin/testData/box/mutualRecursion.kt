@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Folder(val name: String, val files: List<File>, val folders: List<Folder>)
 data class File(val name: String, val attachment: Folder?)

@@ -13,7 +13,7 @@ sealed interface OutcomeView<out T> {
 
 // MODULE: main(lib)
 // FILE: main.kt
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 import lib.Outcome
 import lib.OutcomeView
 

@@ -14,7 +14,7 @@ sealed interface ResultDto {
 
 // MODULE: main(lib)
 // FILE: main.kt
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 import lib.Result
 import lib.ResultDto
 

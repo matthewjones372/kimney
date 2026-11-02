@@ -1,4 +1,4 @@
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 data class Address(val street: String, val zip: String)
 data class User(val name: String, val address: Address, val admin: Boolean)

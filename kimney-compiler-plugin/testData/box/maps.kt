@@ -1,6 +1,6 @@
 // CHECK_BYTECODE_TEXT
 // 0 LambdaMetafactory
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 
 @JvmInline value class UserId(val raw: Long)
 enum class Tier { GOLD, SILVER }

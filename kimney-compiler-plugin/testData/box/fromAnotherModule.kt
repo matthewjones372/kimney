@@ -10,7 +10,7 @@ data class UserDto(val name: String, val address: AddressDto)
 
 // MODULE: main(lib)
 // FILE: main.kt
-import io.github.matthewjones372.kimney.transformInto
+import dev.surefold.kimney.transformInto
 import lib.Address
 import lib.AddressDto
 import lib.User

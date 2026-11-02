@@ -1,6 +1,6 @@
 package kimney.benchmarks
 
-import io.github.matthewjones372.kimney.Partial
+import dev.surefold.kimney.Partial
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Fork
