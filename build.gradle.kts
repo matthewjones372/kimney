@@ -216,9 +216,10 @@ fun RepositoryHandler.githubPackages() = maven("https://maven.pkg.github.com/sur
 
 /** The relocation POMs and anything else outside `dev.surefold` are for Central only, never a snapshot. */
 fun Project.onlyDevSurefoldToGithubPackages() = tasks.withType<PublishToMavenRepository>().configureEach {
-    val toGithubPackages = repository.name == "githubPackages"
-    val group = publication.groupId
-    onlyIf("only dev.surefold goes to GitHub Packages") { !toGithubPackages || group == "dev.surefold" }
+    onlyIf("only dev.surefold goes to GitHub Packages") { task ->
+        val publish = task as PublishToMavenRepository
+        publish.repository.name != "githubPackages" || publish.publication.groupId == "dev.surefold"
+    }
 }
 
 /** The POM every kimney artifact shares; the Gradle plugin's build writes the same one. */

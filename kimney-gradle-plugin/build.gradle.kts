@@ -138,9 +138,10 @@ publishing {
     }
 }
 tasks.withType<PublishToMavenRepository>().configureEach {
-    val toGithubPackages = repository.name == "githubPackages"
-    val group = publication.groupId
-    onlyIf("only dev.surefold goes to GitHub Packages") { !toGithubPackages || group == "dev.surefold" }
+    onlyIf("only dev.surefold goes to GitHub Packages") { task ->
+        val publish = task as PublishToMavenRepository
+        publish.repository.name != "githubPackages" || publish.publication.groupId == "dev.surefold"
+    }
 }
 
 // A release version is signed for Central and the Portal, but the tests also publish it to functional, which needs
