@@ -181,6 +181,7 @@ subprojects {
             relocatedFromOldGroup(this@subprojects.name, version.toString())
         }
         onlyDevSurefoldToGithubPackages()
+        onlyOneNamespaceToCentral()
         // A release version is signed for Central, but `build` also publishes it to icTest, which needs no key.
         tasks.withType<Sign>().configureEach { isRequired = releasing }
     }
@@ -219,6 +220,22 @@ fun Project.onlyDevSurefoldToGithubPackages() = tasks.withType<PublishToMavenRep
     onlyIf("only dev.surefold goes to GitHub Packages") { task ->
         val publish = task as PublishToMavenRepository
         publish.repository.name != "githubPackages" || publish.publication.groupId == "dev.surefold"
+    }
+}
+
+/**
+ * The Central Portal refuses a deployment with files for two namespaces, and a Gradle run uploads one deployment, so
+ * a release publishes to Central once per namespace: `dev.surefold` by default, then the relocation POMs with
+ * `-PcentralNamespace=io.github.matthewjones372`. The Gradle plugin's build filters its own publications the same way.
+ */
+fun Project.onlyOneNamespaceToCentral() {
+    val namespace = providers.gradleProperty("centralNamespace").getOrElse("dev.surefold")
+    tasks.withType<PublishToMavenRepository>().configureEach {
+        onlyIf("only $namespace goes to Central in this run") { task ->
+            val publish = task as PublishToMavenRepository
+            val group = publish.publication.groupId
+            publish.repository.name != "mavenCentral" || group == namespace || group.startsWith("$namespace.")
+        }
     }
 }
 
