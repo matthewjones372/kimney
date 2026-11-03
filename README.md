@@ -262,6 +262,10 @@ The plugin marker is published to Central as well, so a consumer resolves the
 plugin by id with `mavenCentral()` in `pluginManagement.repositories`.
 Publishing to the Gradle Plugin Portal is not set up.
 
+Once the four deployments are released, run the `release` workflow with the
+tag (`v0.5.0`), the commit on `main` they were built from, and the notes: it
+creates the tag on that commit and the GitHub release beside it.
+
 ## Used in
 
 - [petshop](https://github.com/surefold/petshop) maps between its domain

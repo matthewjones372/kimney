@@ -1,13 +1,18 @@
 name: release
 
-# A GitHub release for a tag already pushed, with notes written for it. Run by
-# hand; publishing the artifacts stays where it is.
+# A GitHub release, with notes written for it. Run by hand once the artifacts
+# are on Central; publishing them stays where it is. With `commit`, it also
+# creates the tag on that commit, so nobody has to push one from a laptop.
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "An existing tag, v0.4.0"
+        description: "The release's tag, v0.5.0"
         required: true
+      commit:
+        description: "Commit on main to tag, when the tag does not exist yet. Empty: the tag must exist."
+        type: string
+        default: ""
       notes:
         description: "Release notes, Markdown"
         required: true
@@ -24,7 +29,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
+          COMMIT: ${{ inputs.commit }}
           NOTES: ${{ inputs.notes }}
         run: |
           printf '%s\n' "$NOTES" > notes.md
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --notes-file notes.md
+          if [ -z "$COMMIT" ]; then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --notes-file notes.md
+            exit 0
+          fi
+          # The tag is created by the release, through the API, on a commit that
+          # has to be on main; an existing tag is used only if it is that commit.
+          sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/$COMMIT" --jq .sha)
+          status=$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$sha" --jq .status)
+          case "$status" in identical|behind) ;; *) echo "$sha is not on main ($status)"; exit 1 ;; esac
+          if existing=$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" --jq .sha 2>/dev/null); then
+            [ "$existing" = "$sha" ] || { echo "$TAG already tags $existing, not $sha"; exit 1; }
+          fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$sha" --title "$TAG" --notes-file notes.md
